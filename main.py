@@ -4,10 +4,56 @@ import os
 from contextlib import AsyncExitStack
 
 from mcp import StdioServerParameters, stdio_client, ClientSession
+from ollama import Client
+
+
+def get_requested_extensions(ollama_client, user_input: str) -> set[str]:
+    system_prompt = (
+        "Extract file extensions like 'md', 'txt', 'json', etc. from user input. "
+        "Only output a space-separated list of file extensions. No explanation. "
+        "If none found, return empty string."
+    )
+
+    response = ollama_client.chat(
+        model="llama3",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_input},
+        ],
+    )
+    content = response["message"]["content"]
+    return set(content.strip().split())
+
+
+async def get_allowed_directories(session):
+    allowed_response = await session.call_tool("list_allowed_directories")
+    allowed_text = allowed_response.content[0].text
+
+    directories = [line.strip() for line in allowed_text.split("\n") if line.strip()][
+        1:
+    ]
+
+    return directories
+
+
+async def list_files(session, extensions: set[str]) -> list[str]:
+    directories = await get_allowed_directories(session)
+    matches = []
+
+    for directory in directories:
+        response = await session.call_tool("list_directory", {"path": directory})
+        lines = response.content[0].text.splitlines()
+
+        for line in lines:
+            if line.startswith("[FILE] "):
+                filename = line.split(" ", 1)[1]
+                ext = filename.rsplit(".", 1)[-1]
+                if ext in extensions:
+                    matches.append(f"{directory}/{filename}")
+    return matches
 
 
 async def main():
-
     with open("mcp_server_config.json") as f:
         config = json.load(f)["mcpServers"]["filesystem"]
 
@@ -26,51 +72,25 @@ async def main():
 
         print(f"tools: {tool_names}")
 
-        allowed_response = await session.call_tool("list_allowed_directories")
-        allowed_text = allowed_response.content[0].text
+        ollama_client = Client(host="http://localhost:11434")
 
-        directories = [
-            line.strip() for line in allowed_text.split("\n") if line.strip()
-        ][1:]
-        if not directories:
-            directories = ["."]
+        while True:
+            user_input = input("\nYou: ")
+            if user_input.strip().lower() in {"exit", "quit"}:
+                break
 
-        print(f"allowed directories: {', '.join(directories)}")
+            extensions = get_requested_extensions(ollama_client, user_input)
+            if not extensions:
+                print("🤖 No valid file types found in input.")
+                continue
 
-        text_file_extensions = ("txt", "md", "py", "json", "csv", "log")
-
-        text_file_names = []
-        for directory in directories:
-            print(f"list files in {directory}")
-
-            dir_response = await session.call_tool(
-                "list_directory", {"path": directory}
-            )
-            dir_text = dir_response.content[0].text
-            print(dir_text)
-
-            file_txt_list = dir_text.split("\n")
-
-            for file_txt in file_txt_list:
-                # file_txt:
-                # [DIR] .git
-                # [FILE] README.md
-                text_filename = file_txt.split(" ", 1)[1]
-                extension = text_filename.split(".")[-1]
-
-                if extension in text_file_extensions:
-                    text_file_names.append(text_filename)
-
-            print(f"text file names: {text_file_names}")
-
-        for text_filename in text_file_names:
-            file_path = os.path.join(directory, text_filename)
-            file_response = await session.call_tool("read_file", {"path": file_path})
-            content = file_response.content[0].text
-            lines = content.split("\n")
-
-            print(f"\n> {text_filename}:")
-            print("\n".join(lines[: min(len(lines), 5)]))
+            matching_files = await list_files(session, extensions)
+            if matching_files:
+                print("📄 Matching files:")
+                for f in matching_files:
+                    print("  -", f)
+            else:
+                print("❌ No matching files found.")
 
 
 if __name__ == "__main__":
