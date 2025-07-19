@@ -1,6 +1,5 @@
 import asyncio
 import json
-import os
 from contextlib import AsyncExitStack
 
 from mcp import StdioServerParameters, stdio_client, ClientSession
@@ -53,6 +52,61 @@ async def list_files(session, extensions: set[str]) -> list[str]:
     return matches
 
 
+MCP_TOOLS = {
+    # "list_allowed_directories": "Lists directories the user can browse.",
+    # "list_directory": "Lists files and directories at a given path. Requires: {'path': <str>}",
+    # "read_file": "Reads contents of a file. Requires: {'path': <str>}",
+}
+
+
+def choose_mcp_tool(client, user_query, user_context_list):
+    tool_description = "\n".join(
+        f"- {name}: {info}" for name, info in MCP_TOOLS.items()
+    )
+
+    user_contexts = "\n".join(
+        [
+            f"- UserInput: {user_context["user_input"]}\n-Answer: {user_context["llm_answer"]}"
+            for user_context in user_context_list
+        ]
+    )
+
+    prompt = f"""
+    You are a tool-choosing assistant. A user wants to interact with a file system.
+    You have access to the following MCP tools:
+
+    {tool_description}
+
+    User query:
+    "{user_query}"
+    
+    Context:
+    {user_contexts}
+
+    Return a JSON object with:
+    - tool: one of the tool names above
+    - args: any parameters needed (or empty if none)
+
+    Respond ONLY with the JSON object.
+    """
+    print(prompt)
+
+    response = client.chat(
+        model="llama3",
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    content = response["message"]["content"]
+
+    # Extract JSON from response
+    try:
+        parsed = json.loads(content)
+        return parsed
+    except json.JSONDecodeError:
+        print("❌ LLM did not return valid JSON:", content)
+        return {}
+
+
 async def main():
     with open("mcp_server_config.json") as f:
         config = json.load(f)["mcpServers"]["filesystem"]
@@ -68,29 +122,35 @@ async def main():
         await session.initialize()
 
         tools_response = await session.list_tools()
-        tool_names = [tool.name for tool in tools_response.tools]
-
-        print(f"tools: {tool_names}")
+        print(f"Available tools: {[tool.name for tool in tools_response.tools]}")
+        for tool in tools_response.tools:
+            MCP_TOOLS[tool.name] = {
+                "description": tool.description,
+                "input_schema": tool.inputSchema,
+            }
 
         ollama_client = Client(host="http://localhost:11434")
+
+        user_context_list = []
 
         while True:
             user_input = input("\nYou: ")
             if user_input.strip().lower() in {"exit", "quit"}:
                 break
 
-            extensions = get_requested_extensions(ollama_client, user_input)
-            if not extensions:
-                print("🤖 No valid file types found in input.")
+            tool_call = choose_mcp_tool(ollama_client, user_input, user_context_list)
+            if tool_call["tool"] not in list(MCP_TOOLS.keys()):
+                print(f"Invalid tool call: {tool_call}")
                 continue
-
-            matching_files = await list_files(session, extensions)
-            if matching_files:
-                print("📄 Matching files:")
-                for f in matching_files:
-                    print("  -", f)
             else:
-                print("❌ No matching files found.")
+                print(f"Calling tool call: {tool_call}")
+
+            result = await session.call_tool(tool_call["tool"], tool_call["args"])
+            print(result.content[0].text)
+
+            user_context_list.append(
+                {"user_input": user_input, "llm_answer": result.content[0].text}
+            )
 
 
 if __name__ == "__main__":
