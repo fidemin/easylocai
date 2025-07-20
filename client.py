@@ -1,19 +1,22 @@
 import asyncio
 import json
+import logging
 from contextlib import AsyncExitStack
 
 from mcp import StdioServerParameters, stdio_client, ClientSession
 from ollama import Client
 
+logger = logging.getLogger(__name__)
+
 
 def choose_mcp_tool(client, user_query, user_context_list, mcp_tools_dict):
     tool_description_lines = []
     for server_name, tool_info_dict in mcp_tools_dict.items():
-        server_name = f"- Server Name: {server_name}"
+        server_name = f"- server_name: {server_name}"
         tool_description_lines.append(server_name)
 
         for tool_name, tool_info in tool_info_dict.items():
-            tool_name_text = f"    - Tool Name: {tool_name}"
+            tool_name_text = f"    - tool_name: {tool_name}"
             tool_description_lines.append(tool_name_text)
             tool_info_text = f"    - Tool Info: {tool_info}"
             tool_description_lines.append(tool_info_text)
@@ -41,28 +44,31 @@ def choose_mcp_tool(client, user_query, user_context_list, mcp_tools_dict):
     {user_contexts}
 
     Return a JSON object with:
-    - server_name: one of the server name above
-    - tool: one of the tool names above
-    - args: any parameters needed (or empty if none)
+    - tool_name: one of the tool_name above based on description
+    - tool_args: any parameters needed (or empty if none) based on input_schema
+    - server_name: one of the server_name above based on tool_name you choose
 
-    Respond ONLY with the JSON object.
+    Respond ONLY with the JSON object. (Not ``` included)
     """
     print(prompt)
 
     response = client.chat(
-        model="llama3",
+        model="mistral",
         messages=[{"role": "user", "content": prompt}],
     )
 
     content = response["message"]["content"]
 
+    print(f"content: {content}")
+
     # Extract JSON from response
     try:
-        parsed = json.loads(content)
+        parsed = json.loads(content.strip())
         return parsed
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        logger.error(f"LLM did not return valid JSON: {content} with error: {str(e)}")
         print("❌ LLM did not return valid JSON:", content)
-        return {}
+        return None
 
 
 async def main():
@@ -106,7 +112,7 @@ async def main():
         user_context_list = []
 
         while True:
-            user_input = input("\nYou: ")
+            user_input = input("\nQuery: ")
             if user_input.strip().lower() in {"exit", "quit"}:
                 break
 
@@ -114,13 +120,16 @@ async def main():
                 ollama_client, user_input, user_context_list, tool_info_dict
             )
 
+            if tool_call is None:
+                print("invalid tool call. please try again")
+
             chosen_server_name = tool_call["server_name"]
 
             if chosen_server_name not in list(tool_info_dict.keys()):
                 print(f"Invalid server call: {tool_call}")
                 continue
 
-            chosen_tool_name = tool_call["tool"]
+            chosen_tool_name = tool_call["tool_name"]
 
             if chosen_tool_name not in tool_info_dict[chosen_server_name].keys():
                 print(f"Invalid tool call: {tool_call}")
@@ -128,7 +137,7 @@ async def main():
             print(f"Calling tool call: {tool_call}")
 
             result = await session_dict[chosen_server_name].call_tool(
-                tool_call["tool"], tool_call["args"]
+                chosen_tool_name, tool_call.get("tool_args")
             )
             print(result.content[0].text)
 

@@ -15,6 +15,16 @@
         "--active",
         "custom_server.py"
       ]
+    },
+    "kubernetes": {
+      "command": "python",
+      "args": [
+        "-m",
+        "kubectl_mcp_tool.mcp_server"
+      ],
+      "env": {
+        "KUBECONFIG": "$HOME/.kube/config"
+      }
     }
   }
 }
