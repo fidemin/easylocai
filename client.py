@@ -114,20 +114,20 @@ async def main():
                 ollama_client, user_input, user_context_list, tool_info_dict
             )
 
-            choosen_server_name = tool_call["server_name"]
+            chosen_server_name = tool_call["server_name"]
 
-            if choosen_server_name not in list(tool_info_dict.keys()):
+            if chosen_server_name not in list(tool_info_dict.keys()):
                 print(f"Invalid server call: {tool_call}")
                 continue
 
-            choosen_tool_name = tool_call["tool"]
+            chosen_tool_name = tool_call["tool"]
 
-            if choosen_tool_name not in tool_info_dict[choosen_server_name].keys():
+            if chosen_tool_name not in tool_info_dict[chosen_server_name].keys():
                 print(f"Invalid tool call: {tool_call}")
 
             print(f"Calling tool call: {tool_call}")
 
-            result = await session_dict[choosen_server_name].call_tool(
+            result = await session_dict[chosen_server_name].call_tool(
                 tool_call["tool"], tool_call["args"]
             )
             print(result.content[0].text)
