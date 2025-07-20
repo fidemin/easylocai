@@ -6,55 +6,6 @@ from mcp import StdioServerParameters, stdio_client, ClientSession
 from ollama import Client
 
 
-def get_requested_extensions(ollama_client, user_input: str) -> set[str]:
-    system_prompt = (
-        "Extract file extensions like 'md', 'txt', 'json', etc. from user input. "
-        "Only output a space-separated list of file extensions. No explanation. "
-        "If none found, return empty string."
-    )
-
-    response = ollama_client.chat(
-        model="llama3",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_input},
-        ],
-    )
-    content = response["message"]["content"]
-    return set(content.strip().split())
-
-
-async def get_allowed_directories(session):
-    allowed_response = await session.call_tool("list_allowed_directories")
-    allowed_text = allowed_response.content[0].text
-
-    directories = [line.strip() for line in allowed_text.split("\n") if line.strip()][
-        1:
-    ]
-
-    return directories
-
-
-async def list_files(session, extensions: set[str]) -> list[str]:
-    directories = await get_allowed_directories(session)
-    matches = []
-
-    for directory in directories:
-        response = await session.call_tool("list_directory", {"path": directory})
-        lines = response.content[0].text.splitlines()
-
-        for line in lines:
-            if line.startswith("[FILE] "):
-                filename = line.split(" ", 1)[1]
-                ext = filename.rsplit(".", 1)[-1]
-                if ext in extensions:
-                    matches.append(f"{directory}/{filename}")
-    return matches
-
-
-MCP_TOOLS = {}
-
-
 def choose_mcp_tool(client, user_query, user_context_list, mcp_tools_dict):
     tool_description_lines = []
     for server_name, tool_info_dict in mcp_tools_dict.items():
