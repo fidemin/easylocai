@@ -7,6 +7,14 @@
         "@modelcontextprotocol/server-filesystem",
         "."
       ]
+    },
+    "custom": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--active",
+        "custom_server.py"
+      ]
     }
   }
 }

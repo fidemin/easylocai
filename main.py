@@ -109,10 +109,16 @@ def choose_mcp_tool(client, user_query, user_context_list):
 
 async def main():
     with open("mcp_server_config.json") as f:
-        config = json.load(f)["mcpServers"]["filesystem"]
+        servers = json.load(f)["mcpServers"]
+        config = servers["filesystem"]
+        config1 = servers["custom"]
 
     server_params = StdioServerParameters(
         command=config["command"], args=config["args"], env=None
+    )
+
+    server_params2 = StdioServerParameters(
+        command=config1["command"], args=config1["args"], env=None
     )
 
     stack = AsyncExitStack()
@@ -121,13 +127,24 @@ async def main():
         session = await stack.enter_async_context(ClientSession(stdio, write))
         await session.initialize()
 
+        stdio2, write2 = await stack.enter_async_context(stdio_client(server_params2))
+        session2 = await stack.enter_async_context(ClientSession(stdio2, write2))
+        await session2.initialize()
+
         tools_response = await session.list_tools()
         print(f"Available tools: {[tool.name for tool in tools_response.tools]}")
+
+        tool_response2 = await session2.list_tools()
+        print(f"Available tools1: {[tool.name for tool in tool_response2.tools]}")
+
         for tool in tools_response.tools:
             MCP_TOOLS[tool.name] = {
                 "description": tool.description,
                 "input_schema": tool.inputSchema,
             }
+
+        for tool in tool_response2.tools:
+            print(tool.name, tool.description, tool.inputSchema)
 
         ollama_client = Client(host="http://localhost:11434")
 
