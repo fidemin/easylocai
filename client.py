@@ -41,45 +41,38 @@ def convert_to_tool_data(server_name, tool_name, tool_info):
 def choose_mcp_tool(
     client,
     user_query,
-    user_context_list,
-    mcp_tools_dict,
+    filtered_user_context_list,
     server_name,
     tool_name,
     document,
 ):
-    # tool_description_lines = []
-    # for server_name, tool_info_dict in mcp_tools_dict.items():
-    #     this_tool_description = convert_to_tool_txt_data(server_name, tool_info_dict)
-    #     tool_description_lines.append(this_tool_description)
-    #
-    # tool_description = "\n".join(tool_description_lines)
-
-    user_contexts = "\n".join(
+    filtered_user_context = "\n".join(
         [
-            f"- UserInput: {user_context["user_input"]}\n-Answer: {user_context["llm_answer"]}"
-            for user_context in user_context_list
+            filtered_user_context["document"]
+            for filtered_user_context in filtered_user_context_list
         ]
     )
 
     prompt = f"""
-    You are a tool-choosing assistant. A user wants to interact with a file system.
-    You have access to the following MCP tools:
+    You are a tool-choosing assistant. A user wants to interact with the tool chosen.
+    
+    You have access to the following chosen MCP server and tools:
 
-    Selected server_name: {server_name}
-    Selected tool_name: {tool_name}
-    Tool Description:
+    - server_name: {server_name}
+    - tool_name: {tool_name}
+    - Tool Description:
     {document}
 
     User query:
     "{user_query}"
     
-    Context:
-    {user_contexts}
-
-    Return a JSON object with:
-    - tool_name: one of the tool_name above based on description
-    - tool_args: any parameters needed (or empty if none) based on input_schema
-    - server_name: one of the server_name above based on tool_name you choose
+    User Context:
+    {filtered_user_context}
+    
+    Return a JSON object with: (all fields are required)
+    - tool_name: tool_name above 
+    - tool_args: any parameters needed (or empty if none) based on User Query, User Context. For args schema, refer to input_schema
+    - server_name: server_name above 
 
     Respond ONLY with the JSON object. (Not ``` included)
     """
@@ -107,6 +100,8 @@ def choose_mcp_tool(
 async def main():
     chromadb_client = chromadb.Client()
     tool_collection = chromadb_client.get_or_create_collection("tools")
+    user_context_collection = chromadb_client.get_or_create_collection("user_context")
+
     with open("mcp_server_config.json") as f:
         servers = json.load(f)["mcpServers"]
 
@@ -160,8 +155,7 @@ async def main():
 
         ollama_client = Client(host="http://localhost:11434")
 
-        user_context_list = []
-
+        query_id = 1
         while True:
             user_input = input("\nQuery: ")
             if user_input.strip().lower() in {"exit", "quit"}:
@@ -175,11 +169,29 @@ async def main():
             id_ = tool_result["ids"][0][0]
             server_name, tool_name = id_.split(":")
             document = tool_result["documents"][0][0]
+
+            user_context_result = user_context_collection.query(
+                query_texts=[user_input],
+                n_results=10,
+            )
+
+            threshold = 1.5  # cosign distance [0, 2] for [same, opposite]
+            filtered_results = []
+            for i, distance in enumerate(user_context_result["distances"][0]):
+                if distance < threshold:
+                    filtered_results.append(
+                        {
+                            "id": user_context_result["ids"][0][i],
+                            "document": user_context_result["documents"][0][i],
+                        }
+                    )
+
+            filtered_results.sort(key=lambda x: int(x["id"]))
+
             tool_call = choose_mcp_tool(
                 ollama_client,
                 user_input,
-                user_context_list,
-                server_name_tool_info_dict,
+                filtered_results,
                 server_name,
                 tool_name,
                 document,
@@ -209,9 +221,14 @@ async def main():
             )
             print(result.content[0].text)
 
-            user_context_list.append(
-                {"user_input": user_input, "llm_answer": result.content[0].text}
+            user_context_document = (
+                f"- Question: {user_input}\n- Answer: {result.content[0].text}"
             )
+            user_context_collection.add(
+                documents=[user_context_document],
+                ids=[str(query_id)],
+            )
+            query_id += 1
 
 
 if __name__ == "__main__":
