@@ -14,3 +14,9 @@ wheels/
 
 # Pycharm
 .idea
+
+# log files
+*.log
+
+# mcp server json file
+mcp_server_config.json

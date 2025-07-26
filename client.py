@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import os
 from contextlib import AsyncExitStack
 
 import chromadb
@@ -107,8 +108,13 @@ async def main():
 
         server_params_dict = {}
         for server_name, config in servers.items():
+            env = None
+            if "env" in config:
+                env = {}
+                for k, v in config["env"].items():
+                    env[k] = os.path.expandvars(v)
             server_params = StdioServerParameters(
-                command=config["command"], args=config["args"], env=None
+                command=config["command"], args=config["args"], env=env
             )
 
             server_params_dict[server_name] = server_params
