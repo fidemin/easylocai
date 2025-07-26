@@ -114,7 +114,7 @@ async def main():
                 for k, v in config["env"].items():
                     env[k] = os.path.expandvars(v)
             server_params = StdioServerParameters(
-                command=config["command"], args=config["args"], env=env
+                **config,
             )
 
             server_params_dict[server_name] = server_params
