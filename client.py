@@ -5,6 +5,7 @@ import os
 from contextlib import AsyncExitStack
 
 import chromadb
+from jinja2 import FileSystemLoader, Environment
 from mcp import StdioServerParameters, stdio_client, ClientSession
 from ollama import Client
 
@@ -28,26 +29,18 @@ def convert_to_tool_txt_data(server_name, tool_info_dict):
 
 def convert_to_tool_data(server_name, tool_name, tool_info):
     tool_description_lines = []
-    tool_name_text = f"- name: {tool_name}"
-    tool_description_lines.append(tool_name_text)
+    # tool_name_text = f"- name: {tool_name}"
+    # tool_description_lines.append(tool_name_text)
     tool_desc_text = f"- description: {tool_info["description"]}"
     tool_description_lines.append(tool_desc_text)
-    tool_input_schema_text = f"- input schema: {tool_info["input_schema"]}"
-    tool_description_lines.append(tool_input_schema_text)
+    # tool_input_schema_text = f"- input schema: {tool_info["input_schema"]}"
+    # tool_description_lines.append(tool_input_schema_text)
 
     tool_description = "\n".join(tool_description_lines)
     return tool_description
 
 
-def choose_mcp_tool(
-    client,
-    user_query,
-    filtered_user_context_list,
-    server_name,
-    tool_name,
-    tool_description,
-    tool_input_schema,
-):
+def choose_mcp_tool(client, user_query, filtered_user_context_list, possible_tools):
     filtered_user_context = "\n".join(
         [
             filtered_user_context["document"]
@@ -55,28 +48,16 @@ def choose_mcp_tool(
         ]
     )
 
-    prompt = f"""
-    You are a tool-choosing assistant. A user wants to interact with the tool chosen.
-    
-    You have access to the following MCP server and tool:
-    - server_name: {server_name}
-    - tool_name: {tool_name}
-    - tool_description: {tool_description}
-    - input_schema: {tool_input_schema}
+    env = Environment(loader=FileSystemLoader(""))
+    template = env.get_template("resources/prompts/tool_assistant.txt")
+    prompt = template.render(
+        {
+            "possible_tools": possible_tools,
+            "user_query": user_query,
+            "filtered_user_context": filtered_user_context,
+        }
+    )
 
-    User query:
-    "{user_query}"
-    
-    User Context:
-    {filtered_user_context}
-    
-    Return a JSON object with: (all fields are required)
-    - tool_name: tool_name above 
-    - tool_args: any parameters needed (or empty if none) based on User Query, User Context. For args schema, refer to input_schema
-    - server_name: server_name above 
-
-    Respond ONLY with the JSON object. (Not ``` included)
-    """
     print(prompt)
 
     response = client.chat(
@@ -169,14 +150,25 @@ async def main():
 
             tool_result = tool_collection.query(
                 query_texts=[user_input],
-                n_results=1,
+                n_results=5,
             )
 
-            id_ = tool_result["ids"][0][0]
-            server_name, tool_name = id_.split(":")
-            tool_info = server_name_tool_info_dict[server_name][tool_name]
-            tool_description = tool_info["description"]
-            tool_input_schema = tool_info["input_schema"]
+            ids = tool_result["ids"][0]
+            possible_tools = []
+            for id_ in ids:
+                server_name, tool_name = id_.split(":")
+                tool_info = server_name_tool_info_dict[server_name][tool_name]
+                tool_description = tool_info["description"]
+                tool_input_schema = tool_info["input_schema"]
+
+                possible_tools.append(
+                    {
+                        "server_name": server_name,
+                        "tool_name": tool_name,
+                        "tool_description": tool_description,
+                        "tool_input_schema": tool_input_schema,
+                    }
+                )
 
             user_context_result = user_context_collection.query(
                 query_texts=[user_input],
@@ -200,14 +192,16 @@ async def main():
                 ollama_client,
                 user_input,
                 filtered_results,
-                server_name,
-                tool_name,
-                tool_description,
-                tool_input_schema,
+                possible_tools,
             )
 
             if tool_call is None:
                 print("invalid tool call. please try again")
+                continue
+
+            if not tool_call["use_tool"]:
+                print("No possible tools. please try again")
+                continue
 
             chosen_server_name = tool_call["server_name"]
 
