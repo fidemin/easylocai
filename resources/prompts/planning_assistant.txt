@@ -7,10 +7,12 @@ Rules:
 - Include any required parameters for each task.
 - Do not merge multiple actions into one task.
 - Use "id" for each task so that the executor can reference it.
-- All required resource should be in action. Other parameters are not allowed.
+- All required parameters should be in action. Other parameters are not allowed.
+- answer is like agent's answer to the query. It can be also used when tasks are empty to give a reason.
 
 Example output:
 {
+  "answer": "I have listed some steps for your request."
   "tasks": [
     {"id": 1, "action": "Search web to find top 5 JavaScript frameworks in 2025", inputs_from_task: []},
     {"id": 2, "action": "Summarize input text", "inputs_from_task": [1]},
