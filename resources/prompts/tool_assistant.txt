@@ -17,6 +17,9 @@ User query:
 User Context:
 {{ filtered_user_context }}
 
+Related task results context:
+{{ task_results_context }}
+
 Return a JSON object with:
 - use_tool (required): true or false. If one of given tool_name and description is relevant to given query, this value is true. Else false.
 - tool_name (optional): (required when use_tool=true) chosen tool_name based on most relevant description based on user query and user context.

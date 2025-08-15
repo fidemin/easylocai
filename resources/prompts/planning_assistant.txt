@@ -7,10 +7,12 @@ Rules:
 - Include any required parameters for each task.
 - Do not merge multiple actions into one task.
 - Use "id" for each task so that the executor can reference it.
-- All required parameters should be in action. Other parameters are not allowed.
 - answer is like agent's answer to the query. It can be also used when tasks are empty to give a reason.
+- action should be semantic explanation not cli command or other command.
+- All required parameters should be in action. Other parameters field is not allowed.
 
-Example output:
+Example output: Only valid JSON without any other text.
+
 {
   "answer": "I have listed some steps for your request."
   "tasks": [

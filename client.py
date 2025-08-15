@@ -40,13 +40,21 @@ def convert_to_tool_data(server_name, tool_name, tool_info):
     return tool_description
 
 
-def choose_mcp_tool(client, user_query, filtered_user_context_list, possible_tools):
+def choose_mcp_tool(
+    client,
+    user_query,
+    filtered_user_context_list,
+    possible_tools,
+    task_results,
+):
     filtered_user_context = "\n".join(
         [
             filtered_user_context["document"]
             for filtered_user_context in filtered_user_context_list
         ]
     )
+
+    task_results_context = "\n".join(task_results)
 
     env = Environment(loader=FileSystemLoader(""))
     template = env.get_template("resources/prompts/tool_assistant.txt")
@@ -55,6 +63,7 @@ def choose_mcp_tool(client, user_query, filtered_user_context_list, possible_too
             "possible_tools": possible_tools,
             "user_query": user_query,
             "filtered_user_context": filtered_user_context,
+            "task_results_context": task_results_context,
         }
     )
 
@@ -145,93 +154,145 @@ async def main():
         query_id = 1
         while True:
             user_input = input("\nQuery: ")
+
             if user_input.strip().lower() in {"exit", "quit"}:
                 break
 
-            tool_result = tool_collection.query(
-                query_texts=[user_input],
-                n_results=5,
+            env = Environment(loader=FileSystemLoader(""))
+            template = env.get_template("resources/prompts/planning_assistant.txt")
+            prompt = template.render()
+            print("planning prompt:", prompt)
+
+            response = ollama_client.chat(
+                model="gpt-oss:20b",
+                # model="llama3",
+                messages=[
+                    {"role": "system", "content": prompt},
+                    {"role": "user", "content": user_input},
+                ],
             )
 
-            ids = tool_result["ids"][0]
-            possible_tools = []
-            for id_ in ids:
-                server_name, tool_name = id_.split(":")
-                tool_info = server_name_tool_info_dict[server_name][tool_name]
-                tool_description = tool_info["description"]
-                tool_input_schema = tool_info["input_schema"]
+            # planning content
+            # {
+            #     "answer": "I will compile a list of recommended boxing movies..",
+            #     "tasks": [
+            #         {
+            #             "id": 1,
+            #             "action": "Search web for boxing movies list",
+            #             "inputs_from_task": [],
+            #         },
+            #         {
+            #             "id": 1,
+            #             "action": "Search web for boxing movies list",
+            #             "inputs_from_task": [],
+            #         }
+            #     ]
+            # }
+            planning_contents_str = response["message"]["content"]
+            print(planning_contents_str)
+            planning_contents = json.loads(planning_contents_str)
+            answer = planning_contents["answer"]
+            print(answer)
 
-                possible_tools.append(
-                    {
-                        "server_name": server_name,
-                        "tool_name": tool_name,
-                        "tool_description": tool_description,
-                        "tool_input_schema": tool_input_schema,
-                    }
+            task_result_memory = {}
+
+            for task in planning_contents["tasks"]:
+                inputs_from_task = task["inputs_from_task"]
+                task_id = task["id"]
+                task_results = []
+                for pre_task_id in inputs_from_task:
+                    task_result = task_result_memory[pre_task_id]
+                    task_results.append(task_result)
+
+                tool_query = task["action"]
+
+                tool_result = tool_collection.query(
+                    query_texts=[tool_query],
+                    n_results=5,
                 )
 
-            user_context_result = user_context_collection.query(
-                query_texts=[user_input],
-                n_results=10,
-            )
+                ids = tool_result["ids"][0]
+                possible_tools = []
+                for id_ in ids:
+                    server_name, tool_name = id_.split(":")
+                    tool_info = server_name_tool_info_dict[server_name][tool_name]
+                    tool_description = tool_info["description"]
+                    tool_input_schema = tool_info["input_schema"]
 
-            threshold = 1.5  # cosign distance [0, 2] for [same, opposite]
-            filtered_results = []
-            for i, distance in enumerate(user_context_result["distances"][0]):
-                if distance < threshold:
-                    filtered_results.append(
+                    possible_tools.append(
                         {
-                            "id": user_context_result["ids"][0][i],
-                            "document": user_context_result["documents"][0][i],
+                            "server_name": server_name,
+                            "tool_name": tool_name,
+                            "tool_description": tool_description,
+                            "tool_input_schema": tool_input_schema,
                         }
                     )
 
-            filtered_results.sort(key=lambda x: int(x["id"]))
+                user_context_result = user_context_collection.query(
+                    query_texts=[tool_query],
+                    n_results=10,
+                )
 
-            tool_call = choose_mcp_tool(
-                ollama_client,
-                user_input,
-                filtered_results,
-                possible_tools,
-            )
+                threshold = 1.5  # cosign distance [0, 2] for [same, opposite]
+                filtered_results = []
+                for i, distance in enumerate(user_context_result["distances"][0]):
+                    if distance < threshold:
+                        filtered_results.append(
+                            {
+                                "id": user_context_result["ids"][0][i],
+                                "document": user_context_result["documents"][0][i],
+                            }
+                        )
 
-            if tool_call is None:
-                print("invalid tool call. please try again")
-                continue
+                filtered_results.sort(key=lambda x: int(x["id"]))
 
-            if not tool_call["use_tool"]:
-                print("No possible tools. please try again")
-                continue
+                tool_call = choose_mcp_tool(
+                    ollama_client,
+                    tool_query,
+                    filtered_results,
+                    possible_tools,
+                    task_results,
+                )
 
-            chosen_server_name = tool_call["server_name"]
+                if tool_call is None:
+                    print("invalid tool call. please try again")
+                    continue
 
-            if chosen_server_name not in list(server_name_tool_info_dict.keys()):
-                print(f"Invalid server call: {tool_call}")
-                continue
+                if not tool_call["use_tool"]:
+                    print("No possible tools. please try again")
+                    continue
 
-            chosen_tool_name = tool_call["tool_name"]
+                chosen_server_name = tool_call["server_name"]
 
-            if (
-                chosen_tool_name
-                not in server_name_tool_info_dict[chosen_server_name].keys()
-            ):
-                print(f"Invalid tool call: {tool_call}")
+                if chosen_server_name not in list(server_name_tool_info_dict.keys()):
+                    print(f"Invalid server call: {tool_call}")
+                    continue
 
-            print(f"Calling tool call: {tool_call}")
+                chosen_tool_name = tool_call["tool_name"]
 
-            result = await session_dict[chosen_server_name].call_tool(
-                chosen_tool_name, tool_call.get("tool_args")
-            )
-            print(result.content[0].text)
+                if (
+                    chosen_tool_name
+                    not in server_name_tool_info_dict[chosen_server_name].keys()
+                ):
+                    print(f"Invalid tool call: {tool_call}")
 
-            user_context_document = (
-                f"- Question: {user_input}\n- Answer: {result.content[0].text}"
-            )
-            user_context_collection.add(
-                documents=[user_context_document],
-                ids=[str(query_id)],
-            )
-            query_id += 1
+                print(f"Calling tool call: {tool_call}")
+
+                result = await session_dict[chosen_server_name].call_tool(
+                    chosen_tool_name, tool_call.get("tool_args")
+                )
+                tool_result = result.content[0].text
+                print("tool result:\n", tool_result)
+                task_result_memory[task_id] = tool_result
+
+                user_context_document = (
+                    f"- Question: {tool_query}\n- Answer: {tool_result}"
+                )
+                user_context_collection.add(
+                    documents=[user_context_document],
+                    ids=[str(query_id)],
+                )
+                query_id += 1
 
 
 if __name__ == "__main__":
