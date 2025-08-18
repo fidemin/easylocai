@@ -9,7 +9,11 @@ from jinja2 import FileSystemLoader, Environment
 from mcp import StdioServerParameters, stdio_client, ClientSession
 from ollama import Client
 
+from src.utlis.prompt import print_prompt
+
 logger = logging.getLogger(__name__)
+
+AI_MODEL = "gpt-oss:20b"
 
 
 def convert_to_tool_txt_data(server_name, tool_info_dict):
@@ -67,16 +71,16 @@ def choose_mcp_tool(
         }
     )
 
-    print(prompt)
+    print_prompt("Tool Prompt", prompt)
 
     response = client.chat(
-        model="mistral",
+        model=AI_MODEL,
         messages=[{"role": "user", "content": prompt}],
     )
 
     content = response["message"]["content"]
 
-    print(f"content: {content}")
+    print(f"Tool Assistant: {content}")
 
     # Extract JSON from response
     try:
@@ -98,7 +102,6 @@ async def main():
 
         server_params_dict = {}
         for server_name, config in servers.items():
-            env = None
             if "env" in config:
                 env = {}
                 for k, v in config["env"].items():
@@ -158,13 +161,35 @@ async def main():
             if user_input.strip().lower() in {"exit", "quit"}:
                 break
 
+            tool_result = tool_collection.query(
+                query_texts=[user_input],
+                n_results=10,
+            )
+
+            ids = tool_result["ids"][0]
+            possible_tools = []
+            for id_ in ids:
+                server_name, tool_name = id_.split(":")
+                tool_info = server_name_tool_info_dict[server_name][tool_name]
+                tool_description = tool_info["description"]
+                tool_input_schema = tool_info["input_schema"]
+
+                possible_tools.append(
+                    {
+                        "tool_description": tool_description,
+                        "tool_input_schema": tool_input_schema,
+                    }
+                )
+
             env = Environment(loader=FileSystemLoader(""))
             template = env.get_template("resources/prompts/planning_assistant.txt")
-            prompt = template.render()
-            print("planning prompt:", prompt)
+            prompt = template.render(
+                possible_tools=possible_tools,
+            )
+            print_prompt("Planning Prompt", prompt)
 
             response = ollama_client.chat(
-                model="gpt-oss:20b",
+                model=AI_MODEL,
                 # model="llama3",
                 messages=[
                     {"role": "system", "content": prompt},
