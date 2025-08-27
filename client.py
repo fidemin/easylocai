@@ -9,6 +9,7 @@ from jinja2 import FileSystemLoader, Environment
 from mcp import StdioServerParameters, stdio_client, ClientSession
 from ollama import Client
 
+from src.planning.agent import PlanningAgent
 from src.utlis.prompt import print_prompt
 
 logger = logging.getLogger(__name__)
@@ -154,12 +155,24 @@ async def main():
 
         ollama_client = Client(host="http://localhost:11434")
 
+        planning_agent = PlanningAgent(
+            client=ollama_client,
+            model="gpt-oss:20b",
+        )
+
         query_id = 1
         while True:
             user_input = input("\nQuery: ")
 
             if user_input.strip().lower() in {"exit", "quit"}:
                 break
+
+            json_text = planning_agent.chat(user_input)
+            print(json_text)
+            data = json.loads(json_text)
+            if not data.get("planned"):
+                print(data["answer"])
+                continue
 
             tool_result = tool_collection.query(
                 query_texts=[user_input],
