@@ -87,6 +87,7 @@ class DetailPlanningAgent(Agent):
         system_prompt = self._prompt_template.render(possible_tools=possible_tools)
         user_inputs = [
             f"user goal: {user_goal}",
+            "plans:\n",
             *[plan for plan in plans_with_id],
         ]
 

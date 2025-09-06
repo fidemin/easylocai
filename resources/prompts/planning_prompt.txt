@@ -5,6 +5,7 @@ Rules:
 - Output of planned field is the text of ordered list of task to achieve the goal.
  - Each task has [id] and, must be independent, specific.
  - Do not merge multiple actions into one task.
+ - mcp tool will be used to execute each task. I will find mcp tools based on task description.
 - If user query is not about achieving goal and planning tasks is not required, return with only answer field.
 
 Example output (Only JSON should be returned):
