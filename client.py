@@ -9,7 +9,7 @@ from jinja2 import FileSystemLoader, Environment
 from mcp import StdioServerParameters, stdio_client, ClientSession
 from ollama import Client
 
-from src.planning.agent import PlanningAgent
+from src.planning.agent import PlanningAgent, DetailPlanningAgent
 from src.utlis.prompt import print_prompt
 
 logger = logging.getLogger(__name__)
@@ -157,7 +157,14 @@ async def main():
 
         planning_agent = PlanningAgent(
             client=ollama_client,
-            model="gpt-oss:20b",
+            model=AI_MODEL,
+        )
+
+        detail_planning_agent = DetailPlanningAgent(
+            client=ollama_client,
+            collection=tool_collection,
+            model=AI_MODEL,
+            server_name_tool_info_dict=server_name_tool_info_dict,
         )
 
         query_id = 1
@@ -174,58 +181,11 @@ async def main():
                 print(data["answer"])
                 continue
 
-            tool_result = tool_collection.query(
-                query_texts=[user_input],
-                n_results=10,
-            )
+            planned = data.get("planned")
+            detail_plan_query = user_input + "\n" + planned
 
-            ids = tool_result["ids"][0]
-            possible_tools = []
-            for id_ in ids:
-                server_name, tool_name = id_.split(":")
-                tool_info = server_name_tool_info_dict[server_name][tool_name]
-                tool_description = tool_info["description"]
-                tool_input_schema = tool_info["input_schema"]
+            response = detail_planning_agent.chat(detail_plan_query)
 
-                possible_tools.append(
-                    {
-                        "tool_description": tool_description,
-                        "tool_input_schema": tool_input_schema,
-                    }
-                )
-
-            env = Environment(loader=FileSystemLoader(""))
-            template = env.get_template("resources/prompts/planning_assistant.txt")
-            prompt = template.render(
-                possible_tools=possible_tools,
-            )
-            print_prompt("Planning Prompt", prompt)
-
-            response = ollama_client.chat(
-                model=AI_MODEL,
-                # model="llama3",
-                messages=[
-                    {"role": "system", "content": prompt},
-                    {"role": "user", "content": user_input},
-                ],
-            )
-
-            # planning content
-            # {
-            #     "answer": "I will compile a list of recommended boxing movies..",
-            #     "tasks": [
-            #         {
-            #             "id": 1,
-            #             "action": "Search web for boxing movies list",
-            #             "inputs_from_task": [],
-            #         },
-            #         {
-            #             "id": 1,
-            #             "action": "Search web for boxing movies list",
-            #             "inputs_from_task": [],
-            #         }
-            #     ]
-            # }
             planning_contents_str = response["message"]["content"]
             print(planning_contents_str)
             planning_contents = json.loads(planning_contents_str)
