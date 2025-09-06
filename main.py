@@ -9,7 +9,7 @@ from jinja2 import FileSystemLoader, Environment
 from mcp import StdioServerParameters, stdio_client, ClientSession
 from ollama import Client
 
-from src.planning.agent import PlanningAgent, DetailPlanningAgent
+from src.plannings.agent import PlanningAgent, DetailPlanningAgent
 from src.utlis.prompt import print_prompt
 
 logger = logging.getLogger(__name__)
@@ -34,12 +34,8 @@ def convert_to_tool_txt_data(server_name, tool_info_dict):
 
 def convert_to_tool_data(server_name, tool_name, tool_info):
     tool_description_lines = []
-    # tool_name_text = f"- name: {tool_name}"
-    # tool_description_lines.append(tool_name_text)
     tool_desc_text = f"- description: {tool_info["description"]}"
     tool_description_lines.append(tool_desc_text)
-    # tool_input_schema_text = f"- input schema: {tool_info["input_schema"]}"
-    # tool_description_lines.append(tool_input_schema_text)
 
     tool_description = "\n".join(tool_description_lines)
     return tool_description
