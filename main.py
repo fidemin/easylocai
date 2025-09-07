@@ -9,7 +9,7 @@ from jinja2 import FileSystemLoader, Environment
 from mcp import StdioServerParameters, stdio_client, ClientSession
 from ollama import Client
 
-from src.plannings.agent import PlanningAgent, DetailPlanningAgent
+from src.plannings.agent import PlanningAgent, DetailPlanningAgent, AnswerAgent
 from src.utlis.prompt import print_prompt
 
 logger = logging.getLogger(__name__)
@@ -163,6 +163,11 @@ async def main():
             server_name_tool_info_dict=server_name_tool_info_dict,
         )
 
+        answer_agent = AnswerAgent(
+            client=ollama_client,
+            model=AI_MODEL,
+        )
+
         query_id = 1
         while True:
             user_input = input("\nQuery: ")
@@ -283,6 +288,12 @@ async def main():
                 )
                 query_id += 1
 
+            chat_input = {
+                "user_query": user_input,
+                "tool_results": task_results,
+            }
+            response = answer_agent.chat(chat_input)
+            print(response["message"]["content"])
 
 if __name__ == "__main__":
     asyncio.run(main())

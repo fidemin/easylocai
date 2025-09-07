@@ -91,3 +91,32 @@ class DetailPlanningAgent(Agent):
             ],
         )
         return response
+
+
+class AnswerAgent(Agent):
+    _system_prompt_path = "resources/prompts/answer_system_prompt.txt"
+
+    def __init__(
+        self,
+        *,
+        client: Client,
+        model: str,
+    ):
+        self._ollama_client = client
+        env = Environment(loader=FileSystemLoader(""))
+        prompt_template = env.get_template(self._system_prompt_path)
+        self._prompt_template = prompt_template
+        self._model = model
+
+    def _chat(self, query: str | dict):
+        user_query = query["user_query"]
+        tool_results = query["tool_results"]
+        system_prompt = self._prompt_template.render(user_query=user_query, tool_results=tool_results,)
+        print_prompt("answer prompt", system_prompt)
+        response = self._ollama_client.chat(
+            model=self._model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+            ],
+        )
+        return response
