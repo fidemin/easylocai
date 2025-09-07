@@ -20,14 +20,14 @@ class PlanningAgent(Agent):
         self._prompt_template = prompt_template
         self._model = model
 
-    def _chat(self, text: str):
+    def _chat(self, query: str):
         prompt = self._prompt_template.render()
         print_prompt("Planning prompt", prompt)
         response = self._ollama_client.chat(
             model=self._model,
             messages=[
                 {"role": "system", "content": prompt},
-                {"role": "user", "content": text},
+                {"role": "user", "content": query},
             ],
         )
         return response["message"]["content"]
@@ -53,20 +53,9 @@ class DetailPlanningAgent(Agent):
         self._prompt_template = prompt_template
         self._model = model
 
-    def _chat(self, text: str):
-        lines = text.split("\n")
-
-        user_goal = lines[0]
-        plans_with_id = []
-        plans = []
-
-        for i in range(1, len(lines)):
-            # plan_line = "[3]:Save file as framework_summary.txt from contents of [2]"
-            plan_line = lines[i]
-            plans_with_id.append(plan_line)
-
-            plan_text = plan_line.split(":", maxsplit=1)[1]
-            plans.append(plan_text)
+    def _chat(self, query: str | dict):
+        user_goal = query["user_goal"]
+        plans = query["plans"]
 
         possible_tools = []
         tool_results = self._collection.query(query_texts=plans, n_results=2)
@@ -86,9 +75,10 @@ class DetailPlanningAgent(Agent):
 
         system_prompt = self._prompt_template.render(possible_tools=possible_tools)
         user_inputs = [
-            f"user goal: {user_goal}",
-            "plans:\n",
-            *[plan for plan in plans_with_id],
+            f"<goal>{user_goal}</goal>",
+            "<plans>",
+            *[plan for plan in plans],
+            "</plans>",
         ]
 
         user_query = "\n".join(user_inputs)

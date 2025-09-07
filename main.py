@@ -173,12 +173,14 @@ async def main():
             json_text = planning_agent.chat(user_input)
             print(json_text)
             data = json.loads(json_text)
-            if not data.get("planned"):
+            if not data.get("plans"):
                 print(data["answer"])
                 continue
 
-            planned = data.get("planned")
-            detail_plan_query = user_input + "\n" + planned
+            detail_plan_query = {
+                "user_goal": user_input,
+                "plans": data.get("plans"),
+            }
 
             response = detail_planning_agent.chat(detail_plan_query)
 
@@ -188,24 +190,17 @@ async def main():
             answer = planning_contents["answer"]
             print(answer)
 
-            task_result_memory = {}
+            task_results = []
 
             for task in planning_contents["tasks"]:
-                inputs_from_task = task["inputs_from_task"]
-                task_id = task["id"]
-                task_results = []
-                for pre_task_id in inputs_from_task:
-                    task_result = task_result_memory[pre_task_id]
-                    task_results.append(task_result)
-
                 tool_query = task["action"]
 
-                tool_result = tool_collection.query(
+                task_result = tool_collection.query(
                     query_texts=[tool_query],
                     n_results=5,
                 )
 
-                ids = tool_result["ids"][0]
+                ids = task_result["ids"][0]
                 possible_tools = []
                 for id_ in ids:
                     server_name, tool_name = id_.split(":")
@@ -275,12 +270,12 @@ async def main():
                 result = await session_dict[chosen_server_name].call_tool(
                     chosen_tool_name, tool_call.get("tool_args")
                 )
-                tool_result = result.content[0].text
-                print("tool result:\n", tool_result)
-                task_result_memory[task_id] = tool_result
+                task_result = result.content[0].text
+                print("tool result:\n", task_result)
+                task_results.append(task_result)
 
                 user_context_document = (
-                    f"- Question: {tool_query}\n- Answer: {tool_result}"
+                    f"- Question: {tool_query}\n- Answer: {task_result}"
                 )
                 user_context_collection.add(
                     documents=[user_context_document],
