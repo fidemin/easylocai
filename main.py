@@ -41,7 +41,7 @@ def convert_to_tool_data(server_name, tool_name, tool_info):
     return tool_description
 
 
-def choose_mcp_tool(
+def create_mcp_tool_request_body(
     client,
     user_query,
     filtered_user_context_list,
@@ -87,6 +87,39 @@ def choose_mcp_tool(
         logger.error(f"LLM did not return valid JSON: {content} with error: {str(e)}")
         print("❌ LLM did not return valid JSON:", content)
         return None
+
+
+def filter_tool_result(
+    ollama_client,
+    user_query: str,
+    task: str,
+    tooL_result: str,
+):
+    env = Environment(loader=FileSystemLoader(""))
+    template = env.get_template("resources/prompts/tool_result_prompt.txt")
+    prompt = template.render(
+        {"user_query": user_query, "task": task, "tooL_result": tooL_result}
+    )
+
+    print_prompt("Tool Filter Prompt", prompt)
+
+    tooL_result_str = (
+        "TOOL RESULT:\n" + tooL_result
+        if isinstance(tooL_result, str)
+        else str(tooL_result)
+    )
+
+    response = ollama_client.chat(
+        model=AI_MODEL,
+        messages=[
+            {"role": "system", "content": prompt},
+            {
+                "role": "user",
+                "content": tooL_result_str,
+            },
+        ],
+    )
+    return response["message"]["content"]
 
 
 async def main():
@@ -240,7 +273,7 @@ async def main():
 
                 filtered_results.sort(key=lambda x: int(x["id"]))
 
-                tool_call = choose_mcp_tool(
+                tool_call = create_mcp_tool_request_body(
                     ollama_client,
                     tool_query,
                     filtered_results,
@@ -276,11 +309,15 @@ async def main():
                     chosen_tool_name, tool_call.get("tool_args")
                 )
                 task_result = result.content[0].text
-                print("tool result:\n", task_result)
-                task_results.append(task_result)
+                print("original tool result:\n", task_result)
+                filtered_tool_result = filter_tool_result(
+                    ollama_client, user_input, task["action"], task_result
+                )
+                print("filtered tool result:\n", filtered_tool_result)
+                task_results.append(filtered_tool_result)
 
                 user_context_document = (
-                    f"- Question: {tool_query}\n- Answer: {task_result}"
+                    f"- Question: {tool_query}\n- Answer: {filtered_tool_result}"
                 )
                 user_context_collection.add(
                     documents=[user_context_document],
@@ -294,6 +331,7 @@ async def main():
             }
             response = answer_agent.chat(chat_input)
             print(response["message"]["content"])
+
 
 if __name__ == "__main__":
     asyncio.run(main())
