@@ -1,14 +1,13 @@
 import asyncio
 import json
 import logging
-import os
 from contextlib import AsyncExitStack
 
 import chromadb
 from jinja2 import FileSystemLoader, Environment
-from mcp import StdioServerParameters, stdio_client, ClientSession
 from ollama import Client
 
+from src.core.server import ServerManager
 from src.plannings.agent import PlanningAgent, DetailPlanningAgent, AnswerAgent
 from src.utlis.prompt import print_prompt
 
@@ -127,34 +126,17 @@ async def main():
     tool_collection = chromadb_client.get_or_create_collection("tools")
     user_context_collection = chromadb_client.get_or_create_collection("user_context")
 
-    with open("mcp_server_config.json") as f:
-        servers = json.load(f)["mcpServers"]
-
-        server_params_dict = {}
-        for server_name, config in servers.items():
-            if "env" in config:
-                env = {}
-                for k, v in config["env"].items():
-                    env[k] = os.path.expandvars(v)
-            server_params = StdioServerParameters(
-                **config,
-            )
-
-            server_params_dict[server_name] = server_params
+    server_manager = ServerManager.from_json_config_file("mcp_server_config.json")
 
     stack = AsyncExitStack()
     async with stack:
-        session_dict = {}
         server_name_tool_info_dict = {}
-        for server_name, server_params in server_params_dict.items():
-            stdio, write = await stack.enter_async_context(stdio_client(server_params))
-            session = await stack.enter_async_context(ClientSession(stdio, write))
-            await session.initialize()
-            session_dict[server_name] = session
+        for server in server_manager.list_servers():
+            await server.initialize(stack)
 
-            tools_response = await session.list_tools()
+            tools_response = await server.list_tools()
             print(
-                f"Server Name: {server_name}, Available tools: {[tool.name for tool in tools_response.tools]}"
+                f"Server Name: {server.name}, Available tools: {[tool.name for tool in tools_response.tools]}"
             )
 
             tool_info = {
@@ -164,7 +146,7 @@ async def main():
                 }
                 for tool in tools_response.tools
             }
-            server_name_tool_info_dict[server_name] = tool_info
+            server_name_tool_info_dict[server.name] = tool_info
 
         # initialize chromadb tool
         ids = []
@@ -305,8 +287,10 @@ async def main():
 
                 print(f"Calling tool call: {tool_call}")
 
-                result = await session_dict[chosen_server_name].call_tool(
-                    chosen_tool_name, tool_call.get("tool_args")
+                result = (
+                    await server_manager.get_server(chosen_server_name)
+                    .get_session()
+                    .call_tool(chosen_tool_name, tool_call.get("tool_args"))
                 )
                 task_result = result.content[0].text
                 print("original tool result:\n", task_result)
