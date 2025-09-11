@@ -8,7 +8,7 @@ Rules:
  - mcp tool will be used to execute each task. MCP tools will be found based on task description.
 - If user query is not about achieving goal and planning tasks is not required, return with only answer field.
 
-Example output (Only JSON should be returned):
+Example output (Only JSON should be returned. No other text like json``` or ```):
 {
   "answer": "I am planning and will execute planned tasks."
   "plans": [

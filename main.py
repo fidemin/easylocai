@@ -130,38 +130,33 @@ async def main():
 
     stack = AsyncExitStack()
     async with stack:
-        server_name_tool_info_dict = {}
         for server in server_manager.list_servers():
             await server.initialize(stack)
 
-            tools_response = await server.list_tools()
+            tools = await server.list_tools()
             print(
-                f"Server Name: {server.name}, Available tools: {[tool.name for tool in tools_response.tools]}"
+                f"Server Name: {server.name}, Available tools: {[tool.name for tool in tools]}"
             )
-
-            tool_info = {
-                tool.name: {
-                    "description": tool.description,
-                    "input_schema": tool.inputSchema,
-                }
-                for tool in tools_response.tools
-            }
-            server_name_tool_info_dict[server.name] = tool_info
 
         # initialize chromadb tool
         ids = []
+        metadatas = []
         documents = []
-        for server_name, tool_info_dict in server_name_tool_info_dict.items():
-            for tool_name, tool_info in tool_info_dict.items():
-                id_ = f"{server_name}:{tool_name}"
+        for server in server_manager.list_servers():
+            for tool in await server.list_tools():
+                id_ = f"{server.name}:{tool.name}"
+                metadata = {
+                    "server_name": server.name,
+                    "tool_name": tool.name,
+                }
                 ids.append(id_)
-
-                document = convert_to_tool_data(server_name, tool_name, tool_info)
-                documents.append(document)
+                documents.append(tool.description)
+                metadatas.append(metadata)
 
         tool_collection.add(
             documents=documents,
             ids=ids,
+            metadatas=metadatas,
         )
 
         ollama_client = Client(host="http://localhost:11434")
@@ -175,7 +170,7 @@ async def main():
             client=ollama_client,
             collection=tool_collection,
             model=AI_MODEL,
-            server_name_tool_info_dict=server_name_tool_info_dict,
+            server_manager=server_manager,
         )
 
         answer_agent = AnswerAgent(
@@ -215,25 +210,23 @@ async def main():
             for task in planning_contents["tasks"]:
                 tool_query = task["action"]
 
-                task_result = tool_collection.query(
+                tool_search_result = tool_collection.query(
                     query_texts=[tool_query],
                     n_results=5,
                 )
 
-                ids = task_result["ids"][0]
+                metadatas = tool_search_result["metadatas"][0]
                 possible_tools = []
-                for id_ in ids:
-                    server_name, tool_name = id_.split(":")
-                    tool_info = server_name_tool_info_dict[server_name][tool_name]
-                    tool_description = tool_info["description"]
-                    tool_input_schema = tool_info["input_schema"]
-
+                for metadata in metadatas:
+                    server_name = metadata["server_name"]
+                    tool_name = metadata["tool_name"]
+                    tool = server_manager.get_server(server_name).get_tool(tool_name)
                     possible_tools.append(
                         {
                             "server_name": server_name,
-                            "tool_name": tool_name,
-                            "tool_description": tool_description,
-                            "tool_input_schema": tool_input_schema,
+                            "tool_name": tool.name,
+                            "tool_description": tool.description,
+                            "tool_input_schema": tool.input_schema,
                         }
                     )
 
@@ -272,30 +265,18 @@ async def main():
                     continue
 
                 chosen_server_name = tool_call["server_name"]
-
-                if chosen_server_name not in list(server_name_tool_info_dict.keys()):
-                    print(f"Invalid server call: {tool_call}")
-                    continue
-
                 chosen_tool_name = tool_call["tool_name"]
 
-                if (
-                    chosen_tool_name
-                    not in server_name_tool_info_dict[chosen_server_name].keys()
-                ):
-                    print(f"Invalid tool call: {tool_call}")
-
-                print(f"Calling tool call: {tool_call}")
-
-                result = (
-                    await server_manager.get_server(chosen_server_name)
-                    .get_session()
-                    .call_tool(chosen_tool_name, tool_call.get("tool_args"))
+                server = server_manager.get_server(chosen_server_name)
+                result = await server.call_tool(
+                    chosen_tool_name, tool_call.get("tool_args")
                 )
-                task_result = result.content[0].text
-                print("original tool result:\n", task_result)
+
+                tool_search_result = result.content[0].text
+
+                print("original tool result:\n", tool_search_result)
                 filtered_tool_result = filter_tool_result(
-                    ollama_client, user_input, task["action"], task_result
+                    ollama_client, user_input, task["action"], tool_search_result
                 )
                 print("filtered tool result:\n", filtered_tool_result)
                 task_results.append(filtered_tool_result)

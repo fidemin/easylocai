@@ -2,6 +2,7 @@ from jinja2 import Environment, FileSystemLoader
 from ollama import Client
 
 from src.core.agent import Agent
+from src.core.server import ServerManager
 from src.utlis.prompt import print_prompt
 
 
@@ -42,11 +43,11 @@ class DetailPlanningAgent(Agent):
         client: Client,
         collection,
         model: str,
-        server_name_tool_info_dict: dict,
+        server_manager: ServerManager,
     ):
         self._ollama_client = client
         self._collection = collection
-        self._server_name_tool_info_dict = server_name_tool_info_dict
+        self._server_manager = server_manager
 
         env = Environment(loader=FileSystemLoader(""))
         prompt_template = env.get_template(self._system_prompt_path)
@@ -62,18 +63,18 @@ class DetailPlanningAgent(Agent):
         for tool_ids in tool_results["ids"]:
             for id_ in tool_ids:
                 server_name, tool_name = id_.split(":")
-                tool_info = self._server_name_tool_info_dict[server_name][tool_name]
-                tool_description = tool_info["description"]
-                tool_input_schema = tool_info["input_schema"]
+                tool = self._server_manager.get_server(server_name).get_tool(tool_name)
 
                 possible_tools.append(
                     {
-                        "tool_description": tool_description,
-                        "tool_input_schema": tool_input_schema,
+                        "tool_description": tool.description,
+                        "tool_input_schema": tool.input_schema,
                     }
                 )
 
         system_prompt = self._prompt_template.render(possible_tools=possible_tools)
+        print_prompt("detail planning prompt", system_prompt)
+
         user_inputs = [
             f"<goal>{user_goal}</goal>",
             "<plans>",
@@ -111,7 +112,10 @@ class AnswerAgent(Agent):
     def _chat(self, query: str | dict):
         user_query = query["user_query"]
         tool_results = query["tool_results"]
-        system_prompt = self._prompt_template.render(user_query=user_query, tool_results=tool_results,)
+        system_prompt = self._prompt_template.render(
+            user_query=user_query,
+            tool_results=tool_results,
+        )
         print_prompt("answer prompt", system_prompt)
         response = self._ollama_client.chat(
             model=self._model,
