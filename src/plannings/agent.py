@@ -94,6 +94,45 @@ class DetailPlanningAgent(Agent):
         return response
 
 
+class NextPlanAgent(Agent):
+    _prompt_path = "resources/prompts/next_plan_prompt.txt"
+
+    def __init__(
+        self,
+        *,
+        client: Client,
+        model: str,
+    ):
+        self._ollama_client = client
+        env = Environment(loader=FileSystemLoader(""))
+        prompt_template = env.get_template(self._prompt_path)
+        self._prompt_template = prompt_template
+        self._model = model
+
+    def _chat(self, query: str | dict):
+        original_user_query = query["original_user_query"]
+        previous_task_results: list[dict] = query["previous_task_results"]
+        task_result_str_list = []
+        for previous_task_result in previous_task_results:
+            task = previous_task_result["task"]
+            result = previous_task_result["result"]
+            task_result_str = f"<task>{task}</task>\n<result>{result}</result>\n"
+            task_result_str_list.append(task_result_str)
+
+        task_results_context = "\n".join(task_result_str_list)
+
+        prompt = self._prompt_template.render(task_results_context=task_results_context)
+        print_prompt("Next Plan Prompt", prompt)
+        response = self._ollama_client.chat(
+            model=self._model,
+            messages=[
+                {"role": "system", "content": prompt},
+                {"role": "user", "content": original_user_query},
+            ],
+        )
+        return response["message"]["content"]
+
+
 class AnswerAgent(Agent):
     _system_prompt_path = "resources/prompts/answer_system_prompt.txt"
 
