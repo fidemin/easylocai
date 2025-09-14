@@ -8,6 +8,8 @@ Rules:
 - Output should be in valid JSON without any other text.
 - "next_plan" field is for next atomic plan to achieve the goal. The plan should be independent, specific.
   - Should consider Previous_Task_Results_Context to reason next_plan.
+  - If next_plan is repeated because of failure of previous task, you can stop to continue if same plan is repeated more than two times due to failure.
+  - You can assume there is available mcp tool to execute the next_plan. So, next_plan should be semantic and specific enough to find mcp tool and execute it.
 - "continue" field is boolean. If next_plan is needed to achieve the goal, set it to true. If next_plan is not needed and null, set it to false.
   - if "continue" is false, "next_plan" should be null, vice versa.
 - "answer" field is for answer to the user query.

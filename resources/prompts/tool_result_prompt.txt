@@ -24,4 +24,5 @@ Filter Guidelines:
 
 
 Return filtered results based on Filter Guideline. Make it structured plain text.
+If original tool result is about error or failure, return the failure reason.
 If no results match, return "No task results"
