@@ -12,10 +12,10 @@ You have access to the following MCP servers and tools:
 {% endfor %}
 
 Original User Goal:
-"{{ user_query }}"
+"{{ original_user_query }}"
 
 Plan without tool consideration:
-{{ original_plan }}
+{{ plan }}
 
 Previous task results context:
 {{ task_results_context }}

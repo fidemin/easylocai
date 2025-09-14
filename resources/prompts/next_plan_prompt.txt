@@ -10,8 +10,10 @@ Rules:
   - Should consider Previous_Task_Results_Context to reason next_plan.
 - "continue" field is boolean. If next_plan is needed to achieve the goal, set it to true. If next_plan is not needed and null, set it to false.
   - if "continue" is false, "next_plan" should be null, vice versa.
-- "direct_answer" field is for answer to the user query. If user query is not about achieving goal and planning tasks is not required, return with only direct_answer field.
-  - "direct_answer" field should be null if "next_plan" is not null.
+- "answer" field is for answer to the user query.
+  - If "continue" is true, "answer" should be null.
+  - If "continue" is false, "answer" should be the final answer to the user query based on previous task result.
+  - If user query is not about achieving goal and planning tasks is not required, "answer" can be used for direct answer to user query.
 
 Example output (Only JSON should be returned. No other text like json``` or ```):
 {

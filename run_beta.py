@@ -3,10 +3,15 @@ import json
 from contextlib import AsyncExitStack
 
 import chromadb
+from jinja2 import Environment, FileSystemLoader
 from ollama import Client
 
 from src.core.server import ServerManager
 from src.plannings.agent import NextPlanAgent
+from src.tools.agent import TaskToolAgent
+from src.utlis.prompt import print_prompt
+
+AI_MODEL = "gpt-oss:20b"
 
 
 async def initialize_tools(stack, server_manager, tool_collection):
@@ -37,6 +42,39 @@ async def initialize_tools(stack, server_manager, tool_collection):
         ids=ids,
         metadatas=metadatas,
     )
+
+
+def filter_tool_result(
+    ollama_client,
+    user_query: str,
+    task: str,
+    tooL_result: str,
+):
+    env = Environment(loader=FileSystemLoader(""))
+    template = env.get_template("resources/prompts/tool_result_prompt.txt")
+    prompt = template.render(
+        {"user_query": user_query, "task": task, "tooL_result": tooL_result}
+    )
+
+    print_prompt("Tool Filter Prompt", prompt)
+
+    tooL_result_str = (
+        "TOOL RESULT:\n" + tooL_result
+        if isinstance(tooL_result, str)
+        else str(tooL_result)
+    )
+
+    response = ollama_client.chat(
+        model=AI_MODEL,
+        messages=[
+            {"role": "system", "content": prompt},
+            {
+                "role": "user",
+                "content": tooL_result_str,
+            },
+        ],
+    )
+    return response["message"]["content"]
 
 
 async def main():
@@ -72,43 +110,78 @@ async def main():
                 print(response)
 
                 data = json.loads(response)
-                if data["direct_answer"]:
-                    print(data["direct_answer"])
-                    break
-
-                if data["continue"] is False:
-                    # TODO: Make answer result based on task results
+                if data["answer"]:
+                    print(data["answer"])
                     break
 
                 next_plan = data["next_plan"].strip()
-                tool_search_result = tool_collection.query(
-                    query_texts=[next_plan],
-                    n_results=5,
+
+                task_tool_agent = TaskToolAgent(
+                    client=ollama_client,
+                    model="gpt-oss:20b",
+                    tool_collection=tool_collection,
+                    server_manager=server_manager,
                 )
 
-                metadatas = tool_search_result["metadatas"][0]
-                possible_tools = []
+                task_tool_result = task_tool_agent.chat(
+                    {
+                        "original_user_query": user_input,
+                        "plan": next_plan,
+                        "previous_task_results": next_plan_query[
+                            "previous_task_results"
+                        ],
+                    }
+                )
 
-                for metadata in metadatas:
-                    server_name = metadata["server_name"]
-                    tool_name = metadata["tool_name"]
-                    tool = server_manager.get_server(server_name).get_tool(tool_name)
-                    possible_tools.append(
+                print(task_tool_result)
+                task_tool_data = json.loads(task_tool_result)
+                if task_tool_data["use_llm"] is True:
+                    task = task_tool_data["task"]
+                    response = ollama_client.chat(
+                        model="gpt-oss:20b",
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": "You are task execution AI assistant. Answer the user's query as best as you can.",
+                            },
+                            {
+                                "role": "user",
+                                "content": f"{task}",
+                            },
+                        ],
+                    )
+                    result = response["message"]["content"]
+                    print(f"LLM Result: {result}")
+                    next_plan_query["previous_task_results"].append(
                         {
-                            "server_name": server_name,
-                            "tool_name": tool.name,
-                            "tool_description": tool.description,
-                            "tool_input_schema": tool.input_schema,
+                            "task": task,
+                            "result": result,
                         }
                     )
+                    continue
 
-                temp_next_task = input("\nNext Task: ")
-                temp_next_result = input("\nNext Result: ")
+                if task_tool_data["use_tool"] is False:
+                    print("No tool to use, stop planning.")
+                    break
+
+                chosen_server_name = task_tool_data["server_name"]
+                chosen_tool_name = task_tool_data["tool_name"]
+
+                server = server_manager.get_server(chosen_server_name)
+                tool_call_result = await server.call_tool(
+                    chosen_tool_name, task_tool_data.get("tool_args")
+                )
+
+                print("original tool result:\n", tool_call_result)
+                filtered_tool_result = filter_tool_result(
+                    ollama_client, user_input, task_tool_data["task"], tool_call_result
+                )
+                print("filtered tool result:\n", filtered_tool_result)
 
                 next_plan_query["previous_task_results"].append(
                     {
-                        "task": temp_next_task,
-                        "result": temp_next_result,
+                        "task": task_tool_data["task"],
+                        "result": filtered_tool_result,
                     }
                 )
 
