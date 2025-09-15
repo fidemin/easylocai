@@ -1,9 +1,13 @@
+import logging
+
 from jinja2 import Environment, FileSystemLoader
 from ollama import Client
 
 from src.core.agent import Agent
 from src.core.server import ServerManager
-from src.utlis.prompt import print_prompt
+from src.utlis.prompt import print_prompt, pretty_prompt_text
+
+logger = logging.getLogger(__name__)
 
 
 class PlanningAgent(Agent):
@@ -73,6 +77,7 @@ class DetailPlanningAgent(Agent):
                 )
 
         system_prompt = self._prompt_template.render(possible_tools=possible_tools)
+        # logger.debug(pretty_prompt_text("detail planning prompt", system_prompt))
         print_prompt("detail planning prompt", system_prompt)
 
         user_inputs = [
@@ -122,7 +127,7 @@ class NextPlanAgent(Agent):
         task_results_context = "\n".join(task_result_str_list)
 
         prompt = self._prompt_template.render(task_results_context=task_results_context)
-        print_prompt("Next Plan Prompt", prompt)
+        logger.debug(pretty_prompt_text("Next Plan Prompt", prompt))
         response = self._ollama_client.chat(
             model=self._model,
             messages=[

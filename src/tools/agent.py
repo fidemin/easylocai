@@ -1,9 +1,14 @@
+import json
+import logging
+
 from chromadb.types import Collection
 from jinja2 import Environment, FileSystemLoader
 
 from src.core.agent import Agent
 from src.core.server import ServerManager
 from src.utlis.prompt import print_prompt
+
+logger = logging.getLogger(__name__)
 
 
 class TaskToolAgent(Agent):
@@ -76,4 +81,6 @@ class TaskToolAgent(Agent):
             ],
         )
 
-        return response["message"]["content"]
+        response_content = response["message"]["content"]
+        task_tool_data = json.loads(response_content)
+        return task_tool_data

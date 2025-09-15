@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 
 
 class Agent(ABC):
-    def chat(self, query: str | dict):
+    def chat(self, query: str | dict) -> str | dict:
         return self._chat(query)
 
     @abstractmethod
-    def _chat(self, query: str | dict):
+    def _chat(self, query: str | dict) -> str | dict:
         pass

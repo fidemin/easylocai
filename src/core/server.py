@@ -94,13 +94,21 @@ class ServerManager:
     def list_servers(self) -> list[Server]:
         return list(self._servers.values())
 
+    async def call_tool(
+        self,
+        server_name: str,
+        tool_name: str,
+        tool_args: dict,
+    ):
+        server = self.get_server(server_name)
+        return await server.call_tool(tool_name, tool_args)
+
     @staticmethod
     def from_json_config_file(config_path: str):
         server_manager = ServerManager()
         with open(config_path) as f:
             servers = json.load(f)["mcpServers"]
 
-            server_dict = {}
             for server_name, config in servers.items():
                 if "env" in config:
                     env = {}
