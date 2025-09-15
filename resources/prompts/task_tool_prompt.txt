@@ -17,8 +17,13 @@ Original User Goal:
 Plan without tool consideration:
 {{ plan }}
 
-Previous task results context:
-{{ task_results_context }}
+Previous task results context (chronological order):
+{% for task_result in previous_task_results %}
+<task_result>
+- task: {{ task_result["task"] }}
+- result: {{ task_result["result"] }}
+</task_result>
+{% endfor %}
 
 Return a JSON object with following fields:
 - task: A specific task based on original_plan, task_results_context and accessible tools.

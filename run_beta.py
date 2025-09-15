@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 from contextlib import AsyncExitStack
 
@@ -11,7 +10,7 @@ from src.core.server import ServerManager
 from src.plannings.agent import NextPlanAgent
 from src.tools.agent import TaskToolAgent
 from src.utlis.loggers.default_dict import default_logging_config
-from src.utlis.prompt import print_prompt
+from src.utlis.prompt import pretty_prompt_text
 
 logging.config.dictConfig(default_logging_config)
 
@@ -63,7 +62,7 @@ def filter_tool_result(
         {"user_query": user_query, "task": task, "tooL_result": tooL_result}
     )
 
-    print_prompt("Tool Filter Prompt", prompt)
+    logger.debug(pretty_prompt_text("Tool Filter Prompt", prompt))
 
     tooL_result_str = (
         "TOOL RESULT:\n" + tooL_result
@@ -113,15 +112,14 @@ async def main():
             }
 
             while True:
-                response = next_plan_agent.chat(next_plan_query)
-                logger.debug(f"Next Plan Response:\n{response}")
+                next_plan_data = next_plan_agent.chat(next_plan_query)
+                logger.debug(f"Next Plan Response:\n{next_plan_data}")
 
-                data = json.loads(response)
-                if data["answer"]:
-                    print("Assistant >> " + data["answer"])
+                if next_plan_data["answer"]:
+                    print("Assistant >> " + next_plan_data["answer"])
                     break
 
-                next_plan = data["next_plan"].strip()
+                next_plan = next_plan_data["next_plan"].strip()
 
                 task_tool_agent = TaskToolAgent(
                     client=ollama_client,
@@ -139,11 +137,12 @@ async def main():
                         ],
                     }
                 )
+                logger.debug(f"Task Tool Response:\n{task_tool_data}")
 
                 if task_tool_data["use_llm"] is True:
                     task = task_tool_data["task"]
                     response = ollama_client.chat(
-                        model="gpt-oss:20b",
+                        model=AI_MODEL,
                         messages=[
                             {
                                 "role": "system",

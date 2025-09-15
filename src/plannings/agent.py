@@ -1,3 +1,4 @@
+import json
 import logging
 
 from jinja2 import Environment, FileSystemLoader
@@ -117,16 +118,10 @@ class NextPlanAgent(Agent):
     def _chat(self, query: str | dict):
         original_user_query = query["original_user_query"]
         previous_task_results: list[dict] = query["previous_task_results"]
-        task_result_str_list = []
-        for previous_task_result in previous_task_results:
-            task = previous_task_result["task"]
-            result = previous_task_result["result"]
-            task_result_str = f"<task>{task}</task>\n<result>{result}</result>\n"
-            task_result_str_list.append(task_result_str)
 
-        task_results_context = "\n".join(task_result_str_list)
-
-        prompt = self._prompt_template.render(task_results_context=task_results_context)
+        prompt = self._prompt_template.render(
+            previous_task_results=previous_task_results
+        )
         logger.debug(pretty_prompt_text("Next Plan Prompt", prompt))
         response = self._ollama_client.chat(
             model=self._model,
@@ -135,7 +130,7 @@ class NextPlanAgent(Agent):
                 {"role": "user", "content": original_user_query},
             ],
         )
-        return response["message"]["content"]
+        return json.loads(response["message"]["content"])
 
 
 class AnswerAgent(Agent):
