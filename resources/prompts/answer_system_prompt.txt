@@ -4,11 +4,12 @@ You are an AI assistant. Your task is to generate a clear, structured, and helpf
 - Original User Query:
 {{ user_query }}
 
-- Tool Call Results (all sources of retrieved information):
-{% for tool_result in tool_results %}
-<tool_result>
-{{ tool_result }}
-</tool_result>
+Previous task results context (chronological order):
+{% for task_result in task_results %}
+<task_result>
+- task: {{ task_result["task"] }}
+- result: {{ task_result["result"] }}
+</task_result>
 {% endfor %}
 
 Instructions:

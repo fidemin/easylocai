@@ -7,7 +7,7 @@ from jinja2 import Environment, FileSystemLoader
 from ollama import AsyncClient
 
 from src.core.server import ServerManager
-from src.plannings.agent import NextPlanAgent
+from src.plannings.agent import NextPlanAgent, AnswerAgent
 from src.tools.agent import TaskToolAgent
 from src.utlis.loggers.default_dict import default_logging_config
 from src.utlis.prompt import pretty_prompt_text
@@ -89,12 +89,24 @@ async def main():
     chromadb_client = chromadb.Client()
     tool_collection = chromadb_client.get_or_create_collection("tools")
 
+    server_manager = ServerManager.from_json_config_file("mcp_server_config.json")
+
     next_plan_agent = NextPlanAgent(
         client=ollama_client,
         model=AI_MODEL,
     )
 
-    server_manager = ServerManager.from_json_config_file("mcp_server_config.json")
+    task_tool_agent = TaskToolAgent(
+        client=ollama_client,
+        model=AI_MODEL,
+        tool_collection=tool_collection,
+        server_manager=server_manager,
+    )
+
+    answer_agent = AnswerAgent(
+        client=ollama_client,
+        model=AI_MODEL,
+    )
 
     stack = AsyncExitStack()
     async with stack:
@@ -115,18 +127,20 @@ async def main():
                 next_plan_data = await next_plan_agent.run(next_plan_query)
                 logger.debug(f"Next Plan Response:\n{next_plan_data}")
 
-                if next_plan_data["answer"]:
-                    print("Assistant >> " + next_plan_data["answer"])
+                if not next_plan_data["continue"]:
+                    answer_agent_input = {
+                        "user_query": user_input,
+                        "task_results": next_plan_query["previous_task_results"],
+                    }
+                    response = await answer_agent.run(answer_agent_input)
+                    print("Assistant >>\n" + response)
                     break
 
-                next_plan = next_plan_data["next_plan"].strip()
+                # if next_plan_data["answer"]:
+                #     print("Assistant >> " + next_plan_data["answer"])
+                #     break
 
-                task_tool_agent = TaskToolAgent(
-                    client=ollama_client,
-                    model=AI_MODEL,
-                    tool_collection=tool_collection,
-                    server_manager=server_manager,
-                )
+                next_plan = next_plan_data["next_plan"].strip()
 
                 task_tool_data = await task_tool_agent.run(
                     {

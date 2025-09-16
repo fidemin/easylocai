@@ -150,16 +150,16 @@ class AnswerAgent(Agent):
 
     async def run(self, query: str | dict) -> str | dict:
         user_query = query["user_query"]
-        tool_results = query["tool_results"]
-        system_prompt = self._prompt_template.render(
+        task_results = query["task_results"]
+        prompt = self._prompt_template.render(
             user_query=user_query,
-            tool_results=tool_results,
+            task_results=task_results,
         )
-        print_prompt("answer prompt", system_prompt)
+        logger.debug(pretty_prompt_text("answer prompt", prompt))
         response = await self._ollama_client.chat(
             model=self._model,
             messages=[
-                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
             ],
         )
         return response["message"]["content"]
