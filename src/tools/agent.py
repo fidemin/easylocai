@@ -30,7 +30,7 @@ class TaskToolAgent(Agent):
         self._tool_collection = tool_collection
         self._server_manager = server_manager
 
-    def _chat(self, query: str | dict):
+    async def run(self, query: str | dict) -> str | dict:
         original_user_query = query["original_user_query"]
         plan = query["plan"]
 
@@ -65,7 +65,7 @@ class TaskToolAgent(Agent):
 
         logger.debug(pretty_prompt_text("Task Tool Prompt", prompt))
 
-        response = self._client.chat(
+        response = await self._client.chat(
             model=self._model,
             messages=[
                 {"role": "user", "content": prompt},

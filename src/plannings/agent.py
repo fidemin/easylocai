@@ -2,7 +2,7 @@ import json
 import logging
 
 from jinja2 import Environment, FileSystemLoader
-from ollama import Client
+from ollama import AsyncClient
 
 from src.core.agent import Agent
 from src.core.server import ServerManager
@@ -17,7 +17,7 @@ class PlanningAgent(Agent):
     def __init__(
         self,
         *,
-        client: Client,
+        client: AsyncClient,
         model: str,
     ):
         self._ollama_client = client
@@ -26,10 +26,10 @@ class PlanningAgent(Agent):
         self._prompt_template = prompt_template
         self._model = model
 
-    def _chat(self, query: str):
+    async def run(self, query: str) -> str | dict:
         prompt = self._prompt_template.render()
         print_prompt("Planning prompt", prompt)
-        response = self._ollama_client.chat(
+        response = await self._ollama_client.chat(
             model=self._model,
             messages=[
                 {"role": "system", "content": prompt},
@@ -45,7 +45,7 @@ class DetailPlanningAgent(Agent):
     def __init__(
         self,
         *,
-        client: Client,
+        client: AsyncClient,
         collection,
         model: str,
         server_manager: ServerManager,
@@ -59,7 +59,7 @@ class DetailPlanningAgent(Agent):
         self._prompt_template = prompt_template
         self._model = model
 
-    def _chat(self, query: str | dict):
+    async def run(self, query: str | dict) -> str | dict:
         user_goal = query["user_goal"]
         plans = query["plans"]
 
@@ -90,14 +90,14 @@ class DetailPlanningAgent(Agent):
 
         user_query = "\n".join(user_inputs)
 
-        response = self._ollama_client.chat(
+        response = await self._ollama_client.chat(
             model=self._model,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_query},
             ],
         )
-        return response
+        return response["message"]["content"]
 
 
 class NextPlanAgent(Agent):
@@ -106,7 +106,7 @@ class NextPlanAgent(Agent):
     def __init__(
         self,
         *,
-        client: Client,
+        client: AsyncClient,
         model: str,
     ):
         self._ollama_client = client
@@ -115,7 +115,7 @@ class NextPlanAgent(Agent):
         self._prompt_template = prompt_template
         self._model = model
 
-    def _chat(self, query: str | dict):
+    async def run(self, query: str | dict) -> str | dict:
         original_user_query = query["original_user_query"]
         previous_task_results: list[dict] = query["previous_task_results"]
 
@@ -123,7 +123,7 @@ class NextPlanAgent(Agent):
             previous_task_results=previous_task_results
         )
         logger.debug(pretty_prompt_text("Next Plan Prompt", prompt))
-        response = self._ollama_client.chat(
+        response = await self._ollama_client.chat(
             model=self._model,
             messages=[
                 {"role": "system", "content": prompt},
@@ -139,7 +139,7 @@ class AnswerAgent(Agent):
     def __init__(
         self,
         *,
-        client: Client,
+        client: AsyncClient,
         model: str,
     ):
         self._ollama_client = client
@@ -148,7 +148,7 @@ class AnswerAgent(Agent):
         self._prompt_template = prompt_template
         self._model = model
 
-    def _chat(self, query: str | dict):
+    async def run(self, query: str | dict) -> str | dict:
         user_query = query["user_query"]
         tool_results = query["tool_results"]
         system_prompt = self._prompt_template.render(
@@ -156,10 +156,10 @@ class AnswerAgent(Agent):
             tool_results=tool_results,
         )
         print_prompt("answer prompt", system_prompt)
-        response = self._ollama_client.chat(
+        response = await self._ollama_client.chat(
             model=self._model,
             messages=[
                 {"role": "system", "content": system_prompt},
             ],
         )
-        return response
+        return response["message"]["content"]

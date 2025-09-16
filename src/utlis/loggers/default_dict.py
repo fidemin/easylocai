@@ -32,7 +32,7 @@ default_logging_config = {
         "src": {
             "handlers": ["file"],
             "level": "DEBUG",
-            "propagate": True,
+            "propagate": False,
         },
         "__main__": {
             "handlers": ["file"],
