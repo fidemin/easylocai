@@ -136,13 +136,9 @@ async def main():
                     print("Assistant >>\n" + response)
                     break
 
-                # if next_plan_data["answer"]:
-                #     print("Assistant >> " + next_plan_data["answer"])
-                #     break
-
                 next_plan = next_plan_data["next_plan"].strip()
 
-                task_tool_data = await task_tool_agent.run(
+                task_result = await task_tool_agent.run(
                     {
                         "original_user_query": user_input,
                         "plan": next_plan,
@@ -151,58 +147,8 @@ async def main():
                         ],
                     }
                 )
-                logger.debug(f"Task Tool Response:\n{task_tool_data}")
 
-                if task_tool_data["use_llm"] is True:
-                    task = task_tool_data["task"]
-                    response = await ollama_client.chat(
-                        model=AI_MODEL,
-                        messages=[
-                            {
-                                "role": "system",
-                                "content": "You are task execution AI assistant. Answer the user's query as best as you can.",
-                            },
-                            {
-                                "role": "user",
-                                "content": f"{task}",
-                            },
-                        ],
-                    )
-                    result = response["message"]["content"]
-                    logger.debug(f"LLM Result: {result}")
-                    next_plan_query["previous_task_results"].append(
-                        {
-                            "task": task,
-                            "result": result,
-                        }
-                    )
-                    continue
-
-                if task_tool_data["use_tool"] is False:
-                    print("Assistant >> No tool to use, stop executing.")
-                    break
-
-                tool_result = await server_manager.call_tool(
-                    task_tool_data["server_name"],
-                    task_tool_data["tool_name"],
-                    task_tool_data.get("tool_args"),
-                )
-
-                logger.debug(f"original tool result:\n{tool_result}")
-                filtered_tool_result = await filter_tool_result(
-                    ollama_client,
-                    user_input,
-                    task_tool_data["task"],
-                    tool_result,
-                )
-                logger.debug(f"filtered tool result:\n{filtered_tool_result}")
-
-                next_plan_query["previous_task_results"].append(
-                    {
-                        "task": task_tool_data["task"],
-                        "result": filtered_tool_result,
-                    }
-                )
+                next_plan_query["previous_task_results"].append(task_result)
 
 
 if __name__ == "__main__":

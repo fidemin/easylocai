@@ -74,4 +74,84 @@ class TaskToolAgent(Agent):
 
         response_content = response["message"]["content"]
         task_tool_data = json.loads(response_content)
-        return task_tool_data
+
+        logger.debug(f"Task Tool Response:\n{task_tool_data}")
+
+        if task_tool_data["use_llm"] is True:
+            task = task_tool_data["task"]
+            response = await self._client.chat(
+                model=self._model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are task execution AI assistant. Answer the user's query as best as you can.",
+                    },
+                    {
+                        "role": "user",
+                        "content": f"{task}",
+                    },
+                ],
+            )
+            result = response["message"]["content"]
+            logger.debug(f"LLM Result: {result}")
+            return {
+                "task": task,
+                "result": result,
+            }
+
+        if task_tool_data["use_tool"] is False:
+            return {
+                "task": task_tool_data["task"],
+                "result": "No tool to use.",
+            }
+
+        tool_result = await self._server_manager.call_tool(
+            task_tool_data["server_name"],
+            task_tool_data["tool_name"],
+            task_tool_data.get("tool_args"),
+        )
+
+        logger.debug(f"original tool result:\n{tool_result}")
+        filtered_tool_result = await self._filter_tool_result(
+            original_user_query,
+            task_tool_data["task"],
+            tool_result,
+        )
+        logger.debug(f"filtered tool result:\n{filtered_tool_result}")
+
+        return {
+            "task": task_tool_data["task"],
+            "result": filtered_tool_result,
+        }
+
+    async def _filter_tool_result(
+        self,
+        user_query: str,
+        task: str,
+        tooL_result: str,
+    ):
+        env = Environment(loader=FileSystemLoader(""))
+        template = env.get_template("resources/prompts/tool_result_prompt.txt")
+        prompt = template.render(
+            {"user_query": user_query, "task": task, "tooL_result": tooL_result}
+        )
+
+        logger.debug(pretty_prompt_text("Tool Filter Prompt", prompt))
+
+        tooL_result_str = (
+            "TOOL RESULT:\n" + tooL_result
+            if isinstance(tooL_result, str)
+            else str(tooL_result)
+        )
+
+        response = await self._client.chat(
+            model=self._model,
+            messages=[
+                {"role": "system", "content": prompt},
+                {
+                    "role": "user",
+                    "content": tooL_result_str,
+                },
+            ],
+        )
+        return response["message"]["content"]
