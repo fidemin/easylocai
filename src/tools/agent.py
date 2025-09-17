@@ -34,7 +34,72 @@ class ToolAgent(Agent):
         original_user_query = query["original_user_query"]
         plan = query["plan"]
 
-        previous_task_results: list[dict] = query["previous_task_results"]
+        task_tool_data = await self._get_task_and_tool_data(
+            original_user_query,
+            plan,
+            query["previous_task_results"],
+        )
+        task = task_tool_data["task"]
+
+        logger.debug(f"Task Tool Response:\n{task_tool_data}")
+
+        if task_tool_data["use_llm"] is True:
+            result = await self._get_llm_result(task)
+            logger.debug(f"LLM Result: {result}")
+            return {
+                "task": task,
+                "result": result,
+            }
+
+        if task_tool_data["use_tool"] is False:
+            return {
+                "task": task_tool_data["task"],
+                "result": "No tool to use.",
+            }
+
+        tool_result = await self._server_manager.call_tool(
+            task_tool_data["server_name"],
+            task_tool_data["tool_name"],
+            task_tool_data.get("tool_args"),
+        )
+
+        logger.debug(f"original tool result:\n{tool_result}")
+        filtered_tool_result = await self._filter_tool_result(
+            original_user_query,
+            task_tool_data["task"],
+            tool_result,
+        )
+        logger.debug(f"filtered tool result:\n{filtered_tool_result}")
+
+        return {
+            "task": task_tool_data["task"],
+            "result": filtered_tool_result,
+        }
+
+    async def _get_llm_result(self, task):
+        response = await self._client.chat(
+            model=self._model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are task execution AI assistant. Answer the user's query as best as you can.",
+                },
+                {
+                    "role": "user",
+                    "content": f"{task}",
+                },
+            ],
+        )
+        result = response["message"]["content"]
+        return result
+
+    async def _get_task_and_tool_data(
+        self,
+        original_user_query,
+        plan,
+        previous_task_results,
+    ):
+        previous_task_results: list[dict] = previous_task_results
         tool_search_result = self._tool_collection.query(
             query_texts=[plan],
             n_results=5,
@@ -74,55 +139,7 @@ class ToolAgent(Agent):
 
         response_content = response["message"]["content"]
         task_tool_data = json.loads(response_content)
-
-        logger.debug(f"Task Tool Response:\n{task_tool_data}")
-
-        if task_tool_data["use_llm"] is True:
-            task = task_tool_data["task"]
-            response = await self._client.chat(
-                model=self._model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are task execution AI assistant. Answer the user's query as best as you can.",
-                    },
-                    {
-                        "role": "user",
-                        "content": f"{task}",
-                    },
-                ],
-            )
-            result = response["message"]["content"]
-            logger.debug(f"LLM Result: {result}")
-            return {
-                "task": task,
-                "result": result,
-            }
-
-        if task_tool_data["use_tool"] is False:
-            return {
-                "task": task_tool_data["task"],
-                "result": "No tool to use.",
-            }
-
-        tool_result = await self._server_manager.call_tool(
-            task_tool_data["server_name"],
-            task_tool_data["tool_name"],
-            task_tool_data.get("tool_args"),
-        )
-
-        logger.debug(f"original tool result:\n{tool_result}")
-        filtered_tool_result = await self._filter_tool_result(
-            original_user_query,
-            task_tool_data["task"],
-            tool_result,
-        )
-        logger.debug(f"filtered tool result:\n{filtered_tool_result}")
-
-        return {
-            "task": task_tool_data["task"],
-            "result": filtered_tool_result,
-        }
+        return task_tool_data
 
     async def _filter_tool_result(
         self,

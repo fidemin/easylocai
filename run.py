@@ -96,7 +96,7 @@ async def main():
         model=AI_MODEL,
     )
 
-    task_tool_agent = ToolAgent(
+    tool_agent = ToolAgent(
         client=ollama_client,
         model=AI_MODEL,
         tool_collection=tool_collection,
@@ -138,7 +138,7 @@ async def main():
 
                 next_plan = next_plan_data["next_plan"].strip()
 
-                task_result = await task_tool_agent.run(
+                task_result = await tool_agent.run(
                     {
                         "original_user_query": user_input,
                         "plan": next_plan,
