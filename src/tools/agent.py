@@ -11,7 +11,7 @@ from src.utlis.prompt import pretty_prompt_text
 logger = logging.getLogger(__name__)
 
 
-class TaskToolAgent(Agent):
+class ToolAgent(Agent):
     _prompt_path = "resources/prompts/task_tool_prompt.txt"
 
     def __init__(

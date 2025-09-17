@@ -8,7 +8,7 @@ from ollama import AsyncClient
 
 from src.core.server import ServerManager
 from src.plannings.agent import NextPlanAgent, AnswerAgent
-from src.tools.agent import TaskToolAgent
+from src.tools.agent import ToolAgent
 from src.utlis.loggers.default_dict import default_logging_config
 from src.utlis.prompt import pretty_prompt_text
 
@@ -96,7 +96,7 @@ async def main():
         model=AI_MODEL,
     )
 
-    task_tool_agent = TaskToolAgent(
+    task_tool_agent = ToolAgent(
         client=ollama_client,
         model=AI_MODEL,
         tool_collection=tool_collection,
