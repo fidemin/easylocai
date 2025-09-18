@@ -1,0 +1,6 @@
+# !/env bash
+
+source .venv/bin/activate
+
+# run the easyloc.ai
+python run.py
