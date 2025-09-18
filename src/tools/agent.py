@@ -54,7 +54,7 @@ class ToolAgent(Agent):
         if task_tool_data["use_tool"] is False:
             return {
                 "task": task_tool_data["task"],
-                "result": "No tool to use.",
+                "result": "No tool to use. No result available.",
             }
 
         tool_result = await self._server_manager.call_tool(

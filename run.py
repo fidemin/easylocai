@@ -3,14 +3,12 @@ import logging
 from contextlib import AsyncExitStack
 
 import chromadb
-from jinja2 import Environment, FileSystemLoader
 from ollama import AsyncClient
 
 from src.core.server import ServerManager
 from src.plannings.agent import NextPlanAgent, AnswerAgent
 from src.tools.agent import ToolAgent
 from src.utlis.loggers.default_dict import default_logging_config
-from src.utlis.prompt import pretty_prompt_text
 
 logging.config.dictConfig(default_logging_config)
 
@@ -48,39 +46,6 @@ async def initialize_tools(stack, server_manager, tool_collection):
         ids=ids,
         metadatas=metadatas,
     )
-
-
-async def filter_tool_result(
-    ollama_client,
-    user_query: str,
-    task: str,
-    tooL_result: str,
-):
-    env = Environment(loader=FileSystemLoader(""))
-    template = env.get_template("resources/prompts/tool_result_prompt.txt")
-    prompt = template.render(
-        {"user_query": user_query, "task": task, "tooL_result": tooL_result}
-    )
-
-    logger.debug(pretty_prompt_text("Tool Filter Prompt", prompt))
-
-    tooL_result_str = (
-        "TOOL RESULT:\n" + tooL_result
-        if isinstance(tooL_result, str)
-        else str(tooL_result)
-    )
-
-    response = await ollama_client.chat(
-        model=AI_MODEL,
-        messages=[
-            {"role": "system", "content": prompt},
-            {
-                "role": "user",
-                "content": tooL_result_str,
-            },
-        ],
-    )
-    return response["message"]["content"]
 
 
 async def main():
@@ -147,7 +112,6 @@ async def main():
                         ],
                     }
                 )
-
                 next_plan_query["previous_task_results"].append(task_result)
 
 
