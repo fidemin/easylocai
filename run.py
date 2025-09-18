@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from contextlib import AsyncExitStack
+from datetime import datetime
 
 import chromadb
 from ollama import AsyncClient
@@ -52,6 +53,7 @@ async def main():
     ollama_client = AsyncClient(host="http://localhost:11434")
 
     chromadb_client = chromadb.Client()
+    user_context_collection = chromadb_client.get_or_create_collection("user_context")
     tool_collection = chromadb_client.get_or_create_collection("tools")
 
     server_manager = ServerManager.from_json_config_file("mcp_server_config.json")
@@ -83,9 +85,15 @@ async def main():
             if user_input.strip().lower() in {"exit", "quit"}:
                 break
 
+            related_user_context_list = user_context_collection.query(
+                query_texts=[user_input],
+                n_results=5,
+            )["documents"][0]
+
             next_plan_query = {
                 "original_user_query": user_input,
                 "previous_task_results": [],
+                "user_context_list": related_user_context_list,
             }
 
             while True:
@@ -96,9 +104,24 @@ async def main():
                     answer_agent_input = {
                         "user_query": user_input,
                         "task_results": next_plan_query["previous_task_results"],
+                        "user_context_list": related_user_context_list,
                     }
                     response = await answer_agent.run(answer_agent_input)
                     print("Assistant >>\n" + response)
+
+                    created_at = datetime.now().isoformat()
+                    user_context = "\n".join(
+                        [
+                            f"User Query: {user_input}",
+                            f"Assitant Response: {response}",
+                            f"Created At: {created_at}",
+                        ]
+                    )
+                    user_context_collection.add(
+                        documents=[user_context],
+                        metadatas=[{"created_at": created_at}],
+                        ids=[f"user_context_{user_context_collection.count()}"],
+                    )
                     break
 
                 next_plan = next_plan_data["next_plan"].strip()

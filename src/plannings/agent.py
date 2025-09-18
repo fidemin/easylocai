@@ -118,9 +118,11 @@ class NextPlanAgent(Agent):
     async def run(self, query: str | dict) -> str | dict:
         original_user_query = query["original_user_query"]
         previous_task_results: list[dict] = query["previous_task_results"]
+        user_context_list: list[str] = query["user_context_list"]
 
         prompt = self._prompt_template.render(
-            previous_task_results=previous_task_results
+            previous_task_results=previous_task_results,
+            user_context_list=user_context_list,
         )
         logger.debug(pretty_prompt_text("Next Plan Prompt", prompt))
         response = await self._ollama_client.chat(
@@ -151,9 +153,11 @@ class AnswerAgent(Agent):
     async def run(self, query: str | dict) -> str | dict:
         user_query = query["user_query"]
         task_results = query["task_results"]
+        user_context_list = query["user_context_list"]
         prompt = self._prompt_template.render(
             user_query=user_query,
             task_results=task_results,
+            user_context_list=user_context_list,
         )
         logger.debug(pretty_prompt_text("answer prompt", prompt))
         response = await self._ollama_client.chat(
