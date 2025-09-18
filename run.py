@@ -5,10 +5,12 @@ from datetime import datetime
 
 import chromadb
 from ollama import AsyncClient
+from rich import get_console
 
 from src.core.server import ServerManager
 from src.plannings.agent import NextPlanAgent, AnswerAgent
 from src.tools.agent import ToolAgent
+from src.utlis.console_util import multiline_input
 from src.utlis.loggers.default_dict import default_logging_config
 
 logging.config.dictConfig(default_logging_config)
@@ -80,8 +82,7 @@ async def main():
         await initialize_tools(stack, server_manager, tool_collection)
 
         while True:
-            user_input = input("\nUser >> ")
-
+            user_input = await multiline_input("> ")
             if user_input.strip().lower() in {"exit", "quit"}:
                 break
 
