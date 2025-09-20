@@ -26,7 +26,8 @@ Previous task results context (chronological order):
 {% endfor %}
 
 Return a JSON object with following fields:
-- task: A specific task based on original_plan, task_results_context and accessible tools.
+- task: A specific task based on Plan without tool consideration, task_result and accessible tools.
+- display_task: A user-friendly version of task for display purpose. It should be easily understood by user.
 - use_llm: true or false. If task can be executed by LLM without tool, this value is true. Else false. If use_llm is true, tool related fields will be ignored.
 - use_tool : true or false. If one of given tool_name and description is relevant to given plan, this value is true. Else false.
 - server_name : (null when use_tool=false) server_name of tool_name chosen
