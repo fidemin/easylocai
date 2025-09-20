@@ -1,8 +1,9 @@
-# console_util.py
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.patch_stdout import patch_stdout
+from rich.console import Console
+from rich.panel import Panel
 
 
 def build_session():
@@ -33,3 +34,14 @@ async def multiline_input(prompt_text: str = "> "):
     # Ensure stdout is safe while PTK runs inside asyncio
     with patch_stdout():
         return await session.prompt_async(prompt_text, key_bindings=kb)
+
+
+def render_chat(console: Console, messages: list[dict[str, str]]) -> None:
+    """Clear screen and render the whole conversation as Rich panels."""
+    console.clear()
+    for msg in messages:
+        who = msg["role"]
+        text = msg["content"]
+        border = "green" if who == "user" else "cyan"
+        title = "You" if who == "user" else "Assistant"
+        console.print(Panel(text, title=title, border_style=border, padding=(1, 2)))

@@ -20,11 +20,11 @@ Related User Context:
 Rules:
 - Output should be in valid JSON without any other text.
 - "next_plan" field is for next plan to achieve the goal.
-  - The plan should be **atomic**, **independent**, **specific**, **semantic**.
-  - Should consider Previous Task Results Context and Related User Context to reason next_plan.
+  - The next_plan should be **atomic**, **independent**, **specific**, **semantic**.
+  - Should consider Previous Task Results Context and Related User Context to reason next_plan. Available tools will be found based on next_plan.
   - If failure of previous task is repeated more than 2 times, you can stop to continue.
-  - If user query is not about achieving goal or next plan is not required to get answer, set "next_plan" to null.
-  - If you can answer user query without further plan, set "next_plan" to null.
+  - If user query is not about achieving goal, set "next_plan" to null.
+  - If you have enough user context and previous task results to answer user query, and further plan is not required, set "next_plan" to null.
 - "continue" field is boolean.
   - If next_plan is not null, set it to true. If next_plan is null, set it to false.
 

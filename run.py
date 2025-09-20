@@ -10,7 +10,7 @@ from rich import get_console
 from src.core.server import ServerManager
 from src.plannings.agent import NextPlanAgent, AnswerAgent
 from src.tools.agent import ToolAgent
-from src.utlis.console_util import multiline_input
+from src.utlis.console_util import multiline_input, render_chat
 from src.utlis.loggers.default_dict import default_logging_config
 
 logging.config.dictConfig(default_logging_config)
@@ -77,14 +77,21 @@ async def main():
         model=AI_MODEL,
     )
 
+    console = get_console()
+    messages = []
+
     stack = AsyncExitStack()
     async with stack:
         await initialize_tools(stack, server_manager, tool_collection)
 
         while True:
+            render_chat(console, messages)
             user_input = await multiline_input("> ")
             if user_input.strip().lower() in {"exit", "quit"}:
                 break
+
+            messages.append({"role": "user", "content": user_input})
+            render_chat(console, messages)
 
             related_user_context_list = user_context_collection.query(
                 query_texts=[user_input],
@@ -123,6 +130,7 @@ async def main():
                         metadatas=[{"created_at": created_at}],
                         ids=[f"user_context_{user_context_collection.count()}"],
                     )
+                    messages.append({"role": "assistant", "content": response})
                     break
 
                 next_plan = next_plan_data["next_plan"].strip()

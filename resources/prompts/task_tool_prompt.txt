@@ -27,7 +27,8 @@ Previous task results context (chronological order):
 
 Return a JSON object with following fields:
 - task: A specific task based on Plan without tool consideration, task_result and accessible tools.
-- display_task: A user-friendly version of task for display purpose. It should be easily understood by user.
+- display: A user-friendly description of the task.
+  - e.g. If task is "Search web to find top 5 JavaScript frameworks in 2025", display can be "Searching the web to find top 5 JavaScript frameworks in 2025".
 - use_llm: true or false. If task can be executed by LLM without tool, this value is true. Else false. If use_llm is true, tool related fields will be ignored.
 - use_tool : true or false. If one of given tool_name and description is relevant to given plan, this value is true. Else false.
 - server_name : (null when use_tool=false) server_name of tool_name chosen
