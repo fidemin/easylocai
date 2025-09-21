@@ -1,4 +1,5 @@
 import asyncio
+import time
 from datetime import datetime
 from typing import List, Dict
 
@@ -8,6 +9,7 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.patch_stdout import patch_stdout
 from rich.console import Console
+from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
 
@@ -68,12 +70,23 @@ async def cli_chat():
     while True:
         render_chat(messages)
         try:
+            with Live(console=console, refresh_per_second=4) as live:
+                for i in range(20):
+                    spinner = ["|", "/", "-", "\\"][i % 4]
+                    live.update(f"Loading... {spinner}")
+                    time.sleep(0.2)
+                live.update("")  # Clear loading line
             with patch_stdout():  # keeps Rich output tidy while PTK is active
+
                 user_text = await session.prompt_async(
                     "> ",
                     key_bindings=kb,
                     bottom_toolbar=bottom_toolbar_ansi,
                 )
+
+                if user_text.strip().lower() in {"exit", "quit"}:
+                    console.print("\n[dim]Goodbye.[/dim]")
+                    break
         except EOFError:
             console.print("\n[dim]Goodbye.[/dim]")
             break

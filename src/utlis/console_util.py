@@ -1,8 +1,11 @@
+import time
+
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.patch_stdout import patch_stdout
 from rich.console import Console
+from rich.live import Live
 from rich.panel import Panel
 
 
@@ -45,3 +48,21 @@ def render_chat(console: Console, messages: list[dict[str, str]]) -> None:
         border = "green" if who == "user" else "cyan"
         title = "You" if who == "user" else "Assistant"
         console.print(Panel(text, title=title, border_style=border, padding=(1, 2)))
+
+
+def spinner_task(
+    stop_event,
+    console: Console,
+    prefix: str,
+):
+    with Live(console=console, refresh_per_second=4) as live:
+        i = 0
+        while not stop_event.is_set():
+            i %= 4
+            spinner = ["|", "/", "-", "\\"][i]
+            live.update(f"{prefix}... {spinner}")
+            time.sleep(0.1)
+            i += 1
+
+        # Clear loading line
+        live.update("")

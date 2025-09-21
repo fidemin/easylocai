@@ -52,6 +52,7 @@ async def initialize_tools(stack, server_manager, tool_collection):
 
 
 async def main():
+    console = get_console()
     ollama_client = AsyncClient(host="http://localhost:11434")
 
     chromadb_client = chromadb.Client()
@@ -70,6 +71,7 @@ async def main():
         model=AI_MODEL,
         tool_collection=tool_collection,
         server_manager=server_manager,
+        console=console,
     )
 
     answer_agent = AnswerAgent(
@@ -77,7 +79,6 @@ async def main():
         model=AI_MODEL,
     )
 
-    console = get_console()
     messages = []
 
     stack = AsyncExitStack()
@@ -115,13 +116,12 @@ async def main():
                         "user_context_list": related_user_context_list,
                     }
                     response = await answer_agent.run(answer_agent_input)
-                    print("Assistant >>\n" + response)
 
                     created_at = datetime.now().isoformat()
                     user_context = "\n".join(
                         [
                             f"User Query: {user_input}",
-                            f"Assitant Response: {response}",
+                            f"Assistant Response: {response}",
                             f"Created At: {created_at}",
                         ]
                     )

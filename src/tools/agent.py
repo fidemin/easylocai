@@ -1,11 +1,14 @@
 import json
 import logging
+import threading
 
 from chromadb.types import Collection
 from jinja2 import Environment, FileSystemLoader
+from rich.console import Console
 
 from src.core.agent import Agent
 from src.core.server import ServerManager
+from src.utlis.console_util import spinner_task
 from src.utlis.prompt import pretty_prompt_text
 
 logger = logging.getLogger(__name__)
@@ -21,6 +24,7 @@ class ToolAgent(Agent):
         model: str,
         tool_collection: Collection,
         server_manager: ServerManager,
+        console: Console,
     ):
         self._client = client
         env = Environment(loader=FileSystemLoader(""))
@@ -29,6 +33,7 @@ class ToolAgent(Agent):
         self._model = model
         self._tool_collection = tool_collection
         self._server_manager = server_manager
+        self._console = console
 
     async def run(self, query: str | dict) -> str | dict:
         original_user_query = query["original_user_query"]
@@ -40,6 +45,13 @@ class ToolAgent(Agent):
             query["previous_task_results"],
         )
         task = task_tool_data["task"]
+        display = task_tool_data["display"]
+
+        stop_event = threading.Event()
+        t = threading.Thread(
+            target=spinner_task, args=(stop_event, self._console, display)
+        )
+        t.start()
 
         logger.debug(f"Task Tool Response:\n{task_tool_data}")
 
@@ -70,6 +82,9 @@ class ToolAgent(Agent):
             tool_result,
         )
         logger.debug(f"filtered tool result:\n{filtered_tool_result}")
+
+        stop_event.set()
+        t.join()
 
         return {
             "task": task_tool_data["task"],
