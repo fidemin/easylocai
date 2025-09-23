@@ -104,8 +104,8 @@ async def main():
                 "user_context_list": related_user_context_list,
             }
 
-            while True:
-                with ConsoleSpinner(console) as spinner:
+            with ConsoleSpinner(console) as spinner:
+                while True:
                     next_plan_data = await next_plan_agent.run(next_plan_query)
                     logger.debug(f"Next Plan Response:\n{next_plan_data}")
 
