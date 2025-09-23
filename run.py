@@ -10,7 +10,7 @@ from rich import get_console
 from src.core.server import ServerManager
 from src.plannings.agent import NextPlanAgent, AnswerAgent
 from src.tools.agent import ToolAgent
-from src.utlis.console_util import multiline_input, render_chat
+from src.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
 from src.utlis.loggers.default_dict import default_logging_config
 
 logging.config.dictConfig(default_logging_config)
@@ -71,7 +71,6 @@ async def main():
         model=AI_MODEL,
         tool_collection=tool_collection,
         server_manager=server_manager,
-        console=console,
     )
 
     answer_agent = AnswerAgent(
@@ -106,45 +105,52 @@ async def main():
             }
 
             while True:
-                next_plan_data = await next_plan_agent.run(next_plan_query)
-                logger.debug(f"Next Plan Response:\n{next_plan_data}")
+                with ConsoleSpinner(console) as spinner:
+                    next_plan_data = await next_plan_agent.run(next_plan_query)
+                    logger.debug(f"Next Plan Response:\n{next_plan_data}")
 
-                if not next_plan_data["continue"]:
-                    answer_agent_input = {
-                        "user_query": user_input,
-                        "task_results": next_plan_query["previous_task_results"],
-                        "user_context_list": related_user_context_list,
-                    }
-                    response = await answer_agent.run(answer_agent_input)
+                    if not next_plan_data["continue"]:
+                        spinner.set_prefix("Generating final answer")
 
-                    created_at = datetime.now().isoformat()
-                    user_context = "\n".join(
-                        [
-                            f"User Query: {user_input}",
-                            f"Assistant Response: {response}",
-                            f"Created At: {created_at}",
-                        ]
-                    )
-                    user_context_collection.add(
-                        documents=[user_context],
-                        metadatas=[{"created_at": created_at}],
-                        ids=[f"user_context_{user_context_collection.count()}"],
-                    )
-                    messages.append({"role": "assistant", "content": response})
-                    break
+                        answer_agent_input = {
+                            "user_query": user_input,
+                            "task_results": next_plan_query["previous_task_results"],
+                            "user_context_list": related_user_context_list,
+                        }
+                        response = await answer_agent.run(answer_agent_input)
 
-                next_plan = next_plan_data["next_plan"].strip()
+                        created_at = datetime.now().isoformat()
+                        user_context = "\n".join(
+                            [
+                                f"- User Query: {user_input}",
+                                f"- Assistant Response: {response}",
+                                f"- Created At: {created_at}",
+                            ]
+                        )
+                        user_context_collection.add(
+                            documents=[user_context],
+                            metadatas=[{"created_at": created_at}],
+                            ids=[f"user_context_{user_context_collection.count()}"],
+                        )
+                        messages.append({"role": "assistant", "content": response})
+                        break
 
-                task_result = await tool_agent.run(
-                    {
+                    next_plan = next_plan_data["next_plan"].strip()
+
+                    spinner.set_prefix(f"Reasoning task with tools")
+                    task_agent_query = {
                         "original_user_query": user_input,
                         "plan": next_plan,
                         "previous_task_results": next_plan_query[
                             "previous_task_results"
                         ],
                     }
-                )
-                next_plan_query["previous_task_results"].append(task_result)
+                    async for event in tool_agent.run_stream(task_agent_query):
+                        if event["end"]:
+                            task_result = event["data"]
+                            next_plan_query["previous_task_results"].append(task_result)
+                        else:
+                            spinner.set_prefix(event["display"])
 
 
 if __name__ == "__main__":

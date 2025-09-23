@@ -1,3 +1,4 @@
+import threading
 import time
 
 from prompt_toolkit import PromptSession
@@ -66,3 +67,36 @@ def spinner_task(
 
         # Clear loading line
         live.update("")
+
+
+class ConsoleSpinner:
+    def __init__(self, console: Console):
+        self._console = console
+        self._stop_event = threading.Event()
+        self._prefix = "Thinking"
+        self._thread = threading.Thread(target=self._live_spinner, args=())
+
+    def __enter__(self):
+        self._stop_event.clear()
+        self._thread.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._stop_event.set()
+        self._thread.join()
+
+    def _live_spinner(self):
+        with Live(console=self._console, refresh_per_second=4) as live:
+            i = 0
+            while not self._stop_event.is_set():
+                i %= 4
+                spinner = ["|", "/", "-", "\\"][i]
+                live.update(f"{self._prefix}... {spinner}")
+                time.sleep(0.1)
+                i += 1
+
+            # Clear loading line
+            live.update("")
+
+    def set_prefix(self, prefix: str):
+        self._prefix = prefix
