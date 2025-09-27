@@ -7,9 +7,10 @@ import chromadb
 from ollama import AsyncClient
 from rich import get_console
 
+from src.agents.answer_agent import AnswerAgent
+from src.agents.next_plan_agent import NextPlanAgent
+from src.agents.tool_agent import ToolAgent
 from src.core.server import ServerManager
-from src.plannings.agent import NextPlanAgent, AnswerAgent
-from src.tools.agent import ToolAgent
 from src.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
 from src.utlis.loggers.default_dict import default_logging_config
 

@@ -94,53 +94,6 @@ class ToolAgent(Agent):
         }
         return
 
-    async def run(self, query: str | dict) -> str | dict:
-        original_user_query = query["original_user_query"]
-        plan = query["plan"]
-
-        task_tool_data = await self._get_task_and_tool_data(
-            original_user_query,
-            plan,
-            query["previous_task_results"],
-        )
-        task = task_tool_data["task"]
-        display = task_tool_data["display"]
-
-        logger.debug(f"Task Tool Response:\n{task_tool_data}")
-
-        if task_tool_data["use_llm"] is True:
-            result = await self._get_llm_result(task)
-            logger.debug(f"LLM Result: {result}")
-            return {
-                "task": task,
-                "result": result,
-            }
-
-        if task_tool_data["use_tool"] is False:
-            return {
-                "task": task_tool_data["task"],
-                "result": "No tool to use. No result available.",
-            }
-
-        tool_result = await self._server_manager.call_tool(
-            task_tool_data["server_name"],
-            task_tool_data["tool_name"],
-            task_tool_data.get("tool_args"),
-        )
-
-        logger.debug(f"original tool result:\n{tool_result}")
-        filtered_tool_result = await self._filter_tool_result(
-            original_user_query,
-            task_tool_data["task"],
-            tool_result,
-        )
-        logger.debug(f"filtered tool result:\n{filtered_tool_result}")
-
-        return {
-            "task": task_tool_data["task"],
-            "result": filtered_tool_result,
-        }
-
     async def _get_llm_result(self, task):
         response = await self._client.chat(
             model=self._model,
