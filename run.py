@@ -145,12 +145,12 @@ async def main():
                             "previous_task_results"
                         ],
                     }
-                    async for event in tool_agent.run_stream(task_agent_query):
-                        if event["end"]:
-                            task_result = event["data"]
+                    async for response in tool_agent.run_stream(task_agent_query):
+                        if response["end"]:
+                            task_result = response["data"]
                             next_plan_query["previous_task_results"].append(task_result)
                         else:
-                            spinner.set_prefix(event["display"])
+                            spinner.set_prefix(response["display"])
 
 
 if __name__ == "__main__":
