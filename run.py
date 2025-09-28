@@ -138,7 +138,7 @@ async def main():
 
                     next_plan = next_plan_data["next_plan"].strip()
 
-                    spinner.set_prefix(f"Reasoning task with tools")
+                    spinner.set_prefix(f"Reasoning task")
                     task_agent_query = {
                         "original_user_query": user_input,
                         "plan": next_plan,
