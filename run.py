@@ -22,14 +22,7 @@ logger = logging.getLogger(__name__)
 AI_MODEL = "gpt-oss:20b"
 
 
-async def initialize_tools(stack, server_manager, tool_collection):
-    for server in server_manager.list_servers():
-        await server.initialize(stack)
-
-        tools = await server.list_tools()
-        logger.info(
-            f"Server Name: {server.name}, Available tools: {[tool.name for tool in tools]}"
-        )
+async def initialize_tools(server_manager: ServerManager, tool_collection):
     # initialize chromadb tool
     ids = []
     metadatas = []
@@ -83,7 +76,8 @@ async def main():
 
     stack = AsyncExitStack()
     async with stack:
-        await initialize_tools(stack, server_manager, tool_collection)
+        await server_manager.initialize_servers(stack)
+        await initialize_tools(server_manager, tool_collection)
 
         while True:
             render_chat(console, messages)

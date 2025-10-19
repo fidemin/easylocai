@@ -1,9 +1,12 @@
 import json
+import logging
 import os
 from contextlib import AsyncExitStack
 
 from mcp import StdioServerParameters, stdio_client, ClientSession
 from mcp import Tool as McpTool
+
+logger = logging.getLogger(__name__)
 
 
 class Tool:
@@ -37,14 +40,16 @@ class Server:
     ):
         self.name = name
         self.params = params
-        self._current_session = None
+        self._current_session: ClientSession | None = None
         self._tools = None
         self._tools_dict = {}
 
     async def initialize(self, async_stack: AsyncExitStack):
-        stdio, write = await async_stack.enter_async_context(stdio_client(self.params))
+        stdio_receive_stream, stdio_send_stream = await async_stack.enter_async_context(
+            stdio_client(self.params)
+        )
         self._current_session = await async_stack.enter_async_context(
-            ClientSession(stdio, write)
+            ClientSession(stdio_receive_stream, stdio_send_stream)
         )
         await self._current_session.initialize()
 
@@ -84,6 +89,15 @@ class ServerManager:
 
     def add_server(self, server: Server):
         self._servers[server.name] = server
+
+    async def initialize_servers(self, async_stack: AsyncExitStack):
+        for server in self.list_servers():
+            await server.initialize(async_stack)
+
+            tools = await server.list_tools()
+            logger.info(
+                f"Server Name: {server.name}, Available tools: {[tool.name for tool in tools]}"
+            )
 
     def get_server(self, name: str) -> Server:
         server = self._servers.get(name)
