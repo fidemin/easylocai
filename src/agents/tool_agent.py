@@ -5,6 +5,7 @@ from typing import AsyncIterator, Dict, Any
 from chromadb.types import Collection
 from jinja2 import Environment, FileSystemLoader
 
+from src.agents.tool_result_filter_agent import ToolResultFilterAgent
 from src.core.agent import Agent
 from src.core.server import ServerManager
 from src.utlis.prompt import pretty_prompt_text
@@ -163,30 +164,14 @@ class ToolAgent(Agent):
         self,
         user_query: str,
         task: str,
-        tooL_result: str,
+        tool_result: str,
     ):
-        env = Environment(loader=FileSystemLoader(""))
-        template = env.get_template("resources/prompts/tool_result_prompt.txt")
-        prompt = template.render(
-            {"user_query": user_query, "task": task, "tooL_result": tooL_result}
-        )
-
-        logger.debug(pretty_prompt_text("Tool Filter Prompt", prompt))
-
-        tooL_result_str = (
-            "TOOL RESULT:\n" + tooL_result
-            if isinstance(tooL_result, str)
-            else str(tooL_result)
-        )
-
-        response = await self._client.chat(
+        tool_result_filter_agent = ToolResultFilterAgent(
+            client=self._client,
             model=self._model,
-            messages=[
-                {"role": "system", "content": prompt},
-                {
-                    "role": "user",
-                    "content": tooL_result_str,
-                },
-            ],
         )
-        return response["message"]["content"]
+        return await tool_result_filter_agent.run(
+            user_query=user_query,
+            task=task,
+            tool_result=tool_result,
+        )
