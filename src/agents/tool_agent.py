@@ -6,6 +6,7 @@ from chromadb.types import Collection
 from jinja2 import Environment, FileSystemLoader
 
 from src.agents.tool_result_filter_agent import ToolResultFilterAgent
+from src.agents.tool_select_agent import ToolSelectAgent
 from src.core.agent import Agent
 from src.core.server import ServerManager
 from src.utlis.prompt import pretty_prompt_text
@@ -118,47 +119,59 @@ class ToolAgent(Agent):
         plan,
         previous_task_results,
     ):
-        previous_task_results: list[dict] = previous_task_results
-        tool_search_result = self._tool_collection.query(
-            query_texts=[plan],
-            n_results=5,
-        )
-
-        metadatas = tool_search_result["metadatas"][0]
-        possible_tools = []
-
-        for metadata in metadatas:
-            server_name = metadata["server_name"]
-            tool_name = metadata["tool_name"]
-            tool = self._server_manager.get_server(server_name).get_tool(tool_name)
-            possible_tools.append(
-                {
-                    "server_name": server_name,
-                    "tool_name": tool.name,
-                    "tool_description": tool.description,
-                    "tool_input_schema": tool.input_schema,
-                }
-            )
-
-        prompt = self._prompt_template.render(
-            original_user_query=original_user_query,
-            plan=plan,
-            possible_tools=possible_tools,
-            previous_task_results=previous_task_results,
-        )
-
-        logger.debug(pretty_prompt_text("Task Tool Prompt", prompt))
-
-        response = await self._client.chat(
+        tool_select_agent = ToolSelectAgent(
+            client=self._client,
             model=self._model,
-            messages=[
-                {"role": "user", "content": prompt},
-            ],
+            tool_collection=self._tool_collection,
+            server_manager=self._server_manager,
         )
 
-        response_content = response["message"]["content"]
-        task_tool_data = json.loads(response_content)
-        return task_tool_data
+        return await tool_select_agent.run(
+            previous_task_results=previous_task_results,
+            plan=plan,
+            original_user_query=original_user_query,
+        )
+        # previous_task_results: list[dict] = previous_task_results
+        # tool_search_result = self._tool_collection.query(
+        #     query_texts=[plan],
+        #     n_results=5,
+        # )
+        #
+        # metadatas = tool_search_result["metadatas"][0]
+        # possible_tools = []
+        #
+        # for metadata in metadatas:
+        #     server_name = metadata["server_name"]
+        #     tool_name = metadata["tool_name"]
+        #     tool = self._server_manager.get_server(server_name).get_tool(tool_name)
+        #     possible_tools.append(
+        #         {
+        #             "server_name": server_name,
+        #             "tool_name": tool.name,
+        #             "tool_description": tool.description,
+        #             "tool_input_schema": tool.input_schema,
+        #         }
+        #     )
+        #
+        # prompt = self._prompt_template.render(
+        #     original_user_query=original_user_query,
+        #     plan=plan,
+        #     possible_tools=possible_tools,
+        #     previous_task_results=previous_task_results,
+        # )
+        #
+        # logger.debug(pretty_prompt_text("Task Tool Prompt", prompt))
+        #
+        # response = await self._client.chat(
+        #     model=self._model,
+        #     messages=[
+        #         {"role": "user", "content": prompt},
+        #     ],
+        # )
+        #
+        # response_content = response["message"]["content"]
+        # task_tool_data = json.loads(response_content)
+        # return task_tool_data
 
     async def _filter_tool_result(
         self,
