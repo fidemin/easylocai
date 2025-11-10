@@ -41,5 +41,6 @@ class NextPlanAgent(Agent):
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": original_user_query},
             ],
+            options={"temperature": 0.5},
         )
         return json.loads(response["message"]["content"])
