@@ -20,3 +20,6 @@ wheels/
 
 # mcp server json file
 mcp_server_config.json
+
+# vscode
+.vscode/
