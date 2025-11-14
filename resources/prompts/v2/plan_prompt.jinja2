@@ -5,6 +5,10 @@ Rules:
 - Each step should be atomic, independent, specific, semantic.
 - This plan should involve individual tasks, that if executed correctly will yield the correct answer. Do not add any superfluous steps.
 - Make sure that each step has all the information needed - do not skip steps.
+- If the user query is about problem solving such as math, physics problems, you should not reason step to solve the problem or solve it by yourself.
+  e.g. If the user query is "Calculate (2 + 12) * 15", the plan should not be ["Calculate 2+12", "Multiply result by 15"] but rather ["Calculate (2 + 12) * 15"].
+  e.g. If the user query is "Calculate (2 + 12) * 15 and save the result to result.txt", the plan should be like ["Calculate (2 + 12) * 15", "Save the calculation result to result.txt"].
+
 
 Example outputs (Only JSON should be returned. No other text like json``` or ```):
 
