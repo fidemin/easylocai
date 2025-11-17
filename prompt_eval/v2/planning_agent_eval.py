@@ -30,7 +30,7 @@ async def process(plan_agent, plan_eval_agent, input_dict):
 
 async def main():
     input_dicts = []
-    with open("./resources/prompt_eval/plan_agent_inputs_reasoning.jsonl") as f:
+    with open("./resources/prompt_eval/plan_agent_inputs.jsonl") as f:
         for row in f:
             row = row.strip()
             input_dicts.append(json.loads(row))
