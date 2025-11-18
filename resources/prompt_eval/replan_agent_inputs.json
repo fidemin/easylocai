@@ -11,5 +11,26 @@
       {"step":  "Search for notion documents related to redis", "result": "https://notion.com/abcdef2\nhttps://notion.com/ghijkl3"},
       {"step":  "iterate through the found documents and extract relevant information about redis", "result": "Document 1: Redis is an open-source, in-memory data structure store used as a database, cache, and message broker. Document 2: Redis supports various data structures such as strings, hashes, lists, sets, and more."}
     ]
+  },
+  {
+    "original_user_query": "Calculate (2+3) * 12 and save to file result.txt",
+    "original_plan": [
+      "Calculate (2+3) * 12",
+      "Save the result to a file named result.txt"
+    ],
+    "step_results": [
+      {"step":  "Calculate (2+3) * 12", "result": "Result is 60"}
+    ]
+  },
+  {
+    "original_user_query": "Calculate (2+3) * 12 and save to file result.txt",
+    "original_plan": [
+      "Calculate (2+3) * 12",
+      "Save the result to a file named result.txt"
+    ],
+    "step_results": [
+      {"step":  "Calculate (2+3) * 12", "result": "Result is 60"},
+      {"step":  "Save the result to a file named result.txt", "result": "File result.txt created with content: 60"}
+    ]
   }
 ]
