@@ -3,11 +3,8 @@ You are a single task agent.
 Your's job is to execute the given task by using tools available or reasoning by LLM itself.
 This process is iterative. In each iteration, you will decide where to have more iterations or finish the task.
 
-Task:
-{{ task }}
-
 You have access to the following MCP servers and tools:
-{% for tool in possible_tools %}
+{% for tool in tool_candidates %}
 <tool>
 - server_name: {{ tool["server_name"] }}
 - tool_name: {{ tool["tool_name"] }}
@@ -24,14 +21,14 @@ Previous task and result context (chronological order):
 </task_result>
 {% endfor %}
 
-Accumulated results from previous iterations of current task:
-{% for accumulated_result in accumulated_results %}
-<accumulated_result>
+Iteration results from previous iterations of current task:
+{% for iteration_result in iteration_results %}
+<iteration_result>
     - executed_task:
     {{ accumulated_result["executed_task"] }}
     - result:
     {{ accumulated_result["result"] }}
-</accumulated_result>
+</iteration_result>
 {% endfor %}
 
 
