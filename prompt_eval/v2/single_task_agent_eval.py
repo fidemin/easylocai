@@ -16,8 +16,10 @@ def print_evals(
     eval,
 ):
     print("-------------------------")
-    print(f"Input Dict:\n{input_dict}")
-    print(f"Response:\n{response}")
+    print(f"Input Dict:")
+    print(json.dumps(input_dict, indent=2))
+    print(f"Response:")
+    print(json.dumps(response, indent=2))
     print(f"Eval:\n{eval}")
     print()
 
