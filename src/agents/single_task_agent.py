@@ -31,11 +31,19 @@ class SingleTaskAgent(Agent):
         tool_candidates = query["tool_candidates"]
         previous_task_results = query.get("previous_task_results", [])
         iteration_results = query.get("iteration_results", [])
+        original_tasks = query.get("original_tasks", None)
+
+        if original_tasks is None:
+            logger.warning(
+                "original_tasks is not provided to SingleTaskAgent, defaulting to [task]"
+            )
+            original_tasks = []
 
         prompt = self._prompt_template.render(
             tool_candidates=tool_candidates,
             previous_task_results=previous_task_results,
             iteration_results=iteration_results,
+            original_tasks=original_tasks,
         )
         logger.debug(pretty_prompt_text("Single Task Prompt", prompt))
 
@@ -43,8 +51,19 @@ class SingleTaskAgent(Agent):
             model=self._model,
             messages=[
                 {"role": "system", "content": prompt},
-                {"role": "user", "content": f"Task:\n{task}"},
+                {"role": "user", "content": f"Current Task:\n{task}"},
             ],
-            options={"temperature": 0.0},
+            options={
+                "temperature": 0.2,
+                "max_tokens": 10000,
+            },
         )
-        return json.loads(response["message"]["content"])
+        try:
+            result = json.loads(response["message"]["content"])
+        except json.JSONDecodeError:
+            logger.error(
+                f"Failed to parse SingleTaskAgent response as JSON: {response['message']['content']}"
+            )
+            raise
+
+        return result
