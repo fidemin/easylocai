@@ -42,6 +42,6 @@ class ReplanAgent(Agent):
             messages=[
                 {"role": "system", "content": prompt},
             ],
-            options={"temperature": 0.0},
+            options={"temperature": 0.2},
         )
         return json.loads(response["message"]["content"])

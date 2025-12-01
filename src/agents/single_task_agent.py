@@ -27,7 +27,6 @@ class SingleTaskAgent(Agent):
 
     async def run(self, **query) -> str | dict:
         task = query["task"]
-
         tool_candidates = query["tool_candidates"]
         previous_task_results = query.get("previous_task_results", [])
         iteration_results = query.get("iteration_results", [])
@@ -44,6 +43,7 @@ class SingleTaskAgent(Agent):
             previous_task_results=previous_task_results,
             iteration_results=iteration_results,
             original_tasks=original_tasks,
+            task=task,
         )
         logger.debug(pretty_prompt_text("Single Task Prompt", prompt))
 
@@ -55,7 +55,6 @@ class SingleTaskAgent(Agent):
             ],
             options={
                 "temperature": 0.2,
-                "max_tokens": 10000,
             },
         )
         try:
