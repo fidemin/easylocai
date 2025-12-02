@@ -51,7 +51,6 @@ class SingleTaskAgent(Agent):
             model=self._model,
             messages=[
                 {"role": "system", "content": prompt},
-                {"role": "user", "content": f"Current Task:\n{task}"},
             ],
             options={
                 "temperature": 0.2,

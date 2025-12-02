@@ -185,6 +185,8 @@ async def main():
                         answer = response
                         break
 
+                    steps = replan_agent_response["plan"]["steps"]
+
                 messages.append({"role": "assistant", "content": answer})
 
 
