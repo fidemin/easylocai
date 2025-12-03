@@ -21,7 +21,7 @@ class PlanEvalAgent(Agent):
 
     async def run(self, **query) -> str | dict:
         user_query = query["user_query"]
-        steps = query["steps"]
+        steps = query["tasks"]
 
         prompt = self._prompt_template.render()
 

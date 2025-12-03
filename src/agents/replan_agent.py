@@ -28,12 +28,12 @@ class ReplanAgent(Agent):
     async def run(self, **query) -> str | dict:
         original_user_query = query["original_user_query"]
         original_plan = query["original_plan"]
-        step_results = query["step_results"]
+        task_results = query["task_results"]
 
         prompt = self._prompt_template.render(
             original_user_query=original_user_query,
             original_plan=original_plan,
-            step_results=step_results,
+            task_results=task_results,
         )
         logger.debug(pretty_prompt_text("Replan Prompt", prompt))
 

@@ -87,12 +87,12 @@ async def main():
                 spinner.set_prefix("Creating initial plan...")
                 plan_agent_response = await plan_agent.run(**plan_query)
                 logger.debug(f"Plan Agent Response:\n{plan_agent_response}")
-                steps = plan_agent_response["steps"]
+                tasks = plan_agent_response["tasks"]
                 previous_task_results = []
                 answer = None
 
                 while True:
-                    task = steps[0]
+                    task = tasks[0]
 
                     iteration_results = []
 
@@ -123,7 +123,7 @@ async def main():
                             )
 
                         single_task_agent_query = {
-                            "original_tasks": steps,
+                            "original_tasks": tasks,
                             "original_user_query": user_input,
                             "task": task,
                             "previous_task_list": previous_task_results,
@@ -173,8 +173,8 @@ async def main():
 
                     replan_agent_query = {
                         "original_user_query": user_input,
-                        "original_plan": steps,
-                        "step_results": previous_task_results,
+                        "original_plan": tasks,
+                        "task_results": previous_task_results,
                     }
 
                     replan_agent_response = await replan_agent.run(**replan_agent_query)
@@ -185,7 +185,7 @@ async def main():
                         answer = response
                         break
 
-                    steps = replan_agent_response["plan"]["steps"]
+                    tasks = replan_agent_response["tasks"]
 
                 messages.append({"role": "assistant", "content": answer})
 

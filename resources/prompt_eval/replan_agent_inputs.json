@@ -7,9 +7,9 @@
       "Summarize the extracted information into a concise summary",
       "Save the summary to a file named redis.txt"
     ],
-    "step_results": [
-      {"step":  "Search for notion documents related to redis", "result": "https://notion.com/abcdef2\nhttps://notion.com/ghijkl3"},
-      {"step":  "iterate through the found documents and extract relevant information about redis", "result": "Document 1: Redis is an open-source, in-memory data structure store used as a database, cache, and message broker. Document 2: Redis supports various data structures such as strings, hashes, lists, sets, and more."}
+    "task_results": [
+      {"task":  "Search for notion documents related to redis", "result": "https://notion.com/abcdef2\nhttps://notion.com/ghijkl3"},
+      {"task":  "iterate through the found documents and extract relevant information about redis", "result": "Document 1: Redis is an open-source, in-memory data structure store used as a database, cache, and message broker. Document 2: Redis supports various data structures such as strings, hashes, lists, sets, and more."}
     ]
   },
   {
@@ -18,8 +18,8 @@
       "Calculate (2+3) * 12",
       "Save the result to a file named result.txt"
     ],
-    "step_results": [
-      {"step":  "Calculate (2+3) * 12", "result": "Result is 60"}
+    "task_results": [
+      {"task":  "Calculate (2+3) * 12", "result": "Result is 60"}
     ]
   },
   {
@@ -28,9 +28,9 @@
       "Calculate (2+3) * 12",
       "Save the result to a file named result.txt"
     ],
-    "step_results": [
-      {"step":  "Calculate (2+3) * 12", "result": "Result is 60"},
-      {"step":  "Save the result to a file named result.txt", "result": "File result.txt created with content: 60"}
+    "task_results": [
+      {"task":  "Calculate (2+3) * 12", "result": "Result is 60"},
+      {"task":  "Save the result to a file named result.txt", "result": "File result.txt created with content: 60"}
     ]
   }
 ]

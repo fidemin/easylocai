@@ -18,7 +18,11 @@ class PlanAgent(Agent):
         self,
         *,
         client: AsyncClient,
+        prompt_path: str | None = None,
     ):
+        if prompt_path is not None:
+            self._prompt_path = prompt_path
+
         self._ollama_client = client
         env = Environment(loader=FileSystemLoader(""))
         prompt_template = env.get_template(self._prompt_path)
