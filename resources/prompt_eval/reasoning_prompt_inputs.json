@@ -1,0 +1,12 @@
+[
+  {"task": "What is 37 * 24?"},
+  {"task": "If a rectangle has width 13 and height 9, what is its area?"},
+  {"task": "Calculate (45 + 27) / 6."},
+  {"task": "What is the value of 2^7 + 3^4?"},
+  {"task": "Solve: (18 * 5) - (72 / 3)"},
+  {"task": "If the price increases from 240 to 312, what is the percentage increase?"},
+  {"task": "What is the least common multiple (LCM) of 18 and 30?"},
+  {"task": "A car travels 420 km in 6 hours. What is its average speed?"},
+  {"task": "Simplify the expression: (3/4) × (8/9) × (27/16)"},
+  {"task": "If 5x + 12 = 72, what is the value of x?"}
+]

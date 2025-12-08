@@ -57,8 +57,8 @@ class EvalWorkflow:
     ):
         print("-------------------------")
         print(f"Input Dict:")
-        print(json.dumps(input_dict, indent=2))
+        print(json.dumps(input_dict, indent=2, ensure_ascii=False))
         print(f"Response:")
-        print(json.dumps(response, indent=2))
+        print(json.dumps(response, indent=2, ensure_ascii=False))
         print(f"Eval:\n{eval}")
         print()
