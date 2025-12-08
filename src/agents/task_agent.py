@@ -13,7 +13,7 @@ from src.utlis.prompt import pretty_prompt_text
 logger = logging.getLogger(__name__)
 
 
-class TaskAgent(Agent):
+class SingleTaskAgent(Agent):
     _prompt_path = "resources/prompts/v2/single_task_prompt_v2.jinja2"
 
     def __init__(
