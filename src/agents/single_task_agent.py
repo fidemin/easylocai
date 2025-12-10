@@ -5,6 +5,7 @@ from chromadb.types import Collection
 from jinja2 import Environment, FileSystemLoader
 from ollama import AsyncClient
 
+from src.agents.reasoning_agent import ReasoningAgent
 from src.core.agent import Agent
 from src.core.contants import DEFAULT_LLM_MODEL
 from src.core.server import ServerManager
@@ -40,6 +41,7 @@ class SingleTaskAgent(Agent):
         )
 
         metadatas = tool_search_result["metadatas"][0]
+        reasoning_agent = ReasoningAgent(client=self._ollama_client)
         tool_candidates = []
 
         for metadata in metadatas:
@@ -108,20 +110,21 @@ class SingleTaskAgent(Agent):
             if finished:
                 break
 
-            if task_result["use_llm"] is True:
-                # TODO: implement LLM reasoning here
-                return {
-                    "task": task,
-                    "result": "LLM reasoning not implemented. This task requires LLM reasoning.",
-                }
+            if task_result["use_reasoning"] is True:
+                # TODO: handle reasoning level
+                tool_result = await reasoning_agent.run(
+                    task=task_result["executed_task"]
+                )
+                logger.debug(f"Reasoning Agent Result:\n{tool_result}")
+            else:
+                tool_result = await self._server_manager.call_tool(
+                    task_result["server_name"],
+                    task_result["tool_name"],
+                    task_result["tool_args"],
+                )
 
-            tool_result = await self._server_manager.call_tool(
-                task_result["server_name"],
-                task_result["tool_name"],
-                task_result["tool_args"],
-            )
+                logger.debug(f"Tool result:\n{tool_result}")
 
-            logger.debug(f"Tool result:\n{tool_result}")
             iteration_results.append(
                 {
                     "executed_task": task_result["executed_task"],

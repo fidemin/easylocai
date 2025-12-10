@@ -8,7 +8,7 @@ from rich import get_console
 
 from src.agents.plan_agent import PlanAgent
 from src.agents.replan_agent import ReplanAgent
-from src.agents.task_agent import SingleTaskAgent
+from src.agents.single_task_agent import SingleTaskAgent
 from src.core.server import ServerManager
 from src.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
 from src.utlis.loggers.default_dict import default_logging_config
@@ -56,7 +56,7 @@ async def main():
 
     plan_agent = PlanAgent(client=ollama_client)
     replan_agent = ReplanAgent(client=ollama_client)
-    task_agent = SingleTaskAgent(
+    single_task_agent = SingleTaskAgent(
         client=ollama_client,
         tool_collection=tool_collection,
         server_manager=server_manager,
@@ -102,7 +102,9 @@ async def main():
                         "task": task,
                         "previous_task_list": previous_task_results,
                     }
-                    task_agent_response = await task_agent.run(**task_agent_query)
+                    task_agent_response = await single_task_agent.run(
+                        **task_agent_query
+                    )
 
                     previous_task_results.append(task_agent_response)
 
