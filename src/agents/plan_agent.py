@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class PlanAgent(Agent):
-    _prompt_path = "resources/prompts/v2/plan_prompt.jinja2"
+    _prompt_path = "resources/prompts/v2/plan_system_prompt.jinja2"
 
     def __init__(
         self,

@@ -1,0 +1,100 @@
+[
+  {
+    "messages": [
+      {
+          "role": "system",
+          "arguments": {}
+      },
+      {
+          "role": "user",
+          "arguments": {
+            "user_query": "Find notion documents related to redis and summarize them to redis.txt file"
+        }
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+          "role": "system",
+          "arguments": {}
+      },
+      {
+          "role": "user",
+          "arguments": {
+            "user_query": "I want to know where Korea's capital is"
+        }
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+          "role": "system",
+          "arguments": {}
+      },
+      {
+          "role": "user",
+          "arguments": {
+            "user_query": "Create a to-do list for my trip to Japan"
+        }
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+          "role": "system",
+          "arguments": {}
+      },
+      {
+          "role": "user",
+          "arguments": {
+            "user_query": "What are the health benefits of green tea?"
+        }
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+          "role": "system",
+          "arguments": {}
+      },
+      {
+          "role": "user",
+          "arguments": {
+            "user_query": "Generate a weekly meal plan for a vegetarian diet"
+        }
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+          "role": "system",
+          "arguments": {}
+      },
+      {
+          "role": "user",
+          "arguments": {
+            "user_query": "What is (2+3) * 12 ?"
+        }
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+          "role": "system",
+          "arguments": {}
+      },
+      {
+          "role": "user",
+          "arguments": {
+            "user_query": "Calculate (2+3) * 12 and save to file result.txt"
+        }
+      }
+    ]
+  }
+]
