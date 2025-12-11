@@ -1,0 +1,19 @@
+original user query:
+{{ original_user_query }}
+
+previous plan:
+{{ previous_plan }}
+
+tool candidates:
+{% for tool in tool_candidates %}
+<tool>
+    tool_name: {{ tool["tool_name"] }}
+    tool_description: {{ tool["tool_description"] }}
+</tool>
+{% endfor %}
+
+completed tasks so far:
+{% for task_result in task_results %}
+    task: {{ task_result["task"] }}
+    result: {{ task_result["result"] }}
+{% endfor %}

@@ -1,0 +1,146 @@
+[
+  {
+    "id": "replan-001",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "original_user_query": "Find notion documents related to redis and summarize them to redis.txt file",
+          "previous_plan": [
+            "Search for notion documents related to redis",
+            "iterate through the found documents and extract relevant information about redis",
+            "Summarize the extracted information into a concise summary",
+            "Save the summary to a file named redis.txt"
+          ],
+          "task_results": [
+            {
+              "task": "Search for notion documents related to redis",
+              "result": "https://notion.com/abcdef2\nhttps://notion.com/ghijkl3"
+            },
+            {
+              "task": "iterate through the found documents and extract relevant information about redis",
+              "result": "Document 1: Redis is an open-source, in-memory data structure store used as a database, cache, and message broker. Document 2: Redis supports various data structures such as strings, hashes, lists, sets, and more."
+            }
+          ],
+          "tool_candidates": [
+            {
+              "tool_name": "notion_search",
+              "tool_description": "Searches Notion documents based on a query."
+            },
+            {
+              "tool_name": "file_write",
+              "tool_description": "Writes content to a specified file."
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "replan-002",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "original_user_query": "Find notion documents related to redis and summarize them to redis.txt file",
+          "previous_plan": [
+            "Search for notion documents related to redis",
+            "iterate through the found documents and extract relevant information about redis",
+            "Summarize the extracted information into a concise summary",
+            "Save the summary to a file named redis.txt"
+          ],
+          "task_results": [
+            {
+              "task": "Search for notion documents related to redis",
+              "result": "https://notion.com/abcdef2\nhttps://notion.com/ghijkl3"
+            },
+            {
+              "task": "iterate through the found documents and extract relevant information about redis",
+              "result": "Document 1: Redis is an open-source, in-memory data structure store used as a database, cache, and message broker. Document 2: Redis supports various data structures such as strings, hashes, lists, sets, and more."
+            }
+          ],
+          "tool_candidates": [
+            {
+              "tool_name": "notion_search",
+              "tool_description": "Searches Notion documents based on a query."
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "replan-003",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "original_user_query": "Calculate (2+3) * 12 and save to file result.txt",
+          "previous_plan": [
+            "Calculate (2+3) * 12",
+            "Save the result to a file named result.txt"
+          ],
+          "task_results": [
+            {
+              "task": "Calculate (2+3) * 12",
+              "result": "Result is 60"
+            }
+          ],
+          "tool_candidates": [
+            {
+              "tool_name": "file_write",
+              "tool_description": "Writes content to a specified file."
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "replan-004",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "original_user_query": "Calculate (2+3) * 12 and save to file result.txt",
+          "previous_plan": [
+            "Calculate (2+3) * 12",
+            "Save the result to a file named result.txt"
+          ],
+          "task_results": [
+            {
+              "task": "Calculate (2+3) * 12",
+              "result": "Result is 60"
+            },
+            {
+              "task": "Save the result to a file named result.txt",
+              "result": "File result.txt created with content: 60"
+            }
+          ],
+          "tool_candidates": [
+            {
+              "tool_name": "file_write",
+              "tool_description": "Writes content to a specified file."
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

@@ -45,7 +45,8 @@ class PromptEvalWorkflow:
         chat_input_list = []
 
         for input_dict in input_dict_list:
-            chat_input = []
+            chat_messages = []
+            id_ = input_dict.get("id", None)
 
             for message in input_dict["messages"]:
                 role = message["role"]
@@ -57,7 +58,7 @@ class PromptEvalWorkflow:
                         )
 
                     system_prompt_template.render(**argument)
-                    chat_input.append(
+                    chat_messages.append(
                         {
                             "role": "system",
                             "content": system_prompt_template.render(**argument),
@@ -71,23 +72,28 @@ class PromptEvalWorkflow:
                         )
 
                     user_prompt = user_prompt_template.render(**argument)
-                    chat_input.append({"role": "user", "content": user_prompt})
+                    chat_messages.append({"role": "user", "content": user_prompt})
                 elif role == "assistant":
                     assistant_response = argument.get("response", "")
-                    chat_input.append(
+                    chat_messages.append(
                         {
                             "role": "assistant",
                             "content": f"{assistant_response}",
                         }
                     )
-            chat_input_list.append(chat_input)
+            chat_input_list.append(
+                {
+                    "id": id_,
+                    "messages": chat_messages,
+                }
+            )
 
         ollama_client = AsyncClient(host=self._model_info["host"])
 
         for chat_input in chat_input_list:
             response = await ollama_client.chat(
                 model=self._model_info["model"],
-                messages=chat_input,
+                messages=chat_input["messages"],
                 options=self._model_info.get("options"),
             )
             self._print(chat_input, response["message"]["content"])
@@ -100,8 +106,10 @@ class PromptEvalWorkflow:
         return prompt_template
 
     def _print(self, chat_input, response):
+        id_ = chat_input["id"]
+        print(f"----- Prompt Eval Result (ID: {id_}) -----")
         print("<Chat Input>")
-        for message in chat_input:
+        for message in chat_input["messages"]:
             role = message["role"]
             content = message["content"]
             print(f"[{role.upper()}]\n{content}")
