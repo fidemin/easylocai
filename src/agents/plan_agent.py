@@ -13,7 +13,7 @@ from src.utlis.prompt import pretty_prompt_text
 logger = logging.getLogger(__name__)
 
 
-class PlanAgentBeta(Agent):
+class PlanAgent(Agent):
     _plan_system_prompt_path = "resources/prompts/v2/plan_system_prompt.jinja2"
     _plan_user_prompt_path = "resources/prompts/v2/plan_user_prompt.jinja2"
     _replan_system_prompt_path = "resources/prompts/v2/replan_system_prompt.jinja2"

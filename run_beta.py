@@ -6,7 +6,7 @@ import chromadb
 from ollama import AsyncClient
 from rich import get_console
 
-from src.agents.plan_agent_beta import PlanAgentBeta
+from src.agents.plan_agent import PlanAgent
 from src.agents.single_task_agent import SingleTaskAgent
 from src.core.server import ServerManager
 from src.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
@@ -53,7 +53,7 @@ async def main():
 
     server_manager = ServerManager.from_json_config_file("mcp_server_config.json")
 
-    plan_agent = PlanAgentBeta(
+    plan_agent = PlanAgent(
         client=ollama_client,
         tool_collection=tool_collection,
         server_manager=server_manager,
