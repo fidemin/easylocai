@@ -107,7 +107,7 @@ async def main():
                     task_agent_query = {
                         "original_tasks": tasks,
                         "original_user_query": user_input,
-                        "task": task,
+                        "task": task["description"],
                         "previous_task_list": previous_task_results,
                     }
                     task_agent_response = await single_task_agent.run(
@@ -118,7 +118,7 @@ async def main():
 
                     plan_agent_response = await plan_agent.run(
                         init=False,
-                        previous_plan=tasks,
+                        previous_plan=[task["description"] for task in tasks],
                         task_results=previous_task_results,
                         **plan_query,
                     )

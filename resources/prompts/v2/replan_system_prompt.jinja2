@@ -22,7 +22,12 @@ Rules:
 
 Output format (strict JSON only — no markdown, no explanation, no reasoning):
 {
-  "tasks": ["[TOOL|LLM] remaining task 1", "[TOOL|LLM] remaining task 2"],
+  "tasks": [
+    {
+      "type": "tool" or "llm",
+      "description": "<task description>"
+    }
+  ],
   "response": null or "<final answer only when no tasks remain>"
 }
 
@@ -32,9 +37,18 @@ Example outputs (Only JSON should be returned. No other text like json``` or ```
 Example 1
 {
   "tasks": [
-    "[TOOL] Search web to find top 5 JavaScript frameworks in 2025",
-    "[LLM] Summarize the search result",
-    "[TOOL] Save file as framework_summary.txt from contents"
+    {
+      "type": "tool",
+      "description": "Search web to find top 5 JavaScript frameworks in 2025
+    },
+    {
+      "type": "llm",
+      "description": "Summarize the search result"
+    },
+    {
+      "type": "tool",
+      "description": "Save file as framework_summary.txt from contents"
+    }
   ],
   "response": null
 }
