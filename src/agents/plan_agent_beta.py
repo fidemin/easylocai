@@ -65,28 +65,35 @@ class PlanAgentBeta(Agent):
                 ],
                 options={"temperature": 0.2},
             )
-            previous_plan = json.loads(response["message"]["content"])
+            previous_plan = json.loads(response["message"]["content"])["tasks"]
         else:
             previous_plan = query["previous_plan"]
 
-        tool_search_result = self._tool_collection.query(
-            query_texts=previous_plan,
-            n_results=5,
-        )
+        logger.debug(f"Previous Plan: {previous_plan}")
 
-        metadatas = tool_search_result["metadatas"][0]
         tool_candidates = []
 
-        for metadata in metadatas:
-            server_name = metadata["server_name"]
-            tool_name = metadata["tool_name"]
-            tool = self._server_manager.get_server(server_name).get_tool(tool_name)
-            tool_candidates.append(
-                {
-                    "tool_name": tool.name,
-                    "tool_description": tool.description,
-                }
+        if previous_plan:
+            tool_search_result = self._tool_collection.query(
+                query_texts=previous_plan,
+                n_results=5,
             )
+
+            tool_candidates = []
+
+            for metadatas in tool_search_result["metadatas"]:
+                for metadata in metadatas:
+                    server_name = metadata["server_name"]
+                    tool_name = metadata["tool_name"]
+                    tool = self._server_manager.get_server(server_name).get_tool(
+                        tool_name
+                    )
+                    tool_candidates.append(
+                        {
+                            "tool_name": tool.name,
+                            "tool_description": tool.description,
+                        }
+                    )
 
         system_prompt = self._replan_system_prompt_template.render()
         logger.debug(pretty_prompt_text("Replan System Prompt", system_prompt))

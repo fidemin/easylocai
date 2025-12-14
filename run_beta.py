@@ -6,8 +6,7 @@ import chromadb
 from ollama import AsyncClient
 from rich import get_console
 
-from src.agents.plan_agent import PlanAgent
-from src.agents.replan_agent import ReplanAgent
+from src.agents.plan_agent_beta import PlanAgentBeta
 from src.agents.single_task_agent import SingleTaskAgent
 from src.core.server import ServerManager
 from src.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
@@ -54,8 +53,11 @@ async def main():
 
     server_manager = ServerManager.from_json_config_file("mcp_server_config.json")
 
-    plan_agent = PlanAgent(client=ollama_client)
-    replan_agent = ReplanAgent(client=ollama_client)
+    plan_agent = PlanAgentBeta(
+        client=ollama_client,
+        tool_collection=tool_collection,
+        server_manager=server_manager,
+    )
     single_task_agent = SingleTaskAgent(
         client=ollama_client,
         tool_collection=tool_collection,
@@ -88,9 +90,15 @@ async def main():
             }
 
             with ConsoleSpinner(console) as spinner:
-                spinner.set_prefix("Creating initial plan...")
+                spinner.set_prefix("...")
                 plan_agent_response = await plan_agent.run(**plan_query)
                 logger.debug(f"Plan Agent Response:\n{plan_agent_response}")
+
+                if plan_agent_response["response"] is not None:
+                    answer = plan_agent_response["response"]
+                    messages.append({"role": "assistant", "content": answer})
+                    continue
+
                 tasks = plan_agent_response["tasks"]
                 previous_task_results = []
 
@@ -108,22 +116,21 @@ async def main():
 
                     previous_task_results.append(task_agent_response)
 
-                    replan_agent_query = {
-                        "original_user_query": user_input,
-                        "original_plan": tasks,
-                        "task_results": previous_task_results,
-                    }
+                    plan_agent_response = await plan_agent.run(
+                        init=False,
+                        previous_plan=tasks,
+                        task_results=previous_task_results,
+                        **plan_query,
+                    )
+                    logger.debug(f"Plan Agent Response:\n{plan_agent_response}")
 
-                    replan_agent_response = await replan_agent.run(**replan_agent_query)
-                    logger.debug(f"Replan Agent Response:\n{replan_agent_response}")
-
-                    response = replan_agent_response["response"]
+                    response = plan_agent_response["response"]
 
                     if response is not None:
                         answer = response
                         break
 
-                    tasks = replan_agent_response["tasks"]
+                    tasks = plan_agent_response["tasks"]
 
                 messages.append({"role": "assistant", "content": answer})
 
