@@ -107,7 +107,7 @@ async def main():
                     task_agent_query = {
                         "original_tasks": tasks,
                         "original_user_query": user_input,
-                        "task": task["description"],
+                        "task": task,
                         "previous_task_list": previous_task_results,
                     }
                     task_agent_response = await single_task_agent.run(

@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 
 class SingleTaskAgent(Agent):
     _prompt_path = "resources/prompts/v2/single_task_prompt_v2.jinja2"
+    _tool_system_prompt_path = "resources/prompts/v2/tool_system_prompt.jinja2"
+    _tool_user_prompt_path = "resources/prompts/v2/tool_user_prompt.jinja2"
 
     def __init__(
         self,
@@ -26,22 +28,54 @@ class SingleTaskAgent(Agent):
     ):
         self._ollama_client = client
         env = Environment(loader=FileSystemLoader(""))
-        prompt_template = env.get_template(self._prompt_path)
-        self._prompt_template = prompt_template
+
+        tool_system_prompt_template = env.get_template(self._tool_system_prompt_path)
+        self._tool_system_prompt_template = tool_system_prompt_template
+
+        tool_user_prompt_template = env.get_template(self._tool_user_prompt_path)
+        self._tool_user_prompt_template = tool_user_prompt_template
+
         self._model = DEFAULT_LLM_MODEL
         self._tool_collection = tool_collection
         self._server_manager = server_manager
 
     async def run(self, **query) -> str | dict:
         task = query["task"]
+        type_ = task["type"]
+        task_description = task["description"]
 
+        reasoning_agent = ReasoningAgent(client=self._ollama_client)
+
+        if type_ == "tool":
+            previous_task_results = query.get("previous_task_results", [])
+            original_tasks = query.get("original_tasks", None)
+
+            result = await self._tool_result(
+                task_description=task_description,
+                previous_task_results=previous_task_results,
+                original_tasks=original_tasks,
+            )
+            logger.debug(f"Tool Result:\n{result}")
+        elif type_ == "llm":
+            result = await reasoning_agent.run(task=task)
+            logger.debug(f"LLM Result:\n{result}")
+        else:
+            raise ValueError(f"Unknown task type: {type_}")
+
+        return {
+            "task": task,
+            "result": result,
+        }
+
+    async def _tool_result(
+        self, *, task_description, previous_task_results, original_tasks
+    ):
         tool_search_result = self._tool_collection.query(
-            query_texts=[task],
+            query_texts=[task_description],
             n_results=5,
         )
 
         metadatas = tool_search_result["metadatas"][0]
-        reasoning_agent = ReasoningAgent(client=self._ollama_client)
         tool_candidates = []
 
         for metadata in metadatas:
@@ -57,8 +91,6 @@ class SingleTaskAgent(Agent):
                 }
             )
 
-        previous_task_results = query.get("previous_task_results", [])
-        original_tasks = query.get("original_tasks", None)
         iteration_results = []
 
         if original_tasks is None:
@@ -68,19 +100,23 @@ class SingleTaskAgent(Agent):
             original_tasks = []
 
         while True:
-            prompt = self._prompt_template.render(
+            tool_system_prompt = self._tool_system_prompt_template.render()
+            logger.debug(pretty_prompt_text("Tool System Prompt", tool_system_prompt))
+
+            tool_user_prompt = self._tool_user_prompt_template.render(
                 tool_candidates=tool_candidates,
                 previous_task_results=previous_task_results,
                 iteration_results=iteration_results,
                 original_tasks=original_tasks,
-                task=task,
+                task=task_description,
             )
-            logger.debug(pretty_prompt_text("Task Prompt", prompt))
+            logger.debug(pretty_prompt_text("Tool User Prompt", tool_user_prompt))
 
             response = await self._ollama_client.chat(
                 model=self._model,
                 messages=[
-                    {"role": "system", "content": prompt},
+                    {"role": "system", "content": tool_system_prompt},
+                    {"role": "user", "content": tool_user_prompt},
                 ],
                 options={
                     "temperature": 0.2,
@@ -96,7 +132,7 @@ class SingleTaskAgent(Agent):
                 )
                 iteration_results.append(
                     {
-                        "executed_task": task,
+                        "subtask": task_description,
                         "result": f"Error to parse result to JSON."
                         f"\nContent:{response['message']['content']}"
                         f"\nThinking: {response['message']['thinking']}",
@@ -110,29 +146,21 @@ class SingleTaskAgent(Agent):
             if finished:
                 break
 
-            if task_result["use_reasoning"] is True:
-                # TODO: handle reasoning level
-                tool_result = await reasoning_agent.run(
-                    task=task_result["executed_task"]
-                )
-                logger.debug(f"Reasoning Agent Result:\n{tool_result}")
-            else:
-                tool_result = await self._server_manager.call_tool(
-                    task_result["server_name"],
-                    task_result["tool_name"],
-                    task_result["tool_args"],
-                )
+            tool_result = await self._server_manager.call_tool(
+                task_result["server_name"],
+                task_result["tool_name"],
+                task_result["tool_args"],
+            )
 
-                logger.debug(f"Tool result:\n{tool_result}")
+            logger.debug(f"Tool result:\n{tool_result}")
 
             iteration_results.append(
                 {
-                    "executed_task": task_result["executed_task"],
+                    "subtask": task_result["subtask"],
                     "result": tool_result,
                 }
             )
-
         return {
-            "task": task,
-            "result": iteration_results,
+            "task": task_description,
+            "iteration_results": iteration_results,
         }
