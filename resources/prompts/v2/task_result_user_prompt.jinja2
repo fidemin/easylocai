@@ -1,0 +1,15 @@
+Original User Query:
+{{ original_user_query }}
+
+Task:
+{{ task }}
+
+Iteration Results:
+{% for iteration_result in iteration_results %}
+<iteration_result>
+    - subtask:
+    {{ iteration_result["subtask"] }}
+    - result:
+    {{ iteration_result["result"] }}
+</iteration_result>
+{% endfor %}

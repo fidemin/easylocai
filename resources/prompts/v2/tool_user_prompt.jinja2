@@ -22,7 +22,7 @@ Previous task and result context (chronological order):
 Iteration results from previous iterations of current task:
 {% for iteration_result in iteration_results %}
 <iteration_result>
-    - executed_task:
+    - subtask:
     {{ iteration_result["subtask"] }}
     - result:
     {{ iteration_result["result"] }}

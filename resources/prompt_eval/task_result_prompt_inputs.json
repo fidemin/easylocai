@@ -1,0 +1,51 @@
+[
+  {
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "original_user_query": "List failed Kubernetes pods and their failure reasons",
+          "task": "Extract failed pod information from kubectl output",
+          "iteration_results": [
+            {
+              "subtask": "Parse kubectl get pods output",
+              "result": {
+                "pods": [
+                  {
+                    "name": "api-server-7c9d8f",
+                    "namespace": "default",
+                    "status": "Running"
+                  },
+                  {
+                    "name": "worker-5b6d9c",
+                    "namespace": "batch",
+                    "status": "CrashLoopBackOff",
+                    "reason": "OOMKilled"
+                  }
+                ]
+              }
+            },
+            {
+              "subtask": "Parse kubectl describe pod worker-5b6d9c",
+              "result": {
+                "name": "worker-5b6d9c",
+                "namespace": "batch",
+                "events": [
+                  {
+                    "type": "Warning",
+                    "reason": "OOMKilled",
+                    "message": "Container ran out of memory"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

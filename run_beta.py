@@ -80,6 +80,7 @@ async def main():
             messages.append({"role": "user", "content": user_input})
             render_chat(console, messages)
 
+            # TODO: apply user context
             related_user_context_list = user_context_collection.query(
                 query_texts=[user_input],
                 n_results=5,
