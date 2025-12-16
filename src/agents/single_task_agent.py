@@ -15,9 +15,15 @@ logger = logging.getLogger(__name__)
 
 
 class SingleTaskAgent(Agent):
-    _prompt_path = "resources/prompts/v2/single_task_prompt_v2.jinja2"
     _tool_system_prompt_path = "resources/prompts/v2/tool_system_prompt.jinja2"
     _tool_user_prompt_path = "resources/prompts/v2/tool_user_prompt.jinja2"
+
+    _tool_result_system_prompt_path = (
+        "resources/prompts/v2/task_result_system_prompt.jinja2"
+    )
+    _tool_result_user_prompt_path = (
+        "resources/prompts/v2/task_result_user_prompt.jinja2"
+    )
 
     def __init__(
         self,
@@ -35,6 +41,16 @@ class SingleTaskAgent(Agent):
         tool_user_prompt_template = env.get_template(self._tool_user_prompt_path)
         self._tool_user_prompt_template = tool_user_prompt_template
 
+        task_result_system_prompt_template = env.get_template(
+            self._tool_result_system_prompt_path
+        )
+        self._task_result_system_prompt_template = task_result_system_prompt_template
+
+        task_result_user_prompt_template = env.get_template(
+            self._tool_result_user_prompt_path
+        )
+        self._task_result_user_prompt_template = task_result_user_prompt_template
+
         self._model = DEFAULT_LLM_MODEL
         self._tool_collection = tool_collection
         self._server_manager = server_manager
@@ -50,17 +66,48 @@ class SingleTaskAgent(Agent):
             previous_task_results = query.get("previous_task_results", [])
             original_tasks = query.get("original_tasks", None)
 
-            result = await self._tool_result(
+            # Example:
+            # result = {
+            #   "task": task_description,
+            #   "iteration_results": [
+            #     {
+            #       "subtask": "subtask description",
+            #       "result": "subtask result",
+            #     },
+            #   ]
+            # }
+            tool_result = await self._tool_result(
                 task_description=task_description,
                 previous_task_results=previous_task_results,
                 original_tasks=original_tasks,
             )
-            logger.debug(f"Tool Result:\n{result}")
+
+            logger.debug(f"Tool Result:\n{tool_result}")
+            iteration_results = tool_result["iteration_results"]
+
         elif type_ == "llm":
-            result = await reasoning_agent.run(task=task)
-            logger.debug(f"LLM Result:\n{result}")
+            # Example:
+            # result = {
+            #   "reasoning": "First, I need to calculate the sum of 2 and 3, which is 5. Next, I will multiply this result by 5. Therefore, 5 multiplied by 5 equals 25.",
+            #   "final": "The answer is 25.",
+            #   "confidence": 100
+            # }
+            reasoning_result = await reasoning_agent.run(task=task)
+            iteration_results = [
+                {
+                    "subtask": task_description,
+                    "result": reasoning_result,
+                }
+            ]
+            logger.debug(f"LLM Result:\n{reasoning_result}")
         else:
             raise ValueError(f"Unknown task type: {type_}")
+
+        result = await self._task_result(
+            original_user_query=query["original_user_query"],
+            task=task_description,
+            iteration_results=iteration_results,
+        )
 
         return {
             "task": task,
@@ -161,6 +208,37 @@ class SingleTaskAgent(Agent):
                 }
             )
         return {
-            "task": task_description,
             "iteration_results": iteration_results,
         }
+
+    async def _task_result(
+        self, original_user_query: str, task: str, iteration_results: list
+    ) -> str:
+
+        task_result_system_prompt = self._task_result_system_prompt_template.render()
+        logger.debug(
+            pretty_prompt_text("Task Result System Prompt", task_result_system_prompt)
+        )
+
+        task_result_user_prompt = self._task_result_user_prompt_template.render(
+            original_user_query=original_user_query,
+            task=task,
+            iteration_results=iteration_results,
+        )
+
+        logger.debug(
+            pretty_prompt_text("Task Result User Prompt", task_result_user_prompt)
+        )
+
+        response = await self._ollama_client.chat(
+            model=self._model,
+            messages=[
+                {"role": "system", "content": task_result_system_prompt},
+                {"role": "user", "content": task_result_user_prompt},
+            ],
+            options={
+                "temperature": 0.2,
+            },
+        )
+
+        return response["message"]["content"]
