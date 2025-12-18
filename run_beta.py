@@ -91,7 +91,7 @@ async def main():
             }
 
             with ConsoleSpinner(console) as spinner:
-                spinner.set_prefix("...")
+                spinner.set_prefix("Planning...")
                 plan_agent_response = await plan_agent.run(**plan_query)
                 logger.debug(f"Plan Agent Response:\n{plan_agent_response}")
 
@@ -105,6 +105,7 @@ async def main():
 
                 while True:
                     task = tasks[0]
+                    spinner.set_prefix(task["description"])
                     task_agent_query = {
                         "original_tasks": tasks,
                         "original_user_query": user_input,
@@ -117,6 +118,7 @@ async def main():
 
                     previous_task_results.append(task_agent_response)
 
+                    spinner.set_prefix("Check for completion...")
                     plan_agent_response = await plan_agent.run(
                         init=False,
                         previous_plan=[task["description"] for task in tasks],

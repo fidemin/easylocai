@@ -198,8 +198,15 @@ class SingleTaskAgent(Agent):
                 task_result["tool_name"],
                 task_result["tool_args"],
             )
-
             logger.debug(f"Tool result:\n{tool_result}")
+
+            if tool_result.isError:
+                tool_result = f"Error occurred when calling tool: {tool_result.content}"
+            else:
+                if tool_result.structuredContent:
+                    tool_result = tool_result.structuredContent
+                else:
+                    tool_result = tool_result.content
 
             iteration_results.append(
                 {
