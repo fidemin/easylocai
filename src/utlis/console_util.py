@@ -20,12 +20,12 @@ def build_session():
 def build_keybindings():
     kb = KeyBindings()
 
-    @kb.add("escape", Keys.Enter)
+    @kb.add(Keys.Enter)
     def _(event):
         buf = event.current_buffer
         buf.insert_text("\n")
 
-    @kb.add(Keys.Enter)
+    @kb.add("escape", Keys.Enter)
     def _(event):
         event.current_buffer.validate_and_handle()
 
