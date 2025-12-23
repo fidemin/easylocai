@@ -1,3 +1,11 @@
+previous user contexts:
+{% for user_context in user_contexts %}
+<user_context>
+- user query: {{ user_context["query"] }}
+- assistant answer: {{ user_context["answer"] }}
+</user_context>
+{% endfor %}
+
 original user query:
 {{ original_user_query }}
 

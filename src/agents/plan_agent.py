@@ -99,6 +99,7 @@ class PlanAgent(Agent):
         logger.debug(pretty_prompt_text("Replan System Prompt", system_prompt))
 
         user_prompt = self._replan_user_prompt_template.render(
+            user_context=query.get("user_contexts", []),
             original_user_query=user_query,
             previous_plan=previous_plan,
             tool_candidates=tool_candidates,

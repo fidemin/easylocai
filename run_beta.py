@@ -88,6 +88,7 @@ async def main():
 
             plan_query = {
                 "user_query": user_input,
+                "user_contexts": [],
             }
 
             with ConsoleSpinner(console) as spinner:
@@ -136,6 +137,12 @@ async def main():
                     tasks = plan_agent_response["tasks"]
 
                 messages.append({"role": "assistant", "content": answer})
+                plan_query["user_contexts"].append(
+                    {
+                        "query": user_input,
+                        "answer": answer,
+                    }
+                )
 
 
 if __name__ == "__main__":

@@ -142,5 +142,37 @@
         }
       }
     ]
+  },
+  {
+    "id": "replan-004",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "user_contexts": [
+            {
+              "query": "Calculate (2+3) * 12 and save to file result.txt",
+              "answer": "result is 60 and saved to result.txt"
+            }
+          ],
+          "original_user_query": "Calculate (2+3) * 12 and save to file result.txt",
+          "previous_plan": [
+            "Calculate (2+3) * 12",
+            "Save the result to a file named result.txt"
+          ],
+          "task_results": [],
+          "tool_candidates": [
+            {
+              "tool_name": "file_write",
+              "tool_description": "Writes content to a specified file."
+            }
+          ]
+        }
+      }
+    ]
   }
 ]
