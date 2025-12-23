@@ -14,7 +14,7 @@ Tool Candidates:
 Previous task and result context (chronological order):
 {% for task_result in previous_task_results %}
 <task_result>
-- task: {{ task_result["task"] }}
+- task: {{ task_result["subtask"] }}
 - result: {{ task_result["result"] }}
 </task_result>
 {% endfor %}
