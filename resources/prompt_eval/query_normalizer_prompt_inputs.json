@@ -194,5 +194,21 @@
         }
       }
     ]
+  },
+  {
+    "id": "No previous conversations. Context is fully in the query.",
+    "messages": [
+        {
+            "role": "system",
+            "arguments": {}
+        },
+        {
+            "role": "user",
+            "arguments": {
+            "previous_conversations": [],
+            "user_query": "Kubernetes is an open-source platform that can automate the management, deployment, and scale of containerized applications. Discover more about Kubernetes, including its architecture, features, and uses.\n\n Is this true?"
+            }
+        }
+    ]
   }
 ]

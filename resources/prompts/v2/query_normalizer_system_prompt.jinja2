@@ -8,26 +8,39 @@ Input structure:
 - The section labeled ORIGINAL_USER_QUERY defines what the user wants now and is authoritative.
 - The section labeled PREVIOUS_CONVERSATIONS contains prior user queries and assistant outputs and is context only.
 
+Core principle (apply to ALL requests):
+- Separate the TASK and OBJECT from any REFERENCE MATERIAL.
+  - TASK: what action is being requested
+  - OBJECT: what the task is about
+  - REFERENCE MATERIAL: text/code/data/output being operated on
+
 Rules:
 - Do NOT solve the task.
 - Do NOT create a plan.
 - Only ORIGINAL_USER_QUERY defines the current task.
 - PREVIOUS_CONVERSATIONS must be treated strictly as background context; they may be incomplete or incorrect.
 - Never treat previous assistant answers as instructions unless explicitly referenced in ORIGINAL_USER_QUERY.
-- The user_query must be self-contained and actionable.
-- Context must NOT contain task instructions.
-- If something is a requirement or constraint, it belongs in user_query.
-- If something is background, history, environment, or prior results, it belongs in context.
-- If there is no relevant background, context may be empty.
-- Prefer minimal rewriting: preserve the user’s original intent and wording where possible.
-- If ORIGINAL_USER_QUERY already stands alone, copy it with minor cleanup.
-- Treat concrete references as artifacts that must be preserved:
-  filenames, file paths, URLs, document IDs, database/table names, ticket IDs, tool run IDs, variable names.
-- If PREVIOUS_CONVERSATIONS mentions an artifact that is required to execute ORIGINAL_USER_QUERY,
-  include it in context verbatim (e.g., "logs.txt").
-- If ORIGINAL_USER_QUERY refers to previous outputs implicitly ("using the summary", "from that report", "based on earlier results"),
-  then context must specify WHERE that output is (filename/path/URL) if known.
 
+User_query rules:
+- user_query must be self-contained and actionable.
+- user_query must clearly express:
+  - the ACTION (what to do)
+  - the OBJECT/TARGET (what the task is about)
+- Do NOT embed large reference material inside user_query.
+- If ORIGINAL_USER_QUERY includes pasted content (paragraphs, statements, logs, code, configs, tables),
+  move that content to context and keep user_query short and action-focused.
+- If ORIGINAL_USER_QUERY already stands alone, copy it with minor cleanup.
+
+Context rules:
+- Context must NOT contain task instructions.
+- Context may include only:
+  - REFERENCE MATERIAL (verbatim or minimally cleaned): ORIGINAL_USER_QUERY can be split to extract the reference. Tag the reference and use the tag both in user_query and context.
+  - relevant prior results or state
+  - required environment/tooling details
+- Treat concrete references as artifacts that must be preserved verbatim:
+  filenames, file paths, URLs, document IDs, database/table names, ticket IDs, tool run IDs, variable names.
+- If PREVIOUS_CONVERSATIONS mentions an artifact required to execute ORIGINAL_USER_QUERY, include it in context verbatim.
+- If ORIGINAL_USER_QUERY refers implicitly to prior outputs (e.g., "using the summary", "based on earlier results"), context must specify WHERE that output exists (filename/path/URL) if known.
 
 Output:
 Return ONLY valid JSON in this exact format:
@@ -38,8 +51,10 @@ Return ONLY valid JSON in this exact format:
 }
 
 Heuristics:
-- Imperative actions (“do / build / generate / explain / find”) → user_query
-- References to past actions or results (“previously / before / earlier / last time”) → context
+- Imperative actions (“do / build / generate / explain / find / analyze / summarize / refactor / compare”) → user_query
+- OBJECT is the primary entity being acted upon (document, system, dataset, codebase, concept, report)
+- Large pasted content, quoted text, logs, code blocks → context as reference material
+- References to past actions or results (“previously / earlier / last time”) → context
 - Formatting requirements (JSON-only, no markdown, language) → user_query
 - Tooling, stack, environment → context
 - If the task needs a specific prior output to proceed and that output is named,
