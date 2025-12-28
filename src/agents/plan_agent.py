@@ -1,9 +1,11 @@
 import json
 import logging
+from typing import Any, Optional
 
 from chromadb.types import Collection
 from jinja2 import Environment, FileSystemLoader
 from ollama import AsyncClient
+from pydantic import BaseModel
 
 from src.core.agent import Agent
 from src.core.contants import DEFAULT_LLM_MODEL
@@ -13,7 +15,20 @@ from src.utlis.prompt import pretty_prompt_text
 logger = logging.getLogger(__name__)
 
 
-class PlanAgent(Agent):
+class PlanAgentInput(BaseModel):
+    user_query: str
+    user_contexts: list[dict] = []
+    task_results: list[dict] = []
+    previous_plan: list[str] = []
+    init: bool = True
+
+
+class PlanAgentOutput(BaseModel):
+    tasks: list[dict]
+    response: Optional[str]
+
+
+class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
     _plan_system_prompt_path = "resources/prompts/v2/plan_system_prompt.jinja2"
     _plan_user_prompt_path = "resources/prompts/v2/plan_user_prompt.jinja2"
     _replan_system_prompt_path = "resources/prompts/v2/replan_system_prompt.jinja2"
@@ -46,28 +61,15 @@ class PlanAgent(Agent):
 
         self._model = DEFAULT_LLM_MODEL
 
-    async def run(self, init=True, **query) -> str | dict:
-        user_query = query["user_query"]
-        task_results = query.get("task_results", [])
+    async def _run(self, input_: PlanAgentInput) -> PlanAgentOutput:
+        user_query = input_.user_query
+        task_results = input_.task_results
+        init = input_.init
 
         if init:
-            system_prompt = self._plan_system_prompt_template.render()
-            logger.debug(pretty_prompt_text("Plan System Prompt", system_prompt))
-
-            user_prompt = self._plan_user_prompt_template.render(user_query=user_query)
-            logger.debug(pretty_prompt_text("Plan User Prompt", user_prompt))
-
-            response = await self._ollama_client.chat(
-                model=self._model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                options={"temperature": 0.2},
-            )
-            previous_plan = json.loads(response["message"]["content"])["tasks"]
+            previous_plan = await self._initial_plan(user_query)
         else:
-            previous_plan = query["previous_plan"]
+            previous_plan = input_.previous_plan
 
         logger.debug(f"Previous Plan: {previous_plan}")
 
@@ -99,7 +101,7 @@ class PlanAgent(Agent):
         logger.debug(pretty_prompt_text("Replan System Prompt", system_prompt))
 
         user_prompt = self._replan_user_prompt_template.render(
-            user_context=query.get("user_contexts", []),
+            user_context=input_.user_contexts,
             original_user_query=user_query,
             previous_plan=previous_plan,
             tool_candidates=tool_candidates,
@@ -116,5 +118,25 @@ class PlanAgent(Agent):
             options={"temperature": 0.2},
         )
 
-        revised_plan = json.loads(response["message"]["content"])
+        revised_plan_dict = json.loads(response["message"]["content"])
+        revised_plan = PlanAgentOutput(**revised_plan_dict)
+
         return revised_plan
+
+    async def _initial_plan(self, user_query: str) -> Any:
+        system_prompt = self._plan_system_prompt_template.render()
+        logger.debug(pretty_prompt_text("Plan System Prompt", system_prompt))
+
+        user_prompt = self._plan_user_prompt_template.render(user_query=user_query)
+        logger.debug(pretty_prompt_text("Plan User Prompt", user_prompt))
+
+        response = await self._ollama_client.chat(
+            model=self._model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            options={"temperature": 0.2},
+        )
+        previous_plan = json.loads(response["message"]["content"])["tasks"]
+        return previous_plan

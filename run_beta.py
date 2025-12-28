@@ -6,7 +6,7 @@ import chromadb
 from ollama import AsyncClient
 from rich import get_console
 
-from src.agents.plan_agent import PlanAgent
+from src.agents.plan_agent import PlanAgent, PlanAgentInput, PlanAgentOutput
 from src.agents.single_task_agent import SingleTaskAgent
 from src.core.server import ServerManager
 from src.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
@@ -48,7 +48,6 @@ async def main():
     ollama_client = AsyncClient(host="http://localhost:11434")
 
     chromadb_client = chromadb.Client()
-    user_context_collection = chromadb_client.get_or_create_collection("user_context")
     tool_collection = chromadb_client.get_or_create_collection("tools")
 
     server_manager = ServerManager.from_json_config_file("mcp_server_config.json")
@@ -80,28 +79,23 @@ async def main():
             messages.append({"role": "user", "content": user_input})
             render_chat(console, messages)
 
-            # TODO: apply user context
-            related_user_context_list = user_context_collection.query(
-                query_texts=[user_input],
-                n_results=5,
-            )["documents"][0]
-
-            plan_query = {
-                "user_query": user_input,
-                "user_contexts": [],
-            }
+            plan_agent_input = PlanAgentInput(
+                user_query=user_input,
+            )
 
             with ConsoleSpinner(console) as spinner:
                 spinner.set_prefix("Planning...")
-                plan_agent_response = await plan_agent.run(**plan_query)
-                logger.debug(f"Plan Agent Response:\n{plan_agent_response}")
+                plan_agent_output: PlanAgentOutput = await plan_agent.run(
+                    plan_agent_input
+                )
+                logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
 
-                if plan_agent_response["response"] is not None:
-                    answer = plan_agent_response["response"]
+                if plan_agent_output.response is not None:
+                    answer = plan_agent_output.response
                     messages.append({"role": "assistant", "content": answer})
                     continue
 
-                tasks = plan_agent_response["tasks"]
+                tasks = plan_agent_output.tasks
                 previous_task_results = []
 
                 while True:
@@ -120,26 +114,30 @@ async def main():
                     previous_task_results.append(task_agent_response)
 
                     spinner.set_prefix("Check for completion...")
-                    plan_agent_response = await plan_agent.run(
+                    plan_agent_input = PlanAgentInput(
                         init=False,
+                        user_query=user_input,
                         previous_plan=[task["description"] for task in tasks],
                         task_results=previous_task_results,
-                        **plan_query,
+                        user_contexts=plan_agent_input.user_contexts,
                     )
-                    logger.debug(f"Plan Agent Response:\n{plan_agent_response}")
+                    plan_agent_output: PlanAgentOutput = await plan_agent.run(
+                        plan_agent_input
+                    )
+                    logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
 
-                    response = plan_agent_response["response"]
+                    response = plan_agent_output.response
 
                     if response is not None:
                         answer = response
                         break
 
-                    tasks = plan_agent_response["tasks"]
+                    tasks = plan_agent_output.tasks
 
                 messages.append({"role": "assistant", "content": answer})
-                plan_query["user_contexts"].append(
+                plan_agent_input.user_contexts.append(
                     {
-                        "query": user_input,
+                        "user_query": user_input,
                         "answer": answer,
                     }
                 )
