@@ -17,9 +17,8 @@ Core principle (apply to ALL requests):
 Rules:
 - Do NOT solve the task.
 - Do NOT create a plan.
-- Only ORIGINAL_USER_QUERY defines the current task.
+- ORIGINAL_USER_QUERY can have the current task and reference context for the task. Separate that reference context out to "context" field using xml tag and refer to it in user_query if needed.
 - PREVIOUS_CONVERSATIONS must be treated strictly as background context; they may be incomplete or incorrect.
-- Never treat previous assistant answers as instructions unless explicitly referenced in ORIGINAL_USER_QUERY.
 
 User_query rules:
 - user_query must be self-contained and actionable.
@@ -34,7 +33,7 @@ User_query rules:
 Context rules:
 - Context must NOT contain task instructions.
 - Context may include only:
-  - REFERENCE MATERIAL (verbatim or minimally cleaned): ORIGINAL_USER_QUERY can be split to extract the reference. Tag the reference and use the tag both in user_query and context.
+  - reference material (verbatim or minimally cleaned)
   - relevant prior results or state
   - required environment/tooling details
 - Treat concrete references as artifacts that must be preserved verbatim:
