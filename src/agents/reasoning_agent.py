@@ -1,7 +1,7 @@
 import json
 import logging
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from ollama import AsyncClient
 
 from src.core.agent import Agent
@@ -24,7 +24,7 @@ class ReasoningAgent(Agent):
             self._prompt_path = prompt_path
 
         self._ollama_client = client
-        env = Environment(loader=FileSystemLoader(""))
+        env = Environment(loader=FileSystemLoader(""), undefined=StrictUndefined)
         prompt_template = env.get_template(self._prompt_path)
         self._prompt_template = prompt_template
         self._model = DEFAULT_LLM_MODEL

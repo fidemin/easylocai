@@ -2,7 +2,7 @@ import json
 import logging
 
 from chromadb.types import Collection
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from ollama import AsyncClient
 
 from src.agents.reasoning_agent import ReasoningAgent
@@ -33,7 +33,7 @@ class SingleTaskAgent(Agent):
         server_manager: ServerManager,
     ):
         self._ollama_client = client
-        env = Environment(loader=FileSystemLoader(""))
+        env = Environment(loader=FileSystemLoader(""), undefined=StrictUndefined)
 
         tool_system_prompt_template = env.get_template(self._tool_system_prompt_path)
         self._tool_system_prompt_template = tool_system_prompt_template

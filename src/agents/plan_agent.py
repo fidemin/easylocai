@@ -3,7 +3,7 @@ import logging
 from typing import Any, Optional
 
 from chromadb.types import Collection
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from ollama import AsyncClient
 from pydantic import BaseModel
 
@@ -42,7 +42,7 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
         server_manager: ServerManager,
     ):
         self._ollama_client = client
-        env = Environment(loader=FileSystemLoader(""))
+        env = Environment(loader=FileSystemLoader(""), undefined=StrictUndefined)
 
         self._tool_collection = tool_collection
         self._server_manager = server_manager
