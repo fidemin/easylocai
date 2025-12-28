@@ -1,0 +1,198 @@
+[
+  {
+    "id": "Simple task with no prior context",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "previous_conversations": [],
+          "user_query": "Find notion documents related to redis and summarize them to redis.txt file"
+        }
+      }
+    ]
+  },
+
+  {
+    "id": "Follow-up task building on previous result",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "previous_conversations": [
+            {
+              "user_query": "Find notion documents related to redis and summarize them to redis.txt file",
+              "answer": "12 Redis-related documents were summarized and saved to redis.txt."
+            }
+          ],
+          "user_query": "read the redis.txt file and one key points from each document into a new file called redis_key_points.txt"
+        }
+      }
+    ]
+  },
+
+  {
+    "id": "Previous failure as context",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "previous_conversations": [
+            {
+              "user_query": "Generate a report of API error rates from last week.",
+              "answer": "The data source was unavailable, so the report could not be generated."
+            }
+          ],
+          "user_query": "Retry generating the API error rate report using cached logs if available."
+        }
+      }
+    ]
+  },
+
+  {
+    "id": "Incremental refinement of output",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "previous_conversations": [
+            {
+              "user_query": "Summarize the Q2 sales data into a markdown report.",
+              "answer": "A markdown report summarizing total sales and growth was generated as q2_sales_report.md."
+            }
+          ],
+          "user_query": "Add a section comparing Q2 sales with Q1 and include a simple table."
+        }
+      }
+    ]
+  },
+
+  {
+    "id": "Environment detail only in history",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "previous_conversations": [
+            {
+              "user_query": "Set up a script to process CSV files on my local machine.",
+              "answer": "A Python script was created assuming a local filesystem environment as process_csv.py."
+            }
+          ],
+          "user_query": "Modify the script to skip files larger than 1GB."
+        }
+      }
+    ]
+  },
+
+  {
+    "id": "Conversational noise in previous conversation",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "previous_conversations": [
+            {
+              "user_query": "This might be a dumb question.",
+              "answer": "No question is dumb."
+            }
+          ],
+          "user_query": "Generate a list of top 10 Docker best practices."
+        }
+      }
+    ]
+  },
+
+  {
+    "id": "Implicit reference to previous output",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "previous_conversations": [
+            {
+              "user_query": "Analyze nginx access logs and generate a traffic summary.",
+              "answer": "A summary of requests per endpoint and status code was generated to nginx_traffic_summary.txt."
+            }
+          ],
+          "user_query": "Using the traffic summary, identify the top 3 most requested endpoints."
+        }
+      }
+    ]
+  },
+
+  {
+    "id": "Multiple previous tasks but only one is relevant",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "previous_conversations": [
+            {
+              "user_query": "Summarize Redis documentation.",
+              "answer": "A high-level Redis summary was produced to redis_summary.txt."
+            },
+            {
+              "user_query": "Generate Kubernetes deployment YAML for a web service.",
+              "answer": "A deployment and service YAML were generated to web_service_deployment.yaml."
+            }
+          ],
+          "user_query": "Update the Redis summary to include persistence and replication details."
+        }
+      }
+    ]
+  },
+
+  {
+    "id": "Previous result as constraint",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "previous_conversations": [
+            {
+              "user_query": "Collect all error logs from yesterday.",
+              "answer": "2,314 error log entries were collected to error_logs_2023-09-15.txt."
+            }
+          ],
+          "user_query": "From those logs, identify the top 5 most frequent error messages."
+        }
+      }
+    ]
+  }
+]
