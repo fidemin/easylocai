@@ -6,7 +6,11 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from ollama import AsyncClient
 from pydantic import BaseModel
 
-from src.agents.reasoning_agent import ReasoningAgent
+from src.agents.reasoning_agent import (
+    ReasoningAgent,
+    ReasoningAgentOutput,
+    ReasoningAgentInput,
+)
 from src.core.agent import Agent
 from src.core.contants import DEFAULT_LLM_MODEL
 from src.core.server import ServerManager
@@ -105,18 +109,21 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             #   "final": "The answer is 25.",
             #   "confidence": 100
             # }
-            reasoning_result = await reasoning_agent.run(task=task)
+            reasoning_agent_input = ReasoningAgentInput(task=task)
+            reasoning_result: ReasoningAgentOutput = await reasoning_agent.run(
+                reasoning_agent_input
+            )
             iteration_results = [
                 {
                     "subtask": task_description,
-                    "result": reasoning_result,
+                    "result": reasoning_result.model_dump_json(ensure_ascii=False),
                 }
             ]
             logger.debug(f"LLM Result:\n{reasoning_result}")
         else:
             raise ValueError(f"Unknown task type: {type_}")
 
-        result = await self._task_result(
+        result = await self._parse_task_result(
             original_user_query=input_.original_user_query,
             task=task_description,
             iteration_results=iteration_results,
@@ -231,8 +238,11 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             "iteration_results": iteration_results,
         }
 
-    async def _task_result(
-        self, original_user_query: str, task: str, iteration_results: list
+    async def _parse_task_result(
+        self,
+        original_user_query: str,
+        task: str,
+        iteration_results: list,
     ) -> str:
 
         task_result_system_prompt = self._task_result_system_prompt_template.render()
