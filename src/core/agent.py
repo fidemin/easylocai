@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import AsyncIterator, Generic, TypeVar, Type
+from typing import AsyncIterator, Generic, TypeVar
 
 from pydantic import BaseModel
 
@@ -10,9 +10,6 @@ OutModel = TypeVar("OutModel", bound=BaseModel)
 
 
 class Agent(ABC, Generic[InModel, OutModel]):
-    input_model: Type[InModel]
-    output_model: Type[OutModel]
-
     async def run(self, input_: InModel) -> OutModel:
         """Validate input -> run -> validate output."""
         return await self._run(input_)

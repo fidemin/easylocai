@@ -10,6 +10,12 @@ from pydantic import BaseModel
 from src.core.agent import Agent
 from src.core.contants import DEFAULT_LLM_MODEL
 from src.core.server import ServerManager
+from src.llm_calls.query_normalizer import (
+    QueryNormalizer,
+    QueryNormalizerInput,
+    Conversation,
+    QueryNormalizerOutput,
+)
 from src.utlis.prompt import pretty_prompt_text
 
 logger = logging.getLogger(__name__)
@@ -24,6 +30,7 @@ class PlanAgentInput(BaseModel):
 
 
 class PlanAgentOutput(BaseModel):
+    context: str
     tasks: list[dict]
     response: Optional[str]
 
@@ -62,12 +69,32 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
         self._model = DEFAULT_LLM_MODEL
 
     async def _run(self, input_: PlanAgentInput) -> PlanAgentOutput:
-        user_query = input_.user_query
+        # TODO: separate initial plan and replan into different agents
+        original_user_query = input_.user_query
+        previous_conversations = input_.user_contexts
         task_results = input_.task_results
         init = input_.init
 
+        normalizer_input = QueryNormalizerInput(
+            user_query=original_user_query,
+            previous_conversations=[
+                Conversation(
+                    user_query=conversation_dict["user_query"],
+                    answer=conversation_dict["answer"],
+                )
+                for conversation_dict in previous_conversations
+            ],
+        )
+
+        query_normalizer: QueryNormalizer = QueryNormalizer(client=self._ollama_client)
+        normalizer_output: QueryNormalizerOutput = await query_normalizer.call(
+            normalizer_input
+        )
+        user_query = normalizer_output.user_query
+        user_context = normalizer_output.context
+
         if init:
-            previous_plan = await self._initial_plan(user_query)
+            previous_plan = await self._initial_plan(user_query, user_context)
         else:
             previous_plan = input_.previous_plan
 
@@ -101,7 +128,7 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
         logger.debug(pretty_prompt_text("Replan System Prompt", system_prompt))
 
         user_prompt = self._replan_user_prompt_template.render(
-            user_contexts=input_.user_contexts,
+            user_context=user_context,
             original_user_query=user_query,
             previous_plan=previous_plan,
             tool_candidates=tool_candidates,
@@ -119,15 +146,18 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
         )
 
         revised_plan_dict = json.loads(response["message"]["content"])
-        revised_plan = PlanAgentOutput(**revised_plan_dict)
+        revised_plan = PlanAgentOutput(**revised_plan_dict, context=user_context)
 
         return revised_plan
 
-    async def _initial_plan(self, user_query: str) -> Any:
+    async def _initial_plan(self, user_query: str, user_context: str) -> Any:
         system_prompt = self._plan_system_prompt_template.render()
         logger.debug(pretty_prompt_text("Plan System Prompt", system_prompt))
 
-        user_prompt = self._plan_user_prompt_template.render(user_query=user_query)
+        user_prompt = self._plan_user_prompt_template.render(
+            user_query=user_query,
+            user_context=user_context,
+        )
         logger.debug(pretty_prompt_text("Plan User Prompt", user_prompt))
 
         response = await self._ollama_client.chat(
