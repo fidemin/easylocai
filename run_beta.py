@@ -7,7 +7,11 @@ from ollama import AsyncClient
 from rich import get_console
 
 from src.agents.plan_agent import PlanAgent, PlanAgentInput, PlanAgentOutput
-from src.agents.single_task_agent import SingleTaskAgent
+from src.agents.single_task_agent import (
+    SingleTaskAgent,
+    SingleTaskAgentInput,
+    SingleTaskAgentOutput,
+)
 from src.core.server import ServerManager
 from src.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
 from src.utlis.loggers.default_dict import default_logging_config
@@ -101,17 +105,24 @@ async def main():
                 while True:
                     task = tasks[0]
                     spinner.set_prefix(task["description"])
-                    task_agent_query = {
-                        "original_tasks": tasks,
-                        "original_user_query": user_input,
-                        "task": task,
-                        "previous_task_list": previous_task_results,
-                    }
-                    task_agent_response = await single_task_agent.run(
-                        **task_agent_query
+
+                    task_agent_input = SingleTaskAgentInput(
+                        original_tasks=tasks,
+                        original_user_query=user_input,
+                        task=task,
+                        previous_task_results=previous_task_results,
                     )
 
-                    previous_task_results.append(task_agent_response)
+                    task_agent_response: SingleTaskAgentOutput = (
+                        await single_task_agent.run(task_agent_input)
+                    )
+
+                    previous_task_results.append(
+                        {
+                            "task": task_agent_response.task,
+                            "result": task_agent_response.result,
+                        }
+                    )
 
                     spinner.set_prefix("Check for completion...")
                     plan_agent_input = PlanAgentInput(

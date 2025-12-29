@@ -4,6 +4,7 @@ import logging
 from chromadb.types import Collection
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from ollama import AsyncClient
+from pydantic import BaseModel
 
 from src.agents.reasoning_agent import ReasoningAgent
 from src.core.agent import Agent
@@ -14,7 +15,19 @@ from src.utlis.prompt import pretty_prompt_text
 logger = logging.getLogger(__name__)
 
 
-class SingleTaskAgent(Agent):
+class SingleTaskAgentInput(BaseModel):
+    original_tasks: list[dict]
+    original_user_query: str
+    task: dict
+    previous_task_results: list[dict] = []
+
+
+class SingleTaskAgentOutput(BaseModel):
+    task: dict
+    result: str
+
+
+class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
     _tool_system_prompt_path = "resources/prompts/v2/tool_system_prompt.jinja2"
     _tool_user_prompt_path = "resources/prompts/v2/tool_user_prompt.jinja2"
 
@@ -55,19 +68,19 @@ class SingleTaskAgent(Agent):
         self._tool_collection = tool_collection
         self._server_manager = server_manager
 
-    async def run(self, **query) -> str | dict:
-        task = query["task"]
+    async def run(self, input_: SingleTaskAgentInput) -> SingleTaskAgentOutput:
+        task = input_.task
         type_ = task["type"]
         task_description = task["description"]
 
         reasoning_agent = ReasoningAgent(client=self._ollama_client)
 
         if type_ == "tool":
-            previous_task_results = query.get("previous_task_results", [])
-            original_tasks = query.get("original_tasks", None)
+            previous_task_results = input_.previous_task_results
+            original_tasks = input_.original_tasks
 
             # Example:
-            # result = {
+            # tool_result = {
             #   "task": task_description,
             #   "iteration_results": [
             #     {
@@ -104,15 +117,15 @@ class SingleTaskAgent(Agent):
             raise ValueError(f"Unknown task type: {type_}")
 
         result = await self._task_result(
-            original_user_query=query["original_user_query"],
+            original_user_query=input_.original_user_query,
             task=task_description,
             iteration_results=iteration_results,
         )
 
-        return {
-            "task": task,
-            "result": result,
-        }
+        return SingleTaskAgentOutput(
+            task=task,
+            result=result,
+        )
 
     async def _tool_result(
         self, *, task_description, previous_task_results, original_tasks
@@ -247,5 +260,6 @@ class SingleTaskAgent(Agent):
                 "temperature": 0.2,
             },
         )
+        logger.debug(f"Task Result Response:\n{response['message']['content']}")
 
         return response["message"]["content"]
