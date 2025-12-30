@@ -134,15 +134,14 @@ async def main():
                     )
 
                     spinner.set_prefix("Check for completion...")
-                    plan_agent_input = ReplanAgentInput(
-                        init=False,
+                    replan_agent_input = ReplanAgentInput(
                         user_query=user_input,
                         previous_plan=[task["description"] for task in tasks],
                         task_results=previous_task_results,
-                        user_contexts=plan_agent_input.user_conversations,
+                        user_context=plan_agent_output.context,
                     )
                     plan_agent_output: ReplanAgentOutput = await replan_agent.run(
-                        plan_agent_input
+                        replan_agent_input
                     )
                     logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
 

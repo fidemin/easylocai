@@ -96,7 +96,7 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
         if initial_plan:
             tool_search_result = self._tool_collection.query(
                 query_texts=initial_plan,
-                n_results=5,
+                n_results=10,
             )
 
             tool_candidates = []
