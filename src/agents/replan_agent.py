@@ -28,8 +28,8 @@ class ReplanAgentOutput(BaseModel):
 
 
 class ReplanAgent(Agent[ReplanAgentInput, ReplanAgentOutput]):
-    _plan_system_prompt_path = "resources/prompts/v2/plan_system_prompt.jinja2"
-    _plan_user_prompt_path = "resources/prompts/v2/plan_user_prompt.jinja2"
+    _plan_system_prompt_path = "resources/prompts/v2/planner_system_prompt.jinja2"
+    _plan_user_prompt_path = "resources/prompts/v2/planner_user_prompt.jinja2"
     _replan_system_prompt_path = "resources/prompts/v2/replan_system_prompt.jinja2"
     _replan_user_prompt_path = "resources/prompts/v2/replan_user_prompt.jinja2"
 
