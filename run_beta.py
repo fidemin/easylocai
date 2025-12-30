@@ -14,6 +14,7 @@ from src.agents.single_task_agent import (
     SingleTaskAgentOutput,
 )
 from src.core.server import ServerManager
+from src.schemas.common import UserConversation
 from src.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
 from src.utlis.loggers.default_dict import default_logging_config
 
@@ -75,7 +76,7 @@ async def main():
     )
 
     messages = []
-    user_conversations = []
+    user_conversations: list[UserConversation] = []
 
     stack = AsyncExitStack()
     async with stack:
@@ -104,13 +105,21 @@ async def main():
                 logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
 
                 if plan_agent_output.response is not None:
-                    answer = plan_agent_output.response
-                    messages.append({"role": "assistant", "content": answer})
+                    messages.append(
+                        {"role": "assistant", "content": plan_agent_output.response}
+                    )
+                    user_conversations.append(
+                        UserConversation(
+                            user_query=user_input,
+                            assistant_answer=plan_agent_output.response,
+                        )
+                    )
                     continue
 
                 tasks = plan_agent_output.tasks
                 previous_task_results = []
 
+                answer = None
                 while True:
                     task = tasks[0]
                     spinner.set_prefix(task["description"])
@@ -155,10 +164,7 @@ async def main():
 
                 messages.append({"role": "assistant", "content": answer})
                 user_conversations.append(
-                    {
-                        "user_query": user_input,
-                        "answer": answer,
-                    }
+                    UserConversation(user_query=user_input, assistant_answer=answer)
                 )
 
 

@@ -1,16 +1,12 @@
 from pydantic import BaseModel
 
 from src.core.llm_call import LLMCall
-
-
-class Conversation(BaseModel):
-    user_query: str
-    answer: str
+from src.schemas.common import UserConversation
 
 
 class QueryNormalizerInput(BaseModel):
     user_query: str
-    previous_conversations: list[Conversation] = []
+    previous_conversations: list[UserConversation] = []
 
 
 class QueryNormalizerOutput(BaseModel):

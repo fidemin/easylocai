@@ -12,17 +12,17 @@ from src.llm_calls.planner import Planner, PlannerInput, PlannerOutput
 from src.llm_calls.query_normalizer import (
     QueryNormalizer,
     QueryNormalizerInput,
-    Conversation,
     QueryNormalizerOutput,
 )
 from src.llm_calls.replanner import ReplannerInput, Replanner, ReplannerOutput
+from src.schemas.common import UserConversation
 
 logger = logging.getLogger(__name__)
 
 
 class PlanAgentInput(BaseModel):
     user_query: str
-    user_conversations: list[dict] = []
+    user_conversations: list[UserConversation] = []
 
 
 class PlanAgentOutput(BaseModel):
@@ -77,17 +77,11 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
         return revised_plan
 
     async def _normalize_query(
-        self, original_user_query: str, previous_conversations: list[dict]
+        self, original_user_query: str, previous_conversations: list[UserConversation]
     ) -> QueryNormalizerOutput:
         normalizer_input = QueryNormalizerInput(
             user_query=original_user_query,
-            previous_conversations=[
-                Conversation(
-                    user_query=conversation_dict["user_query"],
-                    answer=conversation_dict["answer"],
-                )
-                for conversation_dict in previous_conversations
-            ],
+            previous_conversations=previous_conversations,
         )
 
         query_normalizer: QueryNormalizer = QueryNormalizer(client=self._ollama_client)
