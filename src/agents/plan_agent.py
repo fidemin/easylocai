@@ -21,21 +21,18 @@ from src.utlis.prompt import pretty_prompt_text
 logger = logging.getLogger(__name__)
 
 
-class ReplanAgentInput(BaseModel):
+class PlanAgentInput(BaseModel):
     user_query: str
-    user_contexts: list[dict] = []
-    task_results: list[dict] = []
-    previous_plan: list[str] = []
-    init: bool = True
+    user_conversations: list[dict] = []
 
 
-class ReplanAgentOutput(BaseModel):
+class PlanAgentOutput(BaseModel):
     context: str | None
     tasks: list[dict]
     response: Optional[str]
 
 
-class ReplanAgent(Agent[ReplanAgentInput, ReplanAgentOutput]):
+class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
     _plan_system_prompt_path = "resources/prompts/v2/plan_system_prompt.jinja2"
     _plan_user_prompt_path = "resources/prompts/v2/plan_user_prompt.jinja2"
     _replan_system_prompt_path = "resources/prompts/v2/replan_system_prompt.jinja2"
@@ -68,12 +65,9 @@ class ReplanAgent(Agent[ReplanAgentInput, ReplanAgentOutput]):
 
         self._model = DEFAULT_LLM_MODEL
 
-    async def _run(self, input_: ReplanAgentInput) -> ReplanAgentOutput:
-        # TODO: separate initial plan and replan into different agents
+    async def _run(self, input_: PlanAgentInput) -> PlanAgentOutput:
         original_user_query = input_.user_query
-        previous_conversations = input_.user_contexts
-        task_results = input_.task_results
-        init = input_.init
+        previous_conversations = input_.user_conversations
 
         normalizer_input = QueryNormalizerInput(
             user_query=original_user_query,
@@ -93,18 +87,15 @@ class ReplanAgent(Agent[ReplanAgentInput, ReplanAgentOutput]):
         user_query = normalizer_output.user_query
         user_context = normalizer_output.user_context
 
-        if init:
-            previous_plan = await self._initial_plan(user_query, user_context)
-        else:
-            previous_plan = input_.previous_plan
+        initial_plan = await self._initial_plan(user_query, user_context)
 
-        logger.debug(f"Previous Plan: {previous_plan}")
+        logger.debug(f"Previous Plan: {initial_plan}")
 
         tool_candidates = []
 
-        if previous_plan:
+        if initial_plan:
             tool_search_result = self._tool_collection.query(
-                query_texts=previous_plan,
+                query_texts=initial_plan,
                 n_results=5,
             )
 
@@ -130,9 +121,9 @@ class ReplanAgent(Agent[ReplanAgentInput, ReplanAgentOutput]):
         user_prompt = self._replan_user_prompt_template.render(
             user_context=user_context,
             original_user_query=user_query,
-            previous_plan=previous_plan,
+            previous_plan=initial_plan,
             tool_candidates=tool_candidates,
-            task_results=task_results,
+            task_results=[],  # no tasks results yet at planning stage
         )
         logger.debug(pretty_prompt_text("Replan User Prompt", user_prompt))
 
@@ -146,7 +137,7 @@ class ReplanAgent(Agent[ReplanAgentInput, ReplanAgentOutput]):
         )
 
         revised_plan_dict = json.loads(response["message"]["content"])
-        revised_plan = ReplanAgentOutput(**revised_plan_dict, context=user_context)
+        revised_plan = PlanAgentOutput(**revised_plan_dict, context=user_context)
 
         return revised_plan
 

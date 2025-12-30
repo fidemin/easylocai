@@ -6,6 +6,7 @@ import chromadb
 from ollama import AsyncClient
 from rich import get_console
 
+from src.agents.plan_agent import PlanAgent, PlanAgentInput, PlanAgentOutput
 from src.agents.replan_agent import ReplanAgent, ReplanAgentInput, ReplanAgentOutput
 from src.agents.single_task_agent import (
     SingleTaskAgent,
@@ -56,7 +57,13 @@ async def main():
 
     server_manager = ServerManager.from_json_config_file("mcp_server_config.json")
 
-    plan_agent = ReplanAgent(
+    plan_agent = PlanAgent(
+        client=ollama_client,
+        tool_collection=tool_collection,
+        server_manager=server_manager,
+    )
+
+    replan_agent = ReplanAgent(
         client=ollama_client,
         tool_collection=tool_collection,
         server_manager=server_manager,
@@ -68,6 +75,7 @@ async def main():
     )
 
     messages = []
+    user_conversations = []
 
     stack = AsyncExitStack()
     async with stack:
@@ -83,13 +91,14 @@ async def main():
             messages.append({"role": "user", "content": user_input})
             render_chat(console, messages)
 
-            plan_agent_input = ReplanAgentInput(
+            plan_agent_input = PlanAgentInput(
                 user_query=user_input,
+                user_conversations=user_conversations,
             )
 
             with ConsoleSpinner(console) as spinner:
                 spinner.set_prefix("Planning...")
-                plan_agent_output: ReplanAgentOutput = await plan_agent.run(
+                plan_agent_output: PlanAgentOutput = await plan_agent.run(
                     plan_agent_input
                 )
                 logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
@@ -130,9 +139,9 @@ async def main():
                         user_query=user_input,
                         previous_plan=[task["description"] for task in tasks],
                         task_results=previous_task_results,
-                        user_contexts=plan_agent_input.user_contexts,
+                        user_contexts=plan_agent_input.user_conversations,
                     )
-                    plan_agent_output: ReplanAgentOutput = await plan_agent.run(
+                    plan_agent_output: ReplanAgentOutput = await replan_agent.run(
                         plan_agent_input
                     )
                     logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
@@ -146,7 +155,7 @@ async def main():
                     tasks = plan_agent_output.tasks
 
                 messages.append({"role": "assistant", "content": answer})
-                plan_agent_input.user_contexts.append(
+                user_conversations.append(
                     {
                         "user_query": user_input,
                         "answer": answer,
