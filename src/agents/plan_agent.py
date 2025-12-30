@@ -1,9 +1,7 @@
-import json
 import logging
 from typing import Optional, Any
 
 from chromadb.types import Collection
-from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from ollama import AsyncClient
 from pydantic import BaseModel
 
@@ -17,7 +15,7 @@ from src.llm_calls.query_normalizer import (
     Conversation,
     QueryNormalizerOutput,
 )
-from src.utlis.prompt import pretty_prompt_text
+from src.llm_calls.replanner import ReplannerInput, Replanner, ReplannerOutput
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +32,6 @@ class PlanAgentOutput(BaseModel):
 
 
 class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
-    _replan_system_prompt_path = "resources/prompts/v2/replan_system_prompt.jinja2"
-    _replan_user_prompt_path = "resources/prompts/v2/replan_user_prompt.jinja2"
-
     def __init__(
         self,
         *,
@@ -45,17 +40,8 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
         server_manager: ServerManager,
     ):
         self._ollama_client = client
-        env = Environment(loader=FileSystemLoader(""), undefined=StrictUndefined)
-
         self._tool_collection = tool_collection
         self._server_manager = server_manager
-
-        replan_system_prompt_template = env.get_template(
-            self._replan_system_prompt_path
-        )
-        self._replan_system_prompt_template = replan_system_prompt_template
-        replan_user_prompt_template = env.get_template(self._replan_user_prompt_path)
-        self._replan_user_prompt_template = replan_user_prompt_template
 
         self._model = DEFAULT_LLM_MODEL
 
@@ -75,29 +61,18 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
 
         tool_candidates = await self._fetch_tool_candidates(previous_plan)
 
-        system_prompt = self._replan_system_prompt_template.render()
-        logger.debug(pretty_prompt_text("Replan System Prompt", system_prompt))
-
-        user_prompt = self._replan_user_prompt_template.render(
+        replanner_output = await self._replan(
             user_context=user_context,
-            original_user_query=user_query,
+            user_query=user_query,
             previous_plan=previous_plan,
             tool_candidates=tool_candidates,
-            task_results=[],  # no tasks results yet at planning stage
-        )
-        logger.debug(pretty_prompt_text("Replan User Prompt", user_prompt))
-
-        response = await self._ollama_client.chat(
-            model=self._model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            options={"temperature": 0.2},
         )
 
-        revised_plan_dict = json.loads(response["message"]["content"])
-        revised_plan = PlanAgentOutput(**revised_plan_dict, context=user_context)
+        revised_plan = PlanAgentOutput(
+            tasks=replanner_output.tasks,
+            response=replanner_output.response,
+            context=user_context,
+        )
 
         return revised_plan
 
@@ -131,7 +106,7 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
         planner_output: PlannerOutput = await planner.call(planner_input)
         return planner_output
 
-    async def _fetch_tool_candidates(self, previous_plan: list[dict]) -> list[Any]:
+    async def _fetch_tool_candidates(self, previous_plan: list[str]) -> list[Any]:
         if not previous_plan:
             return []
 
@@ -154,3 +129,23 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
                     }
                 )
         return tool_candidates
+
+    async def _replan(
+        self,
+        *,
+        user_context: str | None,
+        user_query: str,
+        previous_plan: list[str],
+        tool_candidates: list[Any],
+    ) -> ReplannerOutput:
+        replanner_input = ReplannerInput(
+            user_context=user_context,
+            original_user_query=user_query,
+            previous_plan=previous_plan,
+            tool_candidates=tool_candidates,
+            task_results=[],  # No task results in the initial planning phase
+        )
+        replanner = Replanner(client=self._ollama_client)
+
+        replanner_output = await replanner.call(replanner_input)
+        return replanner_output

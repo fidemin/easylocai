@@ -5,8 +5,8 @@ from prompt_eval.prompt_eval_workflow import PromptEvalWorkflow
 if __name__ == "__main__":
     input_file_path = "resources/prompt_eval/replan_prompt_inputs.json"
     prompt_info = {
-        "system": "resources/prompts/v2/replan_system_prompt.jinja2",
-        "user": "resources/prompts/v2/replan_user_prompt.jinja2",
+        "system": "resources/prompts/v2/replanner_system_prompt.jinja2",
+        "user": "resources/prompts/v2/replanner_user_prompt.jinja2",
     }
     model_info = {
         "host": "http://localhost:11434",
