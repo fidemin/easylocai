@@ -6,7 +6,7 @@ import chromadb
 from ollama import AsyncClient
 from rich import get_console
 
-from src.agents.plan_agent import PlanAgent, PlanAgentInput, PlanAgentOutput
+from src.agents.replan_agent import ReplanAgent, ReplanAgentInput, ReplanAgentOutput
 from src.agents.single_task_agent import (
     SingleTaskAgent,
     SingleTaskAgentInput,
@@ -56,7 +56,7 @@ async def main():
 
     server_manager = ServerManager.from_json_config_file("mcp_server_config.json")
 
-    plan_agent = PlanAgent(
+    plan_agent = ReplanAgent(
         client=ollama_client,
         tool_collection=tool_collection,
         server_manager=server_manager,
@@ -83,13 +83,13 @@ async def main():
             messages.append({"role": "user", "content": user_input})
             render_chat(console, messages)
 
-            plan_agent_input = PlanAgentInput(
+            plan_agent_input = ReplanAgentInput(
                 user_query=user_input,
             )
 
             with ConsoleSpinner(console) as spinner:
                 spinner.set_prefix("Planning...")
-                plan_agent_output: PlanAgentOutput = await plan_agent.run(
+                plan_agent_output: ReplanAgentOutput = await plan_agent.run(
                     plan_agent_input
                 )
                 logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
@@ -125,14 +125,14 @@ async def main():
                     )
 
                     spinner.set_prefix("Check for completion...")
-                    plan_agent_input = PlanAgentInput(
+                    plan_agent_input = ReplanAgentInput(
                         init=False,
                         user_query=user_input,
                         previous_plan=[task["description"] for task in tasks],
                         task_results=previous_task_results,
                         user_contexts=plan_agent_input.user_contexts,
                     )
-                    plan_agent_output: PlanAgentOutput = await plan_agent.run(
+                    plan_agent_output: ReplanAgentOutput = await plan_agent.run(
                         plan_agent_input
                     )
                     logger.debug(f"Plan Agent Response:\n{plan_agent_output}")

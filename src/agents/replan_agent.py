@@ -21,7 +21,7 @@ from src.utlis.prompt import pretty_prompt_text
 logger = logging.getLogger(__name__)
 
 
-class PlanAgentInput(BaseModel):
+class ReplanAgentInput(BaseModel):
     user_query: str
     user_contexts: list[dict] = []
     task_results: list[dict] = []
@@ -29,13 +29,13 @@ class PlanAgentInput(BaseModel):
     init: bool = True
 
 
-class PlanAgentOutput(BaseModel):
+class ReplanAgentOutput(BaseModel):
     context: str
     tasks: list[dict]
     response: Optional[str]
 
 
-class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
+class ReplanAgent(Agent[ReplanAgentInput, ReplanAgentOutput]):
     _plan_system_prompt_path = "resources/prompts/v2/plan_system_prompt.jinja2"
     _plan_user_prompt_path = "resources/prompts/v2/plan_user_prompt.jinja2"
     _replan_system_prompt_path = "resources/prompts/v2/replan_system_prompt.jinja2"
@@ -68,7 +68,7 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
 
         self._model = DEFAULT_LLM_MODEL
 
-    async def _run(self, input_: PlanAgentInput) -> PlanAgentOutput:
+    async def _run(self, input_: ReplanAgentInput) -> ReplanAgentOutput:
         # TODO: separate initial plan and replan into different agents
         original_user_query = input_.user_query
         previous_conversations = input_.user_contexts
@@ -146,7 +146,7 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
         )
 
         revised_plan_dict = json.loads(response["message"]["content"])
-        revised_plan = PlanAgentOutput(**revised_plan_dict, context=user_context)
+        revised_plan = ReplanAgentOutput(**revised_plan_dict, context=user_context)
 
         return revised_plan
 
