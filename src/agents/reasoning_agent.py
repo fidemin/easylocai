@@ -1,4 +1,3 @@
-import json
 import logging
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
@@ -7,7 +6,7 @@ from pydantic import BaseModel
 
 from src.core.agent import Agent
 from src.core.contants import DEFAULT_LLM_MODEL
-from src.utlis.prompt import pretty_prompt_text
+from src.llm_calls.reasoning import Reasoning, ReasoningInput, ReasoningOutput
 
 logger = logging.getLogger(__name__)
 
@@ -41,18 +40,14 @@ class ReasoningAgent(Agent[ReasoningAgentInput, ReasoningAgentOutput]):
         self._model = DEFAULT_LLM_MODEL
 
     async def run(self, input_: ReasoningAgentInput) -> ReasoningAgentOutput:
-        task = input_.task
-
-        prompt = self._prompt_template.render(task=task)
-
-        logger.debug(pretty_prompt_text("Reasoning Prompt", prompt))
-
-        response = await self._ollama_client.chat(
-            model=self._model,
-            messages=[
-                {"role": "system", "content": prompt},
-            ],
-            options={"temperature": 0.5},
+        reasoning_input = ReasoningInput(task=input_.task["description"])
+        reasoning = Reasoning(client=self._ollama_client)
+        # TODO: adjust think time based on task complexity
+        reasoning_output: ReasoningOutput = await reasoning.call(
+            reasoning_input, think="medium"
         )
-        result_dict = json.loads(response["message"]["content"])
-        return ReasoningAgentOutput(**result_dict)
+
+        response = ReasoningAgentOutput(**reasoning_output.model_dump())
+
+        logger.debug(f"{self.__class__.__name__} Response:\n{response}")
+        return response

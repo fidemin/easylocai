@@ -51,7 +51,7 @@ class LLMCall(ABC, Generic[InModel, OutModel]):
     ) -> Union[ChatResponse, AsyncIterator[ChatResponse], None]:
         return self._current_llm_call_response
 
-    async def call(self, input_: InModel) -> OutModel:
+    async def call(self, input_: InModel, *, think=None) -> OutModel:
         system_prompt = self._system_prompt_template.render()
         logger.debug(
             pretty_prompt_text(
@@ -76,6 +76,7 @@ class LLMCall(ABC, Generic[InModel, OutModel]):
                 },
             ],
             options=self._options,
+            think=think,
         )
 
         self._current_llm_call_response = llm_call_response
