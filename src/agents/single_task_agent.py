@@ -1,7 +1,6 @@
 import logging
 
 from chromadb.types import Collection
-from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from ollama import AsyncClient
 from pydantic import BaseModel, ValidationError
 
@@ -11,7 +10,6 @@ from src.agents.reasoning_agent import (
     ReasoningAgentInput,
 )
 from src.core.agent import Agent
-from src.core.contants import DEFAULT_LLM_MODEL
 from src.core.server import ServerManager
 from src.llm_calls.task_result_filter import TaskResultFilter, TaskResultFilterInput
 from src.llm_calls.tool_selector import (
@@ -19,7 +17,6 @@ from src.llm_calls.tool_selector import (
     ToolSelectorInput,
     ToolSelectorOutput,
 )
-from src.utlis.prompt import pretty_prompt_text
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +34,6 @@ class SingleTaskAgentOutput(BaseModel):
 
 
 class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
-    _tool_system_prompt_path = "resources/prompts/v2/tool_selector_system_prompt.jinja2"
-    _tool_user_prompt_path = "resources/prompts/v2/tool_selector_user_prompt.jinja2"
 
     _tool_result_system_prompt_path = (
         "resources/prompts/v2/task_result_filter_system_prompt.jinja2"
@@ -55,19 +50,6 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         server_manager: ServerManager,
     ):
         self._ollama_client = client
-        env = Environment(loader=FileSystemLoader(""), undefined=StrictUndefined)
-
-        task_result_system_prompt_template = env.get_template(
-            self._tool_result_system_prompt_path
-        )
-        self._task_result_system_prompt_template = task_result_system_prompt_template
-
-        task_result_user_prompt_template = env.get_template(
-            self._tool_result_user_prompt_path
-        )
-        self._task_result_user_prompt_template = task_result_user_prompt_template
-
-        self._model = DEFAULT_LLM_MODEL
         self._tool_collection = tool_collection
         self._server_manager = server_manager
 
