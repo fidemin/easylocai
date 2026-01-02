@@ -1,0 +1,132 @@
+[
+  {
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "task": "Read redis_config.md",
+          "tool_candidates": [
+            {
+              "server_name": "filesystem",
+              "tool_name": "read_file",
+              "tool_description": "Read file content",
+              "tool_input_schema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "tail": {
+                    "type": "number"
+                  },
+                  "head": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            },
+            {
+              "server_name": "filesystem",
+              "tool_name": "write_file",
+              "tool_description": "Write content to a file",
+              "tool_input_schema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ]
+              }
+            }
+          ],
+          "previous_task_results": [],
+          "iteration_results": []
+        }
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "task": "Read all Redis documents",
+          "tool_candidates": [
+            {
+              "server_name": "filesystem",
+              "tool_name": "read_file",
+              "tool_description": "Read file content",
+              "tool_input_schema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "tail": {
+                    "type": "number"
+                  },
+                  "head": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "path"
+                ]
+              }
+            },
+            {
+              "server_name": "filesystem",
+              "tool_name": "write_file",
+              "tool_description": "Write content to a file",
+              "tool_input_schema": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path",
+                  "content"
+                ]
+              }
+            }
+          ],
+          "previous_task_results": [
+          ],
+          "iteration_results": [
+            {
+              "task": "Find Redis-related documents",
+              "result": "Found 3 documents: redis_intro.md, redis_config.md, redis_perf.md"
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

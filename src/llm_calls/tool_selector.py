@@ -3,6 +3,12 @@ from pydantic import BaseModel
 from src.core.llm_call import LLMCall
 
 
+class ToolInput(BaseModel):
+    server_name: str
+    tool_name: str
+    tool_args: dict
+
+
 class ToolSelectorInput(BaseModel):
     tool_candidates: list[dict]
     previous_task_results: list[dict]
@@ -13,9 +19,7 @@ class ToolSelectorInput(BaseModel):
 
 class ToolSelectorOutput(BaseModel):
     subtask: str | None
-    server_name: str | None
-    tool_name: str | None
-    tool_args: dict | None
+    selected_tools: list[ToolInput] | None
     finished: bool
     finished_reason: str | None
 

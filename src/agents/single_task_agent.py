@@ -17,6 +17,7 @@ from src.llm_calls.tool_selector import (
     ToolSelector,
     ToolSelectorInput,
     ToolSelectorOutput,
+    ToolInput,
 )
 
 logger = logging.getLogger(__name__)
@@ -90,7 +91,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             iteration_results = [
                 {
                     "subtask": task_description,
-                    "result": reasoning_result.model_dump_json(ensure_ascii=False),
+                    "result": [reasoning_result.model_dump_json(ensure_ascii=False)],
                 }
             ]
             logger.debug(f"LLM Result:\n{reasoning_result}")
@@ -167,11 +168,13 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
                 iteration_results.append(
                     {
                         "subtask": task_description,
-                        "result": {
-                            "error": f"Error to parse llm call response content."
-                            f"\nContent:{llm_call_response['message']['content']}"
-                            f"\nThinking: {llm_call_response['message']['thinking']}"
-                        },
+                        "result": [
+                            {
+                                "error": f"Error to parse llm call response content."
+                                f"\nContent:{llm_call_response['message']['content']}"
+                                f"\nThinking: {llm_call_response['message']['thinking']}"
+                            }
+                        ],
                     }
                 )
                 continue
@@ -183,25 +186,26 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
                     "iteration_results": iteration_results,
                 }
 
-            tool_result = await self._call_tool(tool_selector_output)
+            tool_results = []
+            for tool_input in tool_selector_output.selected_tools:
+                tool_result = await self._call_tool(tool_input)
+                tool_results.append(tool_result)
 
             iteration_results.append(
                 {
                     "subtask": tool_selector_output.subtask,
-                    "result": tool_result,
+                    "result": tool_results,
                 }
             )
         return {
             "iteration_results": iteration_results,
         }
 
-    async def _call_tool(
-        self, tool_selector_output: ToolSelectorOutput
-    ) -> dict[str, Any]:
+    async def _call_tool(self, tool_input: ToolInput) -> dict[str, Any]:
         tool_result = await self._server_manager.call_tool(
-            tool_selector_output.server_name,
-            tool_selector_output.tool_name,
-            tool_selector_output.tool_args,
+            tool_input.server_name,
+            tool_input.tool_name,
+            tool_input.tool_args,
         )
         logger.debug(f"Tool Call result:\n{tool_result}")
 
