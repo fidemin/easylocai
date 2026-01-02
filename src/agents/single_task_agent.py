@@ -13,6 +13,7 @@ from src.agents.reasoning_agent import (
 from src.core.agent import Agent
 from src.core.contants import DEFAULT_LLM_MODEL
 from src.core.server import ServerManager
+from src.llm_calls.task_result_filter import TaskResultFilter, TaskResultFilterInput
 from src.llm_calls.tool_selector import (
     ToolSelector,
     ToolSelectorInput,
@@ -40,10 +41,10 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
     _tool_user_prompt_path = "resources/prompts/v2/tool_selector_user_prompt.jinja2"
 
     _tool_result_system_prompt_path = (
-        "resources/prompts/v2/task_result_system_prompt.jinja2"
+        "resources/prompts/v2/task_result_filter_system_prompt.jinja2"
     )
     _tool_result_user_prompt_path = (
-        "resources/prompts/v2/task_result_user_prompt.jinja2"
+        "resources/prompts/v2/task_result_filter_user_prompt.jinja2"
     )
 
     def __init__(
@@ -211,12 +212,14 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             logger.debug(f"Tool Call result:\n{tool_result}")
 
             if tool_result.isError:
-                tool_result = f"Error occurred when calling tool: {tool_result.content}"
+                tool_result = {
+                    "error": f"Error occurred when calling tool: {tool_result.content}"
+                }
             else:
                 if tool_result.structuredContent:
                     tool_result = tool_result.structuredContent
                 else:
-                    tool_result = tool_result.content
+                    tool_result = {"content": tool_result.content}
 
             iteration_results.append(
                 {
@@ -235,31 +238,16 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         iteration_results: list,
     ) -> str:
 
-        task_result_system_prompt = self._task_result_system_prompt_template.render()
-        logger.debug(
-            pretty_prompt_text("Task Result System Prompt", task_result_system_prompt)
-        )
-
-        task_result_user_prompt = self._task_result_user_prompt_template.render(
+        task_result_filter_input = TaskResultFilterInput(
             original_user_query=original_user_query,
             task=task,
             iteration_results=iteration_results,
         )
 
-        logger.debug(
-            pretty_prompt_text("Task Result User Prompt", task_result_user_prompt)
+        task_result_filter = TaskResultFilter(client=self._ollama_client)
+
+        task_result_filter_output = await task_result_filter.call(
+            task_result_filter_input
         )
 
-        response = await self._ollama_client.chat(
-            model=self._model,
-            messages=[
-                {"role": "system", "content": task_result_system_prompt},
-                {"role": "user", "content": task_result_user_prompt},
-            ],
-            options={
-                "temperature": 0.2,
-            },
-        )
-        logger.debug(f"Task Result Response:\n{response['message']['content']}")
-
-        return response["message"]["content"]
+        return task_result_filter_output.root

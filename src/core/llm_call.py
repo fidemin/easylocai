@@ -4,7 +4,7 @@ from typing import Generic, TypeVar, Any, Type, Union, AsyncIterator
 
 from jinja2 import Template, Environment, FileSystemLoader, StrictUndefined
 from ollama import AsyncClient, ChatResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 from src.utlis.prompt import pretty_prompt_text
 
@@ -81,7 +81,13 @@ class LLMCall(ABC, Generic[InModel, OutModel]):
         self._current_llm_call_response = llm_call_response
 
         content = llm_call_response["message"]["content"]
-        response = self._output_model.model_validate_json(content)
+
+        if issubclass(self._output_model, RootModel):
+            # RootModel[str] 같은 경우: content가 그냥 텍스트여도 validate 가능
+            response = self._output_model.model_validate(content)
+        else:
+            # BaseModel object output: JSON 형태일 때 validate
+            response = self._output_model.model_validate_json(content)
 
         logger.debug(f"{self.__class__.__name__} Response:\n{response}")
         return response
