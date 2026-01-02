@@ -12,7 +12,7 @@ class ToolSelectorInput(BaseModel):
 
 
 class ToolSelectorOutput(BaseModel):
-    subtask: str
+    subtask: str | None
     server_name: str | None
     tool_name: str | None
     tool_args: dict | None

@@ -4,7 +4,7 @@ Your's job is to choose tool in tool_candidates and execute the given task by us
 This process is iterative. In each iteration, you will decide where to have more iterations or finish the task.
 
 Return a JSON object with following fields:
-- subtask: A specific task based on tool for this iteration. It can be same as given task or modified one. It should not be tool name or tool execution command, but be semantic task to be executed by chosen tool.
+- subtask: (null when finished=true) A specific task based on tool for this iteration. It can be same as given task or modified one. It should not be tool name or tool execution command, but be semantic task to be executed by chosen tool.
 - server_name : (null when finished=true) server_name of tool_name chosen
 - tool_name : (null when finished=true) chosen tool_name based on most relevant description based on user query and user context.
 - tool_args : (null when finished=true) any parameters needed (or empty if none) based on User Query, User Context. For args schema, refer to input_schema of chosen tool_name.

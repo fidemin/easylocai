@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from chromadb.types import Collection
 from ollama import AsyncClient
@@ -34,14 +35,6 @@ class SingleTaskAgentOutput(BaseModel):
 
 
 class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
-
-    _tool_result_system_prompt_path = (
-        "resources/prompts/v2/task_result_filter_system_prompt.jinja2"
-    )
-    _tool_result_user_prompt_path = (
-        "resources/prompts/v2/task_result_filter_user_prompt.jinja2"
-    )
-
     def __init__(
         self,
         *,
@@ -104,7 +97,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         else:
             raise ValueError(f"Unknown task type: {type_}")
 
-        result = await self._parse_task_result(
+        result = await self._filter_task_result(
             original_user_query=input_.original_user_query,
             task=task_description,
             iteration_results=iteration_results,
@@ -164,19 +157,21 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
                 tool_selector_output: ToolSelectorOutput = await tool_selector.call(
                     tool_selector_input
                 )
-            except ValidationError as e:
+            except ValidationError:
                 llm_call_response = tool_selector.current_llm_call_response
 
                 logger.error(
-                    f"Failed to parse SingleTaskAgent response as JSON: {llm_call_response['message']['content']}"
+                    f"Failed to parse ToolSelector response as JSON: {llm_call_response['message']['content']}"
                     + f"\nThinking: {llm_call_response['message']['thinking']}"
                 )
                 iteration_results.append(
                     {
                         "subtask": task_description,
-                        "result": f"Error to parse llm call response."
-                        f"\nContent:{llm_call_response['message']['content']}"
-                        f"\nThinking: {llm_call_response['message']['thinking']}",
+                        "result": {
+                            "error": f"Error to parse llm call response content."
+                            f"\nContent:{llm_call_response['message']['content']}"
+                            f"\nThinking: {llm_call_response['message']['thinking']}"
+                        },
                     }
                 )
                 continue
@@ -184,24 +179,11 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             finished = tool_selector_output.finished
 
             if finished:
-                break
-
-            tool_result = await self._server_manager.call_tool(
-                tool_selector_output.server_name,
-                tool_selector_output.tool_name,
-                tool_selector_output.tool_args,
-            )
-            logger.debug(f"Tool Call result:\n{tool_result}")
-
-            if tool_result.isError:
-                tool_result = {
-                    "error": f"Error occurred when calling tool: {tool_result.content}"
+                return {
+                    "iteration_results": iteration_results,
                 }
-            else:
-                if tool_result.structuredContent:
-                    tool_result = tool_result.structuredContent
-                else:
-                    tool_result = {"content": tool_result.content}
+
+            tool_result = await self._call_tool(tool_selector_output)
 
             iteration_results.append(
                 {
@@ -213,7 +195,25 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             "iteration_results": iteration_results,
         }
 
-    async def _parse_task_result(
+    async def _call_tool(
+        self, tool_selector_output: ToolSelectorOutput
+    ) -> dict[str, Any]:
+        tool_result = await self._server_manager.call_tool(
+            tool_selector_output.server_name,
+            tool_selector_output.tool_name,
+            tool_selector_output.tool_args,
+        )
+        logger.debug(f"Tool Call result:\n{tool_result}")
+
+        if tool_result.isError:
+            return {"error": f"Error occurred when calling tool: {tool_result.content}"}
+
+        if tool_result.structuredContent:
+            return tool_result.structuredContent
+        else:
+            return {"content": tool_result.content}
+
+    async def _filter_task_result(
         self,
         original_user_query: str,
         task: str,
