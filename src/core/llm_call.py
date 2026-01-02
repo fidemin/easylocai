@@ -1,9 +1,9 @@
 import logging
 from abc import ABC
-from typing import Generic, TypeVar, Any, Type
+from typing import Generic, TypeVar, Any, Type, Union, AsyncIterator
 
 from jinja2 import Template, Environment, FileSystemLoader, StrictUndefined
-from ollama import AsyncClient
+from ollama import AsyncClient, ChatResponse
 from pydantic import BaseModel
 
 from src.utlis.prompt import pretty_prompt_text
@@ -23,6 +23,8 @@ class LLMCall(ABC, Generic[InModel, OutModel]):
     _system_prompt_template: Template
     _user_prompt_template: Template
 
+    _current_llm_call_response: Union[ChatResponse, AsyncIterator[ChatResponse], None]
+
     def __init__(
         self,
         client: AsyncClient,
@@ -40,6 +42,14 @@ class LLMCall(ABC, Generic[InModel, OutModel]):
         self._system_prompt_template = env.get_template(system_prompt_path)
         self._user_prompt_template = env.get_template(user_prompt_path)
         self._output_model = output_model
+
+        self._current_llm_call_response = None
+
+    @property
+    def current_llm_call_response(
+        self,
+    ) -> Union[ChatResponse, AsyncIterator[ChatResponse], None]:
+        return self._current_llm_call_response
 
     async def call(self, input_: InModel) -> OutModel:
         system_prompt = self._system_prompt_template.render()
@@ -67,6 +77,8 @@ class LLMCall(ABC, Generic[InModel, OutModel]):
             ],
             options=self._options,
         )
+
+        self._current_llm_call_response = llm_call_response
 
         content = llm_call_response["message"]["content"]
         response = self._output_model.model_validate_json(content)

@@ -1,10 +1,9 @@
-import json
 import logging
 
 from chromadb.types import Collection
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from ollama import AsyncClient
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from src.agents.reasoning_agent import (
     ReasoningAgent,
@@ -14,6 +13,11 @@ from src.agents.reasoning_agent import (
 from src.core.agent import Agent
 from src.core.contants import DEFAULT_LLM_MODEL
 from src.core.server import ServerManager
+from src.llm_calls.tool_selector import (
+    ToolSelector,
+    ToolSelectorInput,
+    ToolSelectorOutput,
+)
 from src.utlis.prompt import pretty_prompt_text
 
 logger = logging.getLogger(__name__)
@@ -32,8 +36,8 @@ class SingleTaskAgentOutput(BaseModel):
 
 
 class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
-    _tool_system_prompt_path = "resources/prompts/v2/tool_system_prompt.jinja2"
-    _tool_user_prompt_path = "resources/prompts/v2/tool_user_prompt.jinja2"
+    _tool_system_prompt_path = "resources/prompts/v2/tool_selector_system_prompt.jinja2"
+    _tool_user_prompt_path = "resources/prompts/v2/tool_selector_user_prompt.jinja2"
 
     _tool_result_system_prompt_path = (
         "resources/prompts/v2/task_result_system_prompt.jinja2"
@@ -51,12 +55,6 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
     ):
         self._ollama_client = client
         env = Environment(loader=FileSystemLoader(""), undefined=StrictUndefined)
-
-        tool_system_prompt_template = env.get_template(self._tool_system_prompt_path)
-        self._tool_system_prompt_template = tool_system_prompt_template
-
-        tool_user_prompt_template = env.get_template(self._tool_user_prompt_path)
-        self._tool_user_prompt_template = tool_user_prompt_template
 
         task_result_system_prompt_template = env.get_template(
             self._tool_result_system_prompt_path
@@ -135,7 +133,11 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         )
 
     async def _tool_result(
-        self, *, task_description, previous_task_results, original_tasks
+        self,
+        *,
+        task_description,
+        previous_task_results,
+        original_tasks,
     ):
         tool_search_result = self._tool_collection.query(
             query_texts=[task_description],
@@ -167,58 +169,46 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             original_tasks = []
 
         while True:
-            tool_system_prompt = self._tool_system_prompt_template.render()
-            logger.debug(pretty_prompt_text("Tool System Prompt", tool_system_prompt))
-
-            tool_user_prompt = self._tool_user_prompt_template.render(
+            tool_selector_input = ToolSelectorInput(
                 tool_candidates=tool_candidates,
                 previous_task_results=previous_task_results,
                 iteration_results=iteration_results,
                 original_tasks=original_tasks,
                 task=task_description,
             )
-            logger.debug(pretty_prompt_text("Tool User Prompt", tool_user_prompt))
-
-            response = await self._ollama_client.chat(
-                model=self._model,
-                messages=[
-                    {"role": "system", "content": tool_system_prompt},
-                    {"role": "user", "content": tool_user_prompt},
-                ],
-                options={
-                    "temperature": 0.2,
-                },
-            )
-
+            tool_selector = ToolSelector(client=self._ollama_client)
             try:
-                task_result = json.loads(response["message"]["content"])
-            except json.JSONDecodeError:
+                tool_selector_output: ToolSelectorOutput = await tool_selector.call(
+                    tool_selector_input
+                )
+            except ValidationError as e:
+                llm_call_response = tool_selector.current_llm_call_response
+
                 logger.error(
-                    f"Failed to parse SingleTaskAgent response as JSON: {response['message']['content']}"
-                    + f"\nThinking: {response['message']['thinking']}"
+                    f"Failed to parse SingleTaskAgent response as JSON: {llm_call_response['message']['content']}"
+                    + f"\nThinking: {llm_call_response['message']['thinking']}"
                 )
                 iteration_results.append(
                     {
                         "subtask": task_description,
-                        "result": f"Error to parse result to JSON."
-                        f"\nContent:{response['message']['content']}"
-                        f"\nThinking: {response['message']['thinking']}",
+                        "result": f"Error to parse llm call response."
+                        f"\nContent:{llm_call_response['message']['content']}"
+                        f"\nThinking: {llm_call_response['message']['thinking']}",
                     }
                 )
                 continue
 
-            logger.debug(f"Task Prompt Response:\n{task_result}")
-            finished = task_result["finished"]
+            finished = tool_selector_output.finished
 
             if finished:
                 break
 
             tool_result = await self._server_manager.call_tool(
-                task_result["server_name"],
-                task_result["tool_name"],
-                task_result["tool_args"],
+                tool_selector_output.server_name,
+                tool_selector_output.tool_name,
+                tool_selector_output.tool_args,
             )
-            logger.debug(f"Tool result:\n{tool_result}")
+            logger.debug(f"Tool Call result:\n{tool_result}")
 
             if tool_result.isError:
                 tool_result = f"Error occurred when calling tool: {tool_result.content}"
@@ -230,7 +220,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
 
             iteration_results.append(
                 {
-                    "subtask": task_result["subtask"],
+                    "subtask": tool_selector_output.subtask,
                     "result": tool_result,
                 }
             )
