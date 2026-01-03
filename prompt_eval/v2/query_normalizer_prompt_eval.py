@@ -11,7 +11,7 @@ if __name__ == "__main__":
     model_info = {
         "host": "http://localhost:11434",
         "model": "gpt-oss:20b",
-        "options": {"temperature": 0.2},
+        "options": {"temperature": 0.1},
     }
     workflow = PromptEvalWorkflow(
         input_file_path=input_file_path,

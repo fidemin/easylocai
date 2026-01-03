@@ -1,16 +1,24 @@
 import json
+from typing import Type
 
 from jinja2 import FileSystemLoader, Environment, Template
 from ollama import AsyncClient
+from pydantic import BaseModel
 
 
 class PromptEvalWorkflow:
     def __init__(
-        self, *, prompt_path_info: dict, input_file_path: str, model_info: dict
+        self,
+        *,
+        prompt_path_info: dict,
+        input_file_path: str,
+        model_info: dict,
+        user_input_schema: Type[BaseModel] | None = None,
     ):
         self._prompt_path_info = prompt_path_info
         self._input_file_path = input_file_path
         self._model_info = model_info
+        self._user_input_schema = user_input_schema
 
     async def run(self):
         """
@@ -71,7 +79,13 @@ class PromptEvalWorkflow:
                             "User prompt template is not provided for user role."
                         )
 
-                    user_prompt = user_prompt_template.render(**argument)
+                    if self._user_input_schema is not None:
+                        argument_schema = self._user_input_schema(**argument)
+                        user_prompt = user_prompt_template.render(
+                            **argument_schema.model_dump()
+                        )
+                    else:
+                        user_prompt = user_prompt_template.render(**argument)
                     chat_messages.append({"role": "user", "content": user_prompt})
                 elif role == "assistant":
                     assistant_response = argument.get("response", "")

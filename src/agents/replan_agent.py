@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 class ReplanAgentInput(BaseModel):
     user_query: str
     user_context: str | None
-    task_results: list[dict] = []
-    previous_plan: list[str] = []
+    task_results: list[dict]
+    previous_plan: list[str]
 
 
 class ReplanAgentOutput(BaseModel):

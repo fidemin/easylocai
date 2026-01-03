@@ -149,20 +149,20 @@ async def main():
                         user_query=user_input,
                         previous_plan=[task["description"] for task in tasks],
                         task_results=previous_task_results,
-                        user_context=plan_agent_output.context,
+                        user_context=user_context,
                     )
-                    plan_agent_output: ReplanAgentOutput = await replan_agent.run(
+                    replan_agent_output: ReplanAgentOutput = await replan_agent.run(
                         replan_agent_input
                     )
                     logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
 
-                    response = plan_agent_output.response
+                    response = replan_agent_output.response
 
                     if response is not None:
                         answer = response
                         break
 
-                    tasks = plan_agent_output.tasks
+                    tasks = replan_agent_output.tasks
 
                 messages.append({"role": "assistant", "content": answer})
                 user_conversations.append(

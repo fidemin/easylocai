@@ -22,7 +22,7 @@ class QueryNormalizer(LLMCall[QueryNormalizerInput, QueryNormalizerOutput]):
         )
         user_prompt_path = "resources/prompts/v2/query_normalizer_user_prompt.jinja2"
         options = {
-            "temperature": 0.2,
+            "temperature": 0.1,
         }
 
         super().__init__(
