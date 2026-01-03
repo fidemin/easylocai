@@ -5,6 +5,7 @@ from src.core.llm_call import LLMCall
 
 class ReasoningInput(BaseModel):
     task: str
+    user_context: str | None
 
 
 class ReasoningOutput(BaseModel):

@@ -117,18 +117,20 @@ async def main():
                     continue
 
                 tasks = plan_agent_output.tasks
+                user_context = plan_agent_output.context
                 previous_task_results = []
 
                 answer = None
                 while True:
-                    task = tasks[0]
-                    spinner.set_prefix(task["description"])
+                    next_task = tasks[0]
+                    spinner.set_prefix(next_task["description"])
 
                     task_agent_input = SingleTaskAgentInput(
                         original_tasks=tasks,
                         original_user_query=user_input,
-                        task=task,
+                        task=next_task,
                         previous_task_results=previous_task_results,
+                        user_context=user_context,
                     )
 
                     task_agent_response: SingleTaskAgentOutput = (

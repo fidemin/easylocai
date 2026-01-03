@@ -15,6 +15,7 @@ class ToolSelectorInput(BaseModel):
     iteration_results: list[dict]
     original_tasks: list[dict]
     task: str
+    user_context: str | None
 
 
 class ToolSelectorOutput(BaseModel):

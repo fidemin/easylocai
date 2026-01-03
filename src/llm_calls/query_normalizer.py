@@ -11,7 +11,7 @@ class QueryNormalizerInput(BaseModel):
 
 class QueryNormalizerOutput(BaseModel):
     user_query: str
-    user_context: str | None = None
+    user_context: str | None
 
 
 class QueryNormalizer(LLMCall[QueryNormalizerInput, QueryNormalizerOutput]):

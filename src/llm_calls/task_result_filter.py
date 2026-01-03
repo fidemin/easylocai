@@ -8,6 +8,7 @@ class TaskResultFilterInput(BaseModel):
     original_user_query: str
     task: str
     iteration_results: list[dict]
+    user_context: str | None
 
 
 class TaskResultFilterOutput(RootModel[str]):

@@ -28,6 +28,7 @@ class SingleTaskAgentInput(BaseModel):
     original_user_query: str
     task: dict
     previous_task_results: list[dict] = []
+    user_context: str | None
 
 
 class SingleTaskAgentOutput(BaseModel):
@@ -51,6 +52,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         task = input_.task
         type_ = task["type"]
         task_description = task["description"]
+        user_context = input_.user_context
 
         reasoning_agent = ReasoningAgent(client=self._ollama_client)
 
@@ -72,6 +74,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
                 task_description=task_description,
                 previous_task_results=previous_task_results,
                 original_tasks=original_tasks,
+                user_context=user_context,
             )
 
             logger.debug(f"Tool Result:\n{tool_result}")
@@ -84,17 +87,21 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             #   "final": "The answer is 25.",
             #   "confidence": 100
             # }
-            reasoning_agent_input = ReasoningAgentInput(task=task)
-            reasoning_result: ReasoningAgentOutput = await reasoning_agent.run(
+            reasoning_agent_input = ReasoningAgentInput(
+                task=task, user_context=user_context
+            )
+            reasoning_agent_output: ReasoningAgentOutput = await reasoning_agent.run(
                 reasoning_agent_input
             )
             iteration_results = [
                 {
                     "subtask": task_description,
-                    "result": [reasoning_result.model_dump_json(ensure_ascii=False)],
+                    "result": [
+                        reasoning_agent_output.model_dump_json(ensure_ascii=False)
+                    ],
                 }
             ]
-            logger.debug(f"LLM Result:\n{reasoning_result}")
+            logger.debug(f"LLM Result:\n{reasoning_agent_output}")
         else:
             raise ValueError(f"Unknown task type: {type_}")
 
@@ -102,6 +109,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             original_user_query=input_.original_user_query,
             task=task_description,
             iteration_results=iteration_results,
+            user_context=user_context,
         )
 
         return SingleTaskAgentOutput(
@@ -115,6 +123,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         task_description,
         previous_task_results,
         original_tasks,
+        user_context,
     ):
         tool_search_result = self._tool_collection.query(
             query_texts=[task_description],
@@ -152,6 +161,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
                 iteration_results=iteration_results,
                 original_tasks=original_tasks,
                 task=task_description,
+                user_context=user_context,
             )
             tool_selector = ToolSelector(client=self._ollama_client)
             try:
@@ -222,12 +232,14 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         original_user_query: str,
         task: str,
         iteration_results: list,
+        user_context: str,
     ) -> str:
 
         task_result_filter_input = TaskResultFilterInput(
             original_user_query=original_user_query,
             task=task,
             iteration_results=iteration_results,
+            user_context=user_context,
         )
 
         task_result_filter = TaskResultFilter(client=self._ollama_client)
