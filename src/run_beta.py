@@ -56,7 +56,7 @@ async def main():
     chromadb_client = chromadb.Client()
     tool_collection = chromadb_client.get_or_create_collection("tools")
 
-    server_manager = ServerManager.from_json_config_file("mcp_server_config.json")
+    server_manager = ServerManager.from_json_config_file("./mcp_server_config.json")
 
     plan_agent = PlanAgent(
         client=ollama_client,
@@ -170,5 +170,9 @@ async def main():
                 )
 
 
-if __name__ == "__main__":
+def run():
     asyncio.run(main())
+
+
+if __name__ == "__main__":
+    run()
