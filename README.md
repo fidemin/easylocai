@@ -3,7 +3,7 @@
 
 # Requirements
 - Only working for MacOS
-- Python 3.10+
+- Python 3.12+
 - Ollama and gpt-oss:20b model should be installed  
 
 # Installation
@@ -14,8 +14,7 @@ bash install.sh
 # Configuration
 
 ### MCP server configuration
-
-- file_name: `mcp_server_config.json`
+- file_name: `~/.config/easylocai/config.json`
 - example
     ```json
     {
@@ -58,8 +57,17 @@ bash install.sh
     }
     ```
 
+# Initialization
+```bash
+easylocai init
+```
+
+If you want to force re-initialization, use `--force` flag:
+```bash
+easylocai init --force
+```
 
 # Run
 ```bash
-./easylocai
+easylocai
 ```

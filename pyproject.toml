@@ -1,7 +1,7 @@
 [project]
 name = "easylocai"
 version = "0.1.0"
-description = "Add your description here"
+description = "Local AI CLI using local llm"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
@@ -26,7 +26,7 @@ dev = [
 easylocai = "src.run_beta:run"
 
 [tool.hatch.build.targets.wheel]
-only-include = ["src"]
+only-include = ["src", "resources"]
 
 [build-system]
 requires = ["hatchling"]

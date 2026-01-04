@@ -17,10 +17,8 @@ class QueryNormalizerOutput(BaseModel):
 class QueryNormalizer(LLMCall[QueryNormalizerInput, QueryNormalizerOutput]):
     def __init__(self, *, client):
         model = "gpt-oss:20b"
-        system_prompt_path = (
-            "resources/prompts/v2/query_normalizer_system_prompt.jinja2"
-        )
-        user_prompt_path = "resources/prompts/v2/query_normalizer_user_prompt.jinja2"
+        system_prompt_path = "prompts/v2/query_normalizer_system_prompt.jinja2"
+        user_prompt_path = "prompts/v2/query_normalizer_user_prompt.jinja2"
         options = {
             "temperature": 0.1,
         }

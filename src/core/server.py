@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from contextlib import AsyncExitStack
+from pathlib import Path
 
 from mcp import StdioServerParameters, stdio_client, ClientSession
 from mcp import Tool as McpTool
@@ -118,7 +119,7 @@ class ServerManager:
         return await server.call_tool(tool_name, tool_args)
 
     @staticmethod
-    def from_json_config_file(config_path: str):
+    def from_json_config_file(config_path: Path):
         server_manager = ServerManager()
         with open(config_path) as f:
             servers = json.load(f)["mcpServers"]

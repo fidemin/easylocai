@@ -7,8 +7,11 @@ from ollama import AsyncClient, ChatResponse
 from pydantic import BaseModel, RootModel
 
 from src.utlis.prompt import pretty_prompt_text
+from src.utlis.resource_util import installed_resources_dir
 
 logger = logging.getLogger(__name__)
+
+resources_dir = installed_resources_dir()
 
 InModel = TypeVar("InModel", bound=BaseModel)
 OutModel = TypeVar("OutModel", bound=BaseModel)
@@ -38,7 +41,10 @@ class LLMCall(ABC, Generic[InModel, OutModel]):
         self._model = model
         self._options = options
 
-        env = Environment(loader=FileSystemLoader(""), undefined=StrictUndefined)
+        env = Environment(
+            loader=FileSystemLoader(str(resources_dir)),
+            undefined=StrictUndefined,
+        )
         self._system_prompt_template = env.get_template(system_prompt_path)
         self._user_prompt_template = env.get_template(user_prompt_path)
         self._output_model = output_model

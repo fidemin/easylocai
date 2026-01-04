@@ -17,8 +17,8 @@ class ReasoningOutput(BaseModel):
 class Reasoning(LLMCall[ReasoningInput, ReasoningOutput]):
     def __init__(self, *, client):
         model = "gpt-oss:20b"
-        system_prompt_path = "resources/prompts/v2/reasoning_system_prompt.jinja2"
-        user_prompt_path = "resources/prompts/v2/reasoning_user_prompt.jinja2"
+        system_prompt_path = "prompts/v2/reasoning_system_prompt.jinja2"
+        user_prompt_path = "prompts/v2/reasoning_user_prompt.jinja2"
         options = {
             "temperature": 0.5,
         }

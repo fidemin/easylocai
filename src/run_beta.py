@@ -1,5 +1,7 @@
+import argparse
 import asyncio
 import logging
+import sys
 from contextlib import AsyncExitStack
 
 import chromadb
@@ -13,6 +15,7 @@ from src.agents.single_task_agent import (
     SingleTaskAgentInput,
     SingleTaskAgentOutput,
 )
+from src.config import user_config_path, ensure_user_config
 from src.core.server import ServerManager
 from src.schemas.common import UserConversation
 from src.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
@@ -42,6 +45,8 @@ async def initialize_tools(server_manager: ServerManager, tool_collection):
             documents.append(tool.description)
             metadatas.append(metadata)
 
+    if len(ids) == 0:
+        return
     tool_collection.add(
         documents=documents,
         ids=ids,
@@ -56,7 +61,8 @@ async def main():
     chromadb_client = chromadb.Client()
     tool_collection = chromadb_client.get_or_create_collection("tools")
 
-    server_manager = ServerManager.from_json_config_file("./mcp_server_config.json")
+    config_path = user_config_path()
+    server_manager = ServerManager.from_json_config_file(config_path)
 
     plan_agent = PlanAgent(
         client=ollama_client,
@@ -170,9 +176,47 @@ async def main():
                 )
 
 
-def run():
-    asyncio.run(main())
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="easylocai",
+        description="Easy Local AI CLI",
+    )
+
+    subparsers = parser.add_subparsers(dest="command")
+
+    # ADD easylocai init command
+    # easylocai init
+    init_parser = subparsers.add_parser(
+        "init",
+        help="Create config at ~/.config/easylocai/config.json",
+    )
+    init_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing config",
+    )
+    return parser
+
+
+def run() -> int:
+    parser = build_parser()
+    args = parser.parse_args()
+
+    if args.command == "init":
+        path = ensure_user_config(overwrite=args.force)
+        print(f"Config initialized at: {path}")
+        return 0
+
+    ensure_user_config(overwrite=False)
+
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\nExiting...")
+        return 0
+
+    return 0
 
 
 if __name__ == "__main__":
-    run()
+    sys.exit(run())
