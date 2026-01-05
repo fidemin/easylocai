@@ -1,7 +1,7 @@
 from ollama import AsyncClient
 from pydantic import BaseModel
 
-from src.core.llm_call import LLMCall
+from easylocai.core.llm_call import LLMCall
 
 
 class ReplannerInput(BaseModel):

@@ -8,18 +8,22 @@ import chromadb
 from ollama import AsyncClient
 from rich import get_console
 
-from src.agents.plan_agent import PlanAgent, PlanAgentInput, PlanAgentOutput
-from src.agents.replan_agent import ReplanAgent, ReplanAgentInput, ReplanAgentOutput
-from src.agents.single_task_agent import (
+from easylocai.agents.plan_agent import PlanAgent, PlanAgentInput, PlanAgentOutput
+from easylocai.agents.replan_agent import (
+    ReplanAgent,
+    ReplanAgentInput,
+    ReplanAgentOutput,
+)
+from easylocai.agents.single_task_agent import (
     SingleTaskAgent,
     SingleTaskAgentInput,
     SingleTaskAgentOutput,
 )
-from src.config import user_config_path, ensure_user_config
-from src.core.server import ServerManager
-from src.schemas.common import UserConversation
-from src.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
-from src.utlis.loggers.default_dict import default_logging_config
+from easylocai.config import user_config_path, ensure_user_config
+from easylocai.core.server import ServerManager
+from easylocai.schemas.common import UserConversation
+from easylocai.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
+from easylocai.utlis.loggers.default_dict import default_logging_config
 
 logging.config.dictConfig(default_logging_config)
 

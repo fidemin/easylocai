@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from pydantic import RootModel, Field
 
-from src.core.llm_call import LLMCall
+from easylocai.core.llm_call import LLMCall
 
 
 class TaskResultFilterInput(BaseModel):

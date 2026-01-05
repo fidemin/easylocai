@@ -3,9 +3,9 @@ import logging
 from ollama import AsyncClient
 from pydantic import BaseModel
 
-from src.core.agent import Agent
-from src.core.contants import DEFAULT_LLM_MODEL
-from src.llm_calls.reasoning import Reasoning, ReasoningInput, ReasoningOutput
+from easylocai.core.agent import Agent
+from easylocai.core.contants import DEFAULT_LLM_MODEL
+from easylocai.llm_calls.reasoning import Reasoning, ReasoningInput, ReasoningOutput
 
 logger = logging.getLogger(__name__)
 

@@ -5,15 +5,18 @@ from chromadb.types import Collection
 from ollama import AsyncClient
 from pydantic import BaseModel, ValidationError
 
-from src.agents.reasoning_agent import (
+from easylocai.agents.reasoning_agent import (
     ReasoningAgent,
     ReasoningAgentOutput,
     ReasoningAgentInput,
 )
-from src.core.agent import Agent
-from src.core.server import ServerManager
-from src.llm_calls.task_result_filter import TaskResultFilter, TaskResultFilterInput
-from src.llm_calls.tool_selector import (
+from easylocai.core.agent import Agent
+from easylocai.core.server import ServerManager
+from easylocai.llm_calls.task_result_filter import (
+    TaskResultFilter,
+    TaskResultFilterInput,
+)
+from easylocai.llm_calls.tool_selector import (
     ToolSelector,
     ToolSelectorInput,
     ToolSelectorOutput,

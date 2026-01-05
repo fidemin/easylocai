@@ -3,7 +3,7 @@ import logging
 
 from jinja2 import Environment, FileSystemLoader
 
-from src.utlis.prompt import pretty_prompt_text
+from easylocai.utlis.prompt import pretty_prompt_text
 
 logger = logging.getLogger(__name__)
 

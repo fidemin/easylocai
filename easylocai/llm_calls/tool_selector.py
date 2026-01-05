@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from src.core.llm_call import LLMCall
+from easylocai.core.llm_call import LLMCall
 
 
 class ToolInput(BaseModel):

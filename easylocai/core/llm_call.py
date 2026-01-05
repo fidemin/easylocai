@@ -6,8 +6,8 @@ from jinja2 import Template, Environment, FileSystemLoader, StrictUndefined
 from ollama import AsyncClient, ChatResponse
 from pydantic import BaseModel, RootModel
 
-from src.utlis.prompt import pretty_prompt_text
-from src.utlis.resource_util import installed_resources_dir
+from easylocai.utlis.prompt import pretty_prompt_text
+from easylocai.utlis.resource_util import installed_resources_dir
 
 logger = logging.getLogger(__name__)
 

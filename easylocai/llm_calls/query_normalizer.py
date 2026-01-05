@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
-from src.core.llm_call import LLMCall
-from src.schemas.common import UserConversation
+from easylocai.core.llm_call import LLMCall
+from easylocai.schemas.common import UserConversation
 
 
 class QueryNormalizerInput(BaseModel):

@@ -1,12 +1,12 @@
 from jinja2 import Environment, FileSystemLoader
 from ollama import AsyncClient
 
-from src.core.agent import Agent
-from src.core.contants import DEFAULT_LLM_MODEL
+from easylocai.core.agent import Agent
+from easylocai.core.contants import DEFAULT_LLM_MODEL
 
 
-class PlanEvalAgent(Agent):
-    _prompt_path = "resources/prompts/v2/plan_eval_prompt.jinja2"
+class ReplanEvalAgent(Agent):
+    _prompt_path = "resources/prompts/v2/replan_eval_prompt.jinja2"
 
     def __init__(
         self,
@@ -20,8 +20,11 @@ class PlanEvalAgent(Agent):
         self._model = DEFAULT_LLM_MODEL
 
     async def run(self, **query) -> str | dict:
-        user_query = query["user_query"]
-        steps = query["tasks"]
+        original_user_query = query["original_user_query"]
+        original_plan = query["original_plan"]
+        task_results = query["task_results"]
+        tasks = query["tasks"]
+        response = query["response"]
 
         prompt = self._prompt_template.render()
 
@@ -29,7 +32,10 @@ class PlanEvalAgent(Agent):
             model=self._model,
             messages=[
                 {"role": "system", "content": prompt},
-                {"role": "user", "content": f"User Query: {user_query}\nPlan: {steps}"},
+                {
+                    "role": "user",
+                    "content": f"Original User Query: {original_user_query}\nOriginal Plan: {original_plan}\nPrevious Step Results: {task_results}\nNew Plan: {tasks}\nResponse: {response}",
+                },
             ],
             options={"temperature": 0.3},
         )

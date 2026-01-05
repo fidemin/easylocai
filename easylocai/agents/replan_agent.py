@@ -5,10 +5,10 @@ from chromadb.types import Collection
 from ollama import AsyncClient
 from pydantic import BaseModel
 
-from src.core.agent import Agent
-from src.core.contants import DEFAULT_LLM_MODEL
-from src.core.server import ServerManager
-from src.llm_calls.replanner import Replanner, ReplannerInput, ReplannerOutput
+from easylocai.core.agent import Agent
+from easylocai.core.contants import DEFAULT_LLM_MODEL
+from easylocai.core.server import ServerManager
+from easylocai.llm_calls.replanner import Replanner, ReplannerInput, ReplannerOutput
 
 logger = logging.getLogger(__name__)
 

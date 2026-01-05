@@ -26,3 +26,6 @@ mcp_server_config.json
 
 # temp files
 temp_*
+
+# Mac OS
+.DS_Store

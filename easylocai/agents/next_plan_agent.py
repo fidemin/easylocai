@@ -4,8 +4,8 @@ import logging
 from jinja2 import Environment, FileSystemLoader
 from ollama import AsyncClient
 
-from src.core.agent import Agent
-from src.utlis.prompt import pretty_prompt_text
+from easylocai.core.agent import Agent
+from easylocai.utlis.prompt import pretty_prompt_text
 
 logger = logging.getLogger(__name__)
 

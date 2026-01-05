@@ -23,10 +23,10 @@ dev = [
 ]
 
 [project.scripts]
-easylocai = "src.run_beta:run"
+easylocai = "easylocai.run_beta:run"
 
 [tool.hatch.build.targets.wheel]
-only-include = ["src", "resources"]
+only-include = ["easylocai", "resources"]
 
 [build-system]
 requires = ["hatchling"]

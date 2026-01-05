@@ -29,7 +29,7 @@ default_logging_config = {
             "level": "INFO",
             "propagate": False,
         },
-        "src": {
+        "easylocai": {
             "handlers": ["file"],
             "level": "DEBUG",
             "propagate": False,

@@ -2,8 +2,8 @@ import asyncio
 import json
 import logging.config
 
-from src.core.agent import Agent
-from src.utlis.loggers.default_dict import default_logging_config
+from easylocai.core.agent import Agent
+from easylocai.utlis.loggers.default_dict import default_logging_config
 
 logging.config.dictConfig(default_logging_config)
 

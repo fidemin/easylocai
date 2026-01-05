@@ -4,10 +4,10 @@ from typing import AsyncIterator, Dict, Any
 from chromadb.types import Collection
 from jinja2 import Environment, FileSystemLoader
 
-from src.agents.tool_result_filter_agent import ToolResultFilterAgent
-from src.agents.tool_select_agent import ToolSelectAgent
-from src.core.agent import Agent
-from src.core.server import ServerManager
+from easylocai.agents.tool_result_filter_agent import ToolResultFilterAgent
+from easylocai.agents.tool_select_agent import ToolSelectAgent
+from easylocai.core.agent import Agent
+from easylocai.core.server import ServerManager
 
 logger = logging.getLogger(__name__)
 

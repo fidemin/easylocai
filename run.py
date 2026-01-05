@@ -7,12 +7,12 @@ import chromadb
 from ollama import AsyncClient
 from rich import get_console
 
-from src.agents.answer_agent import AnswerAgent
-from src.agents.next_plan_agent import NextPlanAgent
-from src.agents.tool_agent import ToolAgent
-from src.core.server import ServerManager
-from src.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
-from src.utlis.loggers.default_dict import default_logging_config
+from easylocai.agents.answer_agent import AnswerAgent
+from easylocai.agents.next_plan_agent import NextPlanAgent
+from easylocai.agents.tool_agent import ToolAgent
+from easylocai.core.server import ServerManager
+from easylocai.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
+from easylocai.utlis.loggers.default_dict import default_logging_config
 
 logging.config.dictConfig(default_logging_config)
 
