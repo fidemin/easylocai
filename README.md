@@ -3,7 +3,7 @@
 
 # Requirements
 - Only working for MacOS
-- Python 3.12+
+- Python 3.12
 - Ollama and gpt-oss:20b model should be installed  
 
 # Install & Execution 
