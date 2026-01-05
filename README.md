@@ -1,5 +1,8 @@
 # easylocai-cli
-- very simple automatic AI agent for your local machine 
+- very simple automatic AI agent for your local machine
+
+![ezgif-254c971713d11b86](https://github.com/user-attachments/assets/eba29220-78a2-46dd-a8d5-31cbcf8a112a)
+
 
 # Requirements
 - Only working for MacOS
