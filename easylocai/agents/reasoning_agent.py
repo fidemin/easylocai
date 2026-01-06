@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 class ReasoningAgentInput(BaseModel):
     task: dict
     user_context: str | None
+    previous_task_results: list[dict]
 
 
 class ReasoningAgentOutput(BaseModel):
@@ -34,6 +35,7 @@ class ReasoningAgent(Agent[ReasoningAgentInput, ReasoningAgentOutput]):
         reasoning_input = ReasoningInput(
             task=input_.task["description"],
             user_context=input_.user_context,
+            previous_task_results=input_.previous_task_results,
         )
         reasoning = Reasoning(client=self._ollama_client)
         # TODO: adjust think time based on task complexity

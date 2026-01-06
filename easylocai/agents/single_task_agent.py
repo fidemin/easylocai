@@ -60,9 +60,6 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         reasoning_agent = ReasoningAgent(client=self._ollama_client)
 
         if type_ == "tool":
-            previous_task_results = input_.previous_task_results
-            original_tasks = input_.original_tasks
-
             # Example:
             # tool_result = {
             #   "task": task_description,
@@ -75,8 +72,8 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             # }
             tool_result = await self._tool_result(
                 task_description=task_description,
-                previous_task_results=previous_task_results,
-                original_tasks=original_tasks,
+                previous_task_results=input_.previous_task_results,
+                original_tasks=input_.original_tasks,
                 user_context=user_context,
             )
 
@@ -91,7 +88,9 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             #   "confidence": 100
             # }
             reasoning_agent_input = ReasoningAgentInput(
-                task=task, user_context=user_context
+                task=task,
+                user_context=user_context,
+                previous_task_results=input_.previous_task_results,
             )
             reasoning_agent_output: ReasoningAgentOutput = await reasoning_agent.run(
                 reasoning_agent_input

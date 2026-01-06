@@ -6,6 +6,7 @@ from easylocai.core.llm_call import LLMCall
 class ReasoningInput(BaseModel):
     task: str
     user_context: str | None
+    previous_task_results: list[dict]
 
 
 class ReasoningOutput(BaseModel):

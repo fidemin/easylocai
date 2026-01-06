@@ -3,3 +3,11 @@ The Task:
 
 USER_CONTEXT:
 {{ user_context }}
+
+PREVIOUS_TASK_RESULTS:
+{% for task_result in previous_task_results %}
+<task_result>
+- task: {{ task_result["task"] }}
+- result: {{ task_result["result"] }}
+</task_result>
+{% endfor %}
