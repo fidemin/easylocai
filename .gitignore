@@ -15,17 +15,15 @@ wheels/
 # Pycharm
 .idea
 
-# log files
-*.log
-
-# mcp server json file
-mcp_server_config.json
-
 # vscode
 .vscode/
 
-# temp files
-temp_*
-
 # Mac OS
 .DS_Store
+
+# log files
+*.log
+
+# temp files
+temp_*
+temp-*
