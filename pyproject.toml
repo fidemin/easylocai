@@ -23,7 +23,7 @@ dev = [
 ]
 
 [project.scripts]
-easylocai = "easylocai.run_beta:run"
+easylocai = "easylocai.run:run"
 
 [tool.hatch.build.targets.wheel]
 only-include = ["easylocai", "resources"]
