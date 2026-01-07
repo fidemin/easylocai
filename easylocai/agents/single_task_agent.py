@@ -11,7 +11,7 @@ from easylocai.agents.reasoning_agent import (
     ReasoningAgentInput,
 )
 from easylocai.core.agent import Agent
-from easylocai.core.server import ServerManager
+from easylocai.core.tool_manager import ServerManager
 from easylocai.llm_calls.task_result_filter import (
     TaskResultFilter,
     TaskResultFilterInput,

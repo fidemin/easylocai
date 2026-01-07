@@ -7,7 +7,7 @@ from jinja2 import Environment, FileSystemLoader
 from easylocai.agents.tool_result_filter_agent import ToolResultFilterAgent
 from easylocai.agents.tool_select_agent import ToolSelectAgent
 from easylocai.core.agent import Agent
-from easylocai.core.server import ServerManager
+from easylocai.core.tool_manager import ServerManager
 
 logger = logging.getLogger(__name__)
 

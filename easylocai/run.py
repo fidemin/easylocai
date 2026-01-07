@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import json
 import logging
 import sys
 from contextlib import AsyncExitStack
@@ -20,7 +21,7 @@ from easylocai.agents.single_task_agent import (
     SingleTaskAgentOutput,
 )
 from easylocai.config import user_config_path, ensure_user_config
-from easylocai.core.server import ServerManager
+from easylocai.core.tool_manager import ServerManager, ToolManager
 from easylocai.schemas.common import UserConversation
 from easylocai.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
 from easylocai.utlis.loggers.default_dict import default_logging_config
@@ -66,7 +67,13 @@ async def main():
     tool_collection = chromadb_client.get_or_create_collection("tools")
 
     config_path = user_config_path()
-    server_manager = ServerManager.from_json_config_file(config_path)
+
+    with open(config_path) as f:
+        config_dict = json.load(f)
+
+    tool_manager = ToolManager(chromadb_client, mpc_servers=config_dict["mcpServers"])
+    # TODO: temporary access to server_manager for compatibility
+    server_manager = tool_manager._server_manager
 
     plan_agent = PlanAgent(
         client=ollama_client,
@@ -90,8 +97,7 @@ async def main():
 
     stack = AsyncExitStack()
     async with stack:
-        await server_manager.initialize_servers(stack)
-        await initialize_tools(server_manager, tool_collection)
+        await tool_manager.initialize(stack)
 
         while True:
             render_chat(console, messages)

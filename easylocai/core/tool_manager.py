@@ -4,6 +4,7 @@ import os
 from contextlib import AsyncExitStack
 from pathlib import Path
 
+from chromadb import ClientAPI
 from mcp import StdioServerParameters, stdio_client, ClientSession
 from mcp import Tool as McpTool
 
@@ -137,3 +138,52 @@ class ServerManager:
                 server_manager.add_server(server)
 
         return server_manager
+
+
+class ToolManager:
+    def __init__(self, chromadb_client: ClientAPI, *, mpc_servers: dict):
+        server_manager = ServerManager()
+
+        for server_name, config in mpc_servers.items():
+            if "env" in config:
+                env = {}
+                for k, v in config["env"].items():
+                    env[k] = os.path.expandvars(v)
+            server_params = StdioServerParameters(
+                **config,
+            )
+
+            server = Server(server_name, server_params)
+            server_manager.add_server(server)
+        self._server_manager = server_manager
+        self._tool_collection = chromadb_client.get_or_create_collection("tools")
+
+    async def initialize(self, async_stack: AsyncExitStack):
+        await self._server_manager.initialize_servers(async_stack)
+        await self._initialize_tools()
+
+    async def _initialize_tools(self):
+        # initialize chromadb tool
+        ids = []
+        metadatas = []
+        documents = []
+        for server in self._server_manager.list_servers():
+            for tool in await server.list_tools():
+                id_ = f"{server.name}:{tool.name}"
+                metadata = {
+                    "server_name": server.name,
+                    "tool_name": tool.name,
+                }
+                ids.append(id_)
+                documents.append(tool.description)
+                metadatas.append(metadata)
+
+        if len(ids) == 0:
+            logger.warning("No tools found to initialize in ToolManager.")
+            return
+
+        self._tool_collection.add(
+            documents=documents,
+            ids=ids,
+            metadatas=metadatas,
+        )

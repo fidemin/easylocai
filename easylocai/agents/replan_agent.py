@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from easylocai.core.agent import Agent
 from easylocai.core.contants import DEFAULT_LLM_MODEL
-from easylocai.core.server import ServerManager
+from easylocai.core.tool_manager import ServerManager
 from easylocai.llm_calls.replanner import Replanner, ReplannerInput, ReplannerOutput
 
 logger = logging.getLogger(__name__)
