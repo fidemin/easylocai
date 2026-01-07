@@ -64,7 +64,6 @@ async def main():
     ollama_client = AsyncClient(host="http://localhost:11434")
 
     chromadb_client = chromadb.Client()
-    tool_collection = chromadb_client.get_or_create_collection("tools")
 
     config_path = user_config_path()
 
@@ -72,24 +71,19 @@ async def main():
         config_dict = json.load(f)
 
     tool_manager = ToolManager(chromadb_client, mpc_servers=config_dict["mcpServers"])
-    # TODO: temporary access to server_manager for compatibility
-    server_manager = tool_manager._server_manager
 
     plan_agent = PlanAgent(
         client=ollama_client,
-        tool_collection=tool_collection,
-        server_manager=server_manager,
+        tool_manager=tool_manager,
     )
 
     replan_agent = ReplanAgent(
         client=ollama_client,
-        tool_collection=tool_collection,
-        server_manager=server_manager,
+        tool_manager=tool_manager,
     )
     single_task_agent = SingleTaskAgent(
         client=ollama_client,
-        tool_collection=tool_collection,
-        server_manager=server_manager,
+        tool_manager=tool_manager,
     )
 
     messages = []

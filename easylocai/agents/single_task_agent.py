@@ -1,7 +1,6 @@
 import logging
 from typing import Any
 
-from chromadb.types import Collection
 from ollama import AsyncClient
 from pydantic import BaseModel, ValidationError
 
@@ -11,7 +10,7 @@ from easylocai.agents.reasoning_agent import (
     ReasoningAgentInput,
 )
 from easylocai.core.agent import Agent
-from easylocai.core.tool_manager import ServerManager
+from easylocai.core.tool_manager import ToolManager
 from easylocai.llm_calls.task_result_filter import (
     TaskResultFilter,
     TaskResultFilterInput,
@@ -44,12 +43,10 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         self,
         *,
         client: AsyncClient,
-        tool_collection: Collection,
-        server_manager: ServerManager,
+        tool_manager: ToolManager,
     ):
         self._ollama_client = client
-        self._tool_collection = tool_collection
-        self._server_manager = server_manager
+        self._tool_manager = tool_manager
 
     async def run(self, input_: SingleTaskAgentInput) -> SingleTaskAgentOutput:
         task = input_.task
@@ -127,21 +124,14 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         original_tasks,
         user_context,
     ):
-        tool_search_result = self._tool_collection.query(
-            query_texts=[task_description],
-            n_results=5,
-        )
+        tools = self._tool_manager.search_tools([task_description], n_results=10)
 
-        metadatas = tool_search_result["metadatas"][0]
         tool_candidates = []
 
-        for metadata in metadatas:
-            server_name = metadata["server_name"]
-            tool_name = metadata["tool_name"]
-            tool = self._server_manager.get_server(server_name).get_tool(tool_name)
+        for tool in tools:
             tool_candidates.append(
                 {
-                    "server_name": server_name,
+                    "server_name": tool.server_name,
                     "tool_name": tool.name,
                     "tool_description": tool.description,
                     "tool_input_schema": tool.input_schema,
@@ -214,7 +204,8 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         }
 
     async def _call_tool(self, tool_input: ToolInput) -> dict[str, Any]:
-        tool_result = await self._server_manager.call_tool(
+        # TODO: call tool is a common function, can be moved to ToolManager
+        tool_result = await self._tool_manager._server_manager.call_tool(
             tool_input.server_name,
             tool_input.tool_name,
             tool_input.tool_args,

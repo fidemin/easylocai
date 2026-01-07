@@ -22,6 +22,10 @@ class Tool:
         return f"Tool(server={self._server_name}, name={self._name})"
 
     @property
+    def server_name(self):
+        return self._server_name
+
+    @property
     def name(self):
         return self._name
 
@@ -187,3 +191,18 @@ class ToolManager:
             ids=ids,
             metadatas=metadatas,
         )
+
+    def search_tools(self, queries: list[str], *, n_results: int) -> list[Tool]:
+        search_result = self._tool_collection.query(
+            query_texts=queries,
+            n_results=n_results,
+        )
+        tools: list[Tool] = []
+
+        for metadata_list in search_result["metadatas"]:
+            for metadata in metadata_list:
+                server_name = metadata["server_name"]
+                tool_name = metadata["tool_name"]
+                tool = self._server_manager.get_server(server_name).get_tool(tool_name)
+                tools.append(tool)
+        return tools

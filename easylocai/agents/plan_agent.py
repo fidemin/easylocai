@@ -1,13 +1,11 @@
 import logging
 from typing import Optional, Any
 
-from chromadb.types import Collection
 from ollama import AsyncClient
 from pydantic import BaseModel
 
 from easylocai.core.agent import Agent
-from easylocai.core.contants import DEFAULT_LLM_MODEL
-from easylocai.core.tool_manager import ServerManager
+from easylocai.core.tool_manager import ToolManager
 from easylocai.llm_calls.planner import Planner, PlannerInput, PlannerOutput
 from easylocai.llm_calls.query_normalizer import (
     QueryNormalizer,
@@ -36,14 +34,10 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
         self,
         *,
         client: AsyncClient,
-        tool_collection: Collection,
-        server_manager: ServerManager,
+        tool_manager: ToolManager,
     ):
         self._ollama_client = client
-        self._tool_collection = tool_collection
-        self._server_manager = server_manager
-
-        self._model = DEFAULT_LLM_MODEL
+        self._tool_manager = tool_manager
 
     async def _run(self, input_: PlanAgentInput) -> PlanAgentOutput:
         original_user_query = input_.user_query
@@ -104,24 +98,16 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
         if not previous_plan:
             return []
 
-        tool_search_result = self._tool_collection.query(
-            query_texts=previous_plan,
-            n_results=10,
-        )
+        tools = self._tool_manager.search_tools(previous_plan, n_results=10)
 
-        tool_candidates = []
+        tool_candidates = [
+            {
+                "tool_name": tool.name,
+                "tool_description": tool.description,
+            }
+            for tool in tools
+        ]
 
-        for metadatas in tool_search_result["metadatas"]:
-            for metadata in metadatas:
-                server_name = metadata["server_name"]
-                tool_name = metadata["tool_name"]
-                tool = self._server_manager.get_server(server_name).get_tool(tool_name)
-                tool_candidates.append(
-                    {
-                        "tool_name": tool.name,
-                        "tool_description": tool.description,
-                    }
-                )
         return tool_candidates
 
     async def _replan(
