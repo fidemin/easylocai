@@ -14,11 +14,13 @@ class PromptEvalWorkflow:
         input_file_path: str,
         model_info: dict,
         user_input_schema: Type[BaseModel] | None = None,
+        output_model: Type[BaseModel] | None = None,
     ):
         self._prompt_path_info = prompt_path_info
         self._input_file_path = input_file_path
         self._model_info = model_info
         self._user_input_schema = user_input_schema
+        self._output_model = output_model
 
     async def run(self):
         """
@@ -105,11 +107,19 @@ class PromptEvalWorkflow:
         ollama_client = AsyncClient(host=self._model_info["host"])
 
         for chat_input in chat_input_list:
-            response = await ollama_client.chat(
-                model=self._model_info["model"],
-                messages=chat_input["messages"],
-                options=self._model_info.get("options"),
-            )
+            if self._output_model:
+                response = await ollama_client.chat(
+                    model=self._model_info["model"],
+                    messages=chat_input["messages"],
+                    options=self._model_info.get("options"),
+                    format=self._output_model.model_json_schema(),
+                )
+            else:
+                response = await ollama_client.chat(
+                    model=self._model_info["model"],
+                    messages=chat_input["messages"],
+                    options=self._model_info.get("options"),
+                )
             self._print(chat_input, response["message"]["content"])
 
     def _get_prompt_template(self, prompt_path: str | None) -> Template | None:
