@@ -1,38 +1,76 @@
 [
   {
-    "id": "No previous conversations. Context is fully in the query.",
+    "id": "No previous conversations. Simple user query",
     "messages": [
-        {
-            "role": "system",
-            "arguments": {}
-        },
-        {
-            "role": "user",
-            "arguments": {
-            "previous_conversations": [],
-            "user_query": "Kubernetes is an open-source platform that can automate the management, deployment, and scale of containerized applications. \n\n Is this true?"
-            }
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "previous_conversations": [],
+          "user_query": "What is (2+3) * 12 ?"
         }
+      }
     ]
   },
   {
-    "id": "Previous conversations",
+    "id": "No previous conversations. Context is fully in the query.",
     "messages": [
-        {
-            "role": "system",
-            "arguments": {}
-        },
-        {
-            "role": "user",
-            "arguments": {
-            "previous_conversations": [
-              "user query: Read README.md file in current directory\nassistant answer: # easylocai-cli\n- very simple automatic AI agent for your local machine \n\n# Requirements\n- Only working for MacOS\n- Python 3.10+\n- Ollama and gpt-oss:20b model should be installed  \n\n# Installation\n```bash\nbash install.sh\n````\n\n# Configuration\n\n### MCP server configuration\n\n- file_name: `mcp_server_config.json`\n- example\n    ```json\n    {\n      \"mcpServers\": {\n        \"filesystem\": {\n          \"command\": \"npx\",\n          \"args\": [\n            \"-y\",\n            \"@modelcontextprotocol/server-filesystem\",\n            \".\"\n          ]\n        },\n        \"kubernetes\": {\n          \"command\": \"python\",\n          \"args\": [\n            \"-m\",\n            \"kubectl_mcp_tool.mcp_server\"\n          ],\n          \"cwd\": \"~/Programming/kubectl-mcp-server\",\n          \"env\": {\n            \"KUBECONFIG\": \"~/.kube/config\",\n            \"KUBECTL_MCP_LOG_LEVEL\": \"ERROR\",\n            \"PYTHONUNBUFFERED\": \"1\"\n          }\n        },\n        \"notion_api\": {\n          \"command\": \"docker\",\n          \"args\": [\n            \"run\",\n            \"--rm\",\n            \"-i\",\n            \"-e\", \"NOTION_TOKEN\",\n            \"mcp/notion\"\n          ],\n          \"env\": {\n            \"NOTION_TOKEN\": \"<token>\"\n          }\n        }\n      }\n    }\n    ```\n\n\n# Run\n```bash\n./easylocai\n```\n"
-            ],
-            "user_query": "summarize it"
-            }
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "previous_conversations": [],
+          "user_query": "Kubernetes is an open-source platform that can automate the management, deployment, and scale of containerized applications. \n\n Is this true?"
         }
+      }
+    ]
+  },
+  {
+    "id": "With previous conversations",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "previous_conversations": [
+            {
+              "user_query": "Read README.md file in current directory",
+              "assistant_answer": "# easylocai-cli\n- very simple automatic AI agent for your local machine \n\n# Requirements\n- Only working for MacOS\n- Python 3.10+\n- Ollama and gpt-oss:20b model should be installed  \n\n# Installation\n```bash\nbash install.sh\n````\n\n# Configuration\n\n### MCP server configuration\n\n- file_name: `mcp_server_config.json`\n- example\n    ```json\n    {\n      \"mcpServers\": {\n        \"filesystem\": {\n          \"command\": \"npx\",\n          \"args\": [\n            \"-y\",\n            \"@modelcontextprotocol/server-filesystem\",\n            \".\"\n          ]\n        },\n        \"kubernetes\": {\n          \"command\": \"python\",\n          \"args\": [\n            \"-m\",\n            \"kubectl_mcp_tool.mcp_server\"\n          ],\n          \"cwd\": \"~/Programming/kubectl-mcp-server\",\n          \"env\": {\n            \"KUBECONFIG\": \"~/.kube/config\",\n            \"KUBECTL_MCP_LOG_LEVEL\": \"ERROR\",\n            \"PYTHONUNBUFFERED\": \"1\"\n          }\n        },\n        \"notion_api\": {\n          \"command\": \"docker\",\n          \"args\": [\n            \"run\",\n            \"--rm\",\n            \"-i\",\n            \"-e\", \"NOTION_TOKEN\",\n            \"mcp/notion\"\n          ],\n          \"env\": {\n            \"NOTION_TOKEN\": \"<token>\"\n          }\n        }\n      }\n    }\n    ```\n\n\n# Run\n```bash\n./easylocai\n```\n"
+            }
+          ],
+          "user_query": "summarize it"
+        }
+      }
+    ]
+  },
+  {
+    "id": "With previous conversation not relevant",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "previous_conversations": [
+            {
+              "user_query": "What are the health benefits of green tea?",
+              "assistant_answer": "Green tea is rich in antioxidants and nutrients that have powerful effects on the body. Some of the health benefits include improved brain function, fat loss, a lower risk of cancer, and many other impressive benefits."
+            }
+          ],
+          "user_query": "Calculate (2+3) * 12 and save to file result.txt"
+        }
+      }
     ]
   }
-
-
 ]

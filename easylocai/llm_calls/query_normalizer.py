@@ -18,7 +18,7 @@ class QueryNormalizerInputV2(BaseModel):
     user_query: str = Field(
         title="User Query", description="The user's original query."
     )
-    previous_conversations: list[str] = Field(
+    previous_conversations: list[UserConversation] = Field(
         default=[],
         title="Previous Conversations",
         description="A list of previous user conversations to provide context.",
@@ -28,11 +28,11 @@ class QueryNormalizerInputV2(BaseModel):
 class QueryNormalizerOutputV2(BaseModel):
     reformed_query: str = Field(
         title="Reformed Query",
-        description="The normalized version of the user's query.",
+        description="The reformed version of the user query.",
     )
     query_context: str | None = Field(
         title="Query Context",
-        description="Additional context extracted from user query and previous conversations, if any.",
+        description="Relevant context extracted from user query and previous conversations.",
     )
 
 
@@ -55,13 +55,13 @@ class QueryNormalizer(LLMCall[QueryNormalizerInput, QueryNormalizerOutput]):
         )
 
 
-class QueryNormalizerV2(LLMCallV2[QueryNormalizerInput, QueryNormalizerOutput]):
+class QueryNormalizerV2(LLMCallV2[QueryNormalizerInputV2, QueryNormalizerOutputV2]):
     def __init__(self, *, client):
         model = "gpt-oss:20b"
         system_prompt_path = "prompts/v2/query_normalizer_system_prompt_v2.jinja2"
         user_prompt_path = "prompts/v2/query_normalizer_user_prompt_v2.jinja2"
         options = {
-            "temperature": 0.4,
+            "temperature": 0.2,
         }
 
         super().__init__(

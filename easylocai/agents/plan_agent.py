@@ -8,9 +8,9 @@ from easylocai.core.agent import Agent
 from easylocai.core.tool_manager import ToolManager
 from easylocai.llm_calls.planner import Planner, PlannerInput, PlannerOutput
 from easylocai.llm_calls.query_normalizer import (
-    QueryNormalizer,
-    QueryNormalizerInput,
-    QueryNormalizerOutput,
+    QueryNormalizerInputV2,
+    QueryNormalizerV2,
+    QueryNormalizerOutputV2,
 )
 from easylocai.llm_calls.replanner import ReplannerInput, Replanner, ReplannerOutput
 from easylocai.schemas.common import UserConversation
@@ -72,14 +72,17 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
 
     async def _normalize_query(
         self, original_user_query: str, previous_conversations: list[UserConversation]
-    ) -> QueryNormalizerOutput:
-        normalizer_input = QueryNormalizerInput(
+    ) -> QueryNormalizerOutputV2:
+        normalizer_input = QueryNormalizerInputV2(
             user_query=original_user_query,
             previous_conversations=previous_conversations,
         )
 
-        query_normalizer: QueryNormalizer = QueryNormalizer(client=self._ollama_client)
-        normalizer_output: QueryNormalizerOutput = await query_normalizer.call(
+        query_normalizer: QueryNormalizerV2 = QueryNormalizerV2(
+            client=self._ollama_client
+        )
+
+        normalizer_output: QueryNormalizerOutputV2 = await query_normalizer.call(
             normalizer_input
         )
         return normalizer_output
