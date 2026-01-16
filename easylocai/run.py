@@ -21,7 +21,7 @@ from easylocai.agents.single_task_agent import (
     SingleTaskAgentOutput,
 )
 from easylocai.config import user_config_path, ensure_user_config
-from easylocai.core.tool_manager import ServerManager, ToolManager
+from easylocai.core.tool_manager import ToolManager
 from easylocai.schemas.common import UserConversation
 from easylocai.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
 from easylocai.utlis.loggers.default_dict import default_logging_config
@@ -29,34 +29,6 @@ from easylocai.utlis.loggers.default_dict import default_logging_config
 logging.config.dictConfig(default_logging_config)
 
 logger = logging.getLogger(__name__)
-
-
-AI_MODEL = "gpt-oss:20b"
-
-
-async def initialize_tools(server_manager: ServerManager, tool_collection):
-    # initialize chromadb tool
-    ids = []
-    metadatas = []
-    documents = []
-    for server in server_manager.list_servers():
-        for tool in await server.list_tools():
-            id_ = f"{server.name}:{tool.name}"
-            metadata = {
-                "server_name": server.name,
-                "tool_name": tool.name,
-            }
-            ids.append(id_)
-            documents.append(tool.description)
-            metadatas.append(metadata)
-
-    if len(ids) == 0:
-        return
-    tool_collection.add(
-        documents=documents,
-        ids=ids,
-        metadatas=metadatas,
-    )
 
 
 async def main():
