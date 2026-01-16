@@ -1,13 +1,13 @@
 import asyncio
 
-from easylocai.llm_calls.query_normalizer import QueryNormalizerOutputV2
+from easylocai.llm_calls.query_reformatter import QueryReformatterOutput
 from prompt_eval.prompt_eval_workflow import PromptEvalWorkflow
 
 if __name__ == "__main__":
-    input_file_path = "resources/prompt_eval/query_normalizer_prompt_inputs_v2.json"
+    input_file_path = "resources/prompt_eval/query_reformatter_prompt_inputs.json"
     prompt_info = {
-        "system": "resources/prompts/v2/query_normalizer_system_prompt_v2.jinja2",
-        "user": "resources/prompts/v2/query_normalizer_user_prompt_v2.jinja2",
+        "system": "resources/prompts/v2/query_reformatter_system_prompt.jinja2",
+        "user": "resources/prompts/v2/query_reformatter_user_prompt.jinja2",
     }
     model_info = {
         "host": "http://localhost:11434",
@@ -18,6 +18,6 @@ if __name__ == "__main__":
         input_file_path=input_file_path,
         prompt_path_info=prompt_info,
         model_info=model_info,
-        output_model=QueryNormalizerOutputV2,
+        output_model=QueryReformatterOutput,
     )
     asyncio.run(workflow.run())

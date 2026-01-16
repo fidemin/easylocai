@@ -7,10 +7,10 @@ from pydantic import BaseModel
 from easylocai.core.agent import Agent
 from easylocai.core.tool_manager import ToolManager
 from easylocai.llm_calls.planner import Planner, PlannerInput, PlannerOutput
-from easylocai.llm_calls.query_normalizer import (
-    QueryNormalizerInputV2,
-    QueryNormalizerV2,
-    QueryNormalizerOutputV2,
+from easylocai.llm_calls.query_reformatter import (
+    QueryReformatterInput,
+    QueryReformatter,
+    QueryReformatterOutput,
 )
 from easylocai.llm_calls.replanner import ReplannerInput, Replanner, ReplannerOutput
 from easylocai.schemas.common import UserConversation
@@ -43,12 +43,12 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
         original_user_query = input_.user_query
         previous_conversations = input_.user_conversations
 
-        normalizer_output: QueryNormalizerOutputV2 = await self._normalize_query(
+        reformatter_output: QueryReformatterOutput = await self._reformat_query(
             original_user_query, previous_conversations
         )
 
-        user_query = normalizer_output.reformed_query
-        user_context = normalizer_output.query_context
+        user_query = reformatter_output.reformed_query
+        user_context = reformatter_output.query_context
 
         planner_output = await self._initial_plan(user_query, user_context)
         previous_plan = planner_output.tasks
@@ -70,22 +70,22 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
 
         return revised_plan
 
-    async def _normalize_query(
+    async def _reformat_query(
         self, original_user_query: str, previous_conversations: list[UserConversation]
-    ) -> QueryNormalizerOutputV2:
-        normalizer_input = QueryNormalizerInputV2(
+    ) -> QueryReformatterOutput:
+        reformatter_input = QueryReformatterInput(
             user_query=original_user_query,
             previous_conversations=previous_conversations,
         )
 
-        query_normalizer: QueryNormalizerV2 = QueryNormalizerV2(
+        query_reformatter: QueryReformatter = QueryReformatter(
             client=self._ollama_client
         )
 
-        normalizer_output: QueryNormalizerOutputV2 = await query_normalizer.call(
-            normalizer_input
+        reformatter_output: QueryReformatterOutput = await query_reformatter.call(
+            reformatter_input
         )
-        return normalizer_output
+        return reformatter_output
 
     async def _initial_plan(self, user_query: str, user_context: str) -> PlannerOutput:
         planner = Planner(client=self._ollama_client)

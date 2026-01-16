@@ -4,17 +4,7 @@ from easylocai.core.llm_call import LLMCallV2
 from easylocai.schemas.common import UserConversation
 
 
-class QueryNormalizerInput(BaseModel):
-    user_query: str
-    previous_conversations: list[UserConversation] = []
-
-
-class QueryNormalizerOutput(BaseModel):
-    user_query: str
-    user_context: str | None
-
-
-class QueryNormalizerInputV2(BaseModel):
+class QueryReformatterInput(BaseModel):
     user_query: str = Field(
         title="User Query", description="The user's original query."
     )
@@ -25,7 +15,7 @@ class QueryNormalizerInputV2(BaseModel):
     )
 
 
-class QueryNormalizerOutputV2(BaseModel):
+class QueryReformatterOutput(BaseModel):
     reformed_query: str = Field(
         title="Reformed Query",
         description="The reformed version of the user query.",
@@ -36,11 +26,11 @@ class QueryNormalizerOutputV2(BaseModel):
     )
 
 
-class QueryNormalizerV2(LLMCallV2[QueryNormalizerInputV2, QueryNormalizerOutputV2]):
+class QueryReformatter(LLMCallV2[QueryReformatterInput, QueryReformatterOutput]):
     def __init__(self, *, client):
         model = "gpt-oss:20b"
-        system_prompt_path = "prompts/v2/query_normalizer_system_prompt_v2.jinja2"
-        user_prompt_path = "prompts/v2/query_normalizer_user_prompt_v2.jinja2"
+        system_prompt_path = "prompts/v2/query_reformatter_system_prompt.jinja2"
+        user_prompt_path = "prompts/v2/query_reformatter_user_prompt.jinja2"
         options = {
             "temperature": 0.2,
         }
@@ -50,6 +40,6 @@ class QueryNormalizerV2(LLMCallV2[QueryNormalizerInputV2, QueryNormalizerOutputV
             model=model,
             system_prompt_path=system_prompt_path,
             user_prompt_path=user_prompt_path,
-            output_model=QueryNormalizerOutputV2,
+            output_model=QueryReformatterOutput,
             options=options,
         )
