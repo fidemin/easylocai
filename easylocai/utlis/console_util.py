@@ -37,7 +37,11 @@ async def multiline_input(prompt_text: str = "> "):
     kb = build_keybindings()
     # Ensure stdout is safe while PTK runs inside asyncio
     with patch_stdout():
-        return await session.prompt_async(prompt_text, key_bindings=kb)
+        return await session.prompt_async(
+            prompt_text,
+            key_bindings=kb,
+            bottom_toolbar="Press Option+Enter to submit",
+        )
 
 
 def render_chat(console: Console, messages: list[dict[str, str]]) -> None:
