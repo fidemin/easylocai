@@ -43,12 +43,12 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
         original_user_query = input_.user_query
         previous_conversations = input_.user_conversations
 
-        normalizer_output = await self._normalize_query(
+        normalizer_output: QueryNormalizerOutputV2 = await self._normalize_query(
             original_user_query, previous_conversations
         )
 
-        user_query = normalizer_output.user_query
-        user_context = normalizer_output.user_context
+        user_query = normalizer_output.reformed_query
+        user_context = normalizer_output.query_context
 
         planner_output = await self._initial_plan(user_query, user_context)
         previous_plan = planner_output.tasks
