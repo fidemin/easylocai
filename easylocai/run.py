@@ -118,6 +118,7 @@ async def main():
                     messages.append(
                         {"role": "assistant", "content": plan_agent_output.response}
                     )
+                    render_chat(console, messages)
                     user_conversations.append(
                         UserConversation(
                             user_query=user_input,
@@ -175,6 +176,7 @@ async def main():
                     tasks = replan_agent_output.tasks
 
                 messages.append({"role": "assistant", "content": answer})
+                render_chat(console, messages)
                 user_conversations.append(
                     UserConversation(user_query=user_input, assistant_answer=answer)
                 )

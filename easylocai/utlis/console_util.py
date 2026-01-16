@@ -1,3 +1,5 @@
+import logging
+import os
 import threading
 import time
 
@@ -8,6 +10,8 @@ from prompt_toolkit.patch_stdout import patch_stdout
 from rich.console import Console
 from rich.live import Live
 from rich.panel import Panel
+
+logger = logging.getLogger(__name__)
 
 
 def build_session():
@@ -44,9 +48,26 @@ async def multiline_input(prompt_text: str = "> "):
         )
 
 
+def clear_screen() -> None:
+    """Clear screen and scrollback buffer based on terminal type."""
+    term_program = os.environ.get("TERM_PROGRAM", "")
+
+    logger.debug(f"Clearing screen for terminal: {term_program}")
+
+    if term_program == "iTerm.app":
+        # iTerm2 proprietary sequence
+        print("\033]1337;ClearScrollback\007\033[2J\033[H", end="", flush=True)
+    elif term_program == "Apple_Terminal":
+        # macOS Terminal.app - use clear command
+        os.system("clear && printf '\\e[3J'")
+    else:
+        # Generic fallback: try standard sequences, then clear command
+        print("\033[3J\033[2J\033[H", end="", flush=True)
+
+
 def render_chat(console: Console, messages: list[dict[str, str]]) -> None:
-    """Clear screen and render the whole conversation as Rich panels."""
-    console.clear()
+    """Clear screen and scrollback buffer, then render the conversation as Rich panels."""
+    clear_screen()
     for msg in messages:
         who = msg["role"]
         text = msg["content"]
