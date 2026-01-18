@@ -8,6 +8,21 @@
       {
           "role": "user",
           "arguments": {
+            "user_query": "read README.md file and summarize it",
+            "user_context": "user query:\nread README.md file\n- assistant answer:\n# easylocai-cli\n- very simple automatic AI agent for your local machine \n\n# Requirements\n- Only working for MacOS\n- Python 3.10+\n- Ollama and gpt-oss:20b model should be installed  \n\n# Installation\n```bash\nbash install.sh\n````\n\n# Configuration\n\n### MCP server configuration\n\n- file_name: `mcp_server_config.json`\n- example\n    ```json\n    {\n      \"mcpServers\": {\n        \"filesystem\": {\n          \"command\": \"npx\",\n          \"args\": [\n            \"-y\",\n            \"@modelcontextprotocol/server-filesystem\",\n            \".\"\n          ]\n        },\n        \"kubernetes\": {\n          \"command\": \"python\",\n          \"args\": [\n            \"-m\",\n            \"kubectl_mcp_tool.mcp_server\"\n          ],\n          \"cwd\": \"~/Programming/kubectl-mcp-server\",\n          \"env\": {\n            \"KUBECONFIG\": \"~/.kube/config\",\n            \"KUBECTL_MCP_LOG_LEVEL\": \"ERROR\",\n            \"PYTHONUNBUFFERED\": \"1\"\n          }\n        },\n        \"notion_api\": {\n          \"command\": \"docker\",\n          \"args\": [\n            \"run\",\n            \"--rm\",\n            \"-i\",\n            \"-e\", \"NOTION_TOKEN\",\n            \"mcp/notion\"\n          ],\n          \"env\": {\n            \"NOTION_TOKEN\": \"<token>\"\n          }\n        }\n      }\n    }\n    ```\n\n\n# Run\n```bash\n./easylocai\n```\n"
+        }
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+          "role": "system",
+          "arguments": {}
+      },
+      {
+          "role": "user",
+          "arguments": {
             "user_query": "Find notion documents related to redis and summarize them to redis.txt file"
         }
       }
@@ -37,20 +52,6 @@
           "role": "user",
           "arguments": {
             "user_query": "Create a to-do list for my trip to Japan"
-        }
-      }
-    ]
-  },
-  {
-    "messages": [
-      {
-          "role": "system",
-          "arguments": {}
-      },
-      {
-          "role": "user",
-          "arguments": {
-            "user_query": "What are the health benefits of green tea?"
         }
       }
     ]
