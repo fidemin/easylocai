@@ -29,6 +29,11 @@ class PlanAgentOutput(BaseModel):
     response: Optional[str]
 
 
+class PlanAgentOutputBeta(BaseModel):
+    context: str | None
+    tasks: list[str]
+
+
 class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
     def __init__(
         self,
@@ -132,3 +137,59 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
 
         replanner_output = await replanner.call(replanner_input)
         return replanner_output
+
+
+class PlanAgentBeta(Agent[PlanAgentInput, PlanAgentOutputBeta]):
+    def __init__(
+        self,
+        *,
+        client: AsyncClient,
+    ):
+        self._ollama_client = client
+
+    async def _run(self, input_: PlanAgentInput) -> PlanAgentOutputBeta:
+        original_user_query = input_.user_query
+        previous_conversations = input_.user_conversations
+
+        reformatter_output: QueryReformatterOutput = await self._reformat_query(
+            original_user_query, previous_conversations
+        )
+
+        user_query = reformatter_output.reformed_query
+        user_context = reformatter_output.query_context
+
+        planner_output = await self._initial_plan(user_query, user_context)
+
+        revised_plan = PlanAgentOutputBeta(
+            tasks=planner_output.tasks,
+            context=user_context,
+        )
+
+        return revised_plan
+
+    async def _reformat_query(
+        self, original_user_query: str, previous_conversations: list[UserConversation]
+    ) -> QueryReformatterOutput:
+        reformatter_input = QueryReformatterInput(
+            user_query=original_user_query,
+            previous_conversations=previous_conversations,
+        )
+
+        query_reformatter: QueryReformatter = QueryReformatter(
+            client=self._ollama_client
+        )
+
+        reformatter_output: QueryReformatterOutput = await query_reformatter.call(
+            reformatter_input
+        )
+        return reformatter_output
+
+    async def _initial_plan(self, user_query: str, user_context: str) -> PlannerOutput:
+        planner = Planner(client=self._ollama_client)
+        planner_input = PlannerInput(
+            user_query=user_query,
+            user_context=user_context,
+        )
+
+        planner_output: PlannerOutput = await planner.call(planner_input)
+        return planner_output

@@ -6,7 +6,13 @@ import chromadb
 from ollama import AsyncClient
 from rich import get_console
 
-from easylocai.agents.plan_agent import PlanAgent, PlanAgentInput, PlanAgentOutput
+from easylocai.agents.plan_agent import (
+    PlanAgent,
+    PlanAgentInput,
+    PlanAgentOutput,
+    PlanAgentBeta,
+    PlanAgentOutputBeta,
+)
 from easylocai.agents.replan_agent import (
     ReplanAgent,
     ReplanAgentInput,
@@ -25,7 +31,7 @@ from easylocai.utlis.console_util import multiline_input, render_chat, ConsoleSp
 logger = logging.getLogger(__name__)
 
 
-async def run_agent_flow():
+async def run_agent_flow(flag: str | None = None):
     console = get_console()
     ollama_client = AsyncClient(host="http://localhost:11434")
 
@@ -42,11 +48,13 @@ async def run_agent_flow():
         client=ollama_client,
         tool_manager=tool_manager,
     )
+    plan_agent_beta = PlanAgentBeta(client=ollama_client)
 
     replan_agent = ReplanAgent(
         client=ollama_client,
         tool_manager=tool_manager,
     )
+
     single_task_agent = SingleTaskAgent(
         client=ollama_client,
         tool_manager=tool_manager,
@@ -74,11 +82,18 @@ async def run_agent_flow():
             )
 
             with ConsoleSpinner(console) as spinner:
-                spinner.set_prefix("Planning...")
-                plan_agent_output: PlanAgentOutput = await plan_agent.run(
-                    plan_agent_input
-                )
-                logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
+                spinner.set_prefix("Thinking...")
+
+                if flag == "beta":
+                    plan_agent_output: PlanAgentOutputBeta = await plan_agent_beta.run(
+                        plan_agent_input
+                    )
+                    logger.debug(f"Plan Agent Beta Response:\n{plan_agent_output}")
+                else:
+                    plan_agent_output: PlanAgentOutput = await plan_agent.run(
+                        plan_agent_input
+                    )
+                    logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
 
                 if plan_agent_output.response is not None:
                     messages.append(

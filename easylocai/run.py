@@ -31,6 +31,14 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Overwrite existing config",
     )
+
+    # Global flag option for feature flags
+    parser.add_argument(
+        "--flag",
+        type=str,
+        default=None,
+        help="Feature flag (e.g., --flag=beta)",
+    )
     return parser
 
 
@@ -46,7 +54,7 @@ def run() -> int:
     ensure_user_config(overwrite=False)
 
     try:
-        asyncio.run(run_agent_flow())
+        asyncio.run(run_agent_flow(flag=args.flag))
     except KeyboardInterrupt:
         print("\nExiting...")
         return 0
