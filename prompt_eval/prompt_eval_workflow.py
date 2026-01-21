@@ -120,7 +120,11 @@ class PromptEvalWorkflow:
                     messages=chat_input["messages"],
                     options=self._model_info.get("options"),
                 )
-            self._print(chat_input, response["message"]["content"])
+            self._print(
+                chat_input,
+                response["message"]["content"],
+                response["message"]["thinking"],
+            )
 
     def _get_prompt_template(self, prompt_path: str | None) -> Template | None:
         if prompt_path is None:
@@ -129,7 +133,7 @@ class PromptEvalWorkflow:
         prompt_template = env.get_template(prompt_path)
         return prompt_template
 
-    def _print(self, chat_input, response):
+    def _print(self, chat_input, response, thinking):
         id_ = chat_input["id"]
         print(f"----- Prompt Eval Result (ID: {id_}) -----")
         print("<Chat Input>")
@@ -141,5 +145,8 @@ class PromptEvalWorkflow:
         print("<Response>")
         print(response)
         print("</Response>")
+        print("<Thinking>")
+        print(thinking)
+        print("</Thinking>")
         print("-------------------------")
         print("")
