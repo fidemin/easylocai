@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from easylocai.core.llm_call import LLMCall, LLMCallV2
+from easylocai.core.llm_call import LLMCallV2
 
 
 class TaskRouterInput(BaseModel):
@@ -15,7 +15,7 @@ class TaskRouterInput(BaseModel):
 
 class TaskRouterOutput(BaseModel):
     subtask: str | None = Field(
-        description="The next subtask to execute. None if finished=True"
+        description="The next subtask to execute. None if finished=True. Do not refer to tool names directly here."
     )
     subtask_type: Literal["tool", "reasoning"] | None = Field(
         description="'tool' for tool-based execution, 'reasoning' for reasoning agent. None if finished=True"
