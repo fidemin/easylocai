@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from easylocai.core.llm_call import LLMCall
+from easylocai.core.llm_call import LLMCall, LLMCallV2
 
 
 class TaskRouterInput(BaseModel):
@@ -26,7 +26,7 @@ class TaskRouterOutput(BaseModel):
     )
 
 
-class TaskRouter(LLMCall[TaskRouterInput, TaskRouterOutput]):
+class TaskRouter(LLMCallV2[TaskRouterInput, TaskRouterOutput]):
     def __init__(self, *, client):
         model = "gpt-oss:20b"
         system_prompt_path = "prompts/v2/task_router_system_prompt.jinja2"
