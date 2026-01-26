@@ -110,18 +110,18 @@ async def run_agent_flow(flag: str | None = None):
                     )
                     logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
 
-                if plan_agent_output.response is not None:
-                    messages.append(
-                        {"role": "assistant", "content": plan_agent_output.response}
-                    )
-                    render_chat(console, messages)
-                    user_conversations.append(
-                        UserConversation(
-                            user_query=user_input,
-                            assistant_answer=plan_agent_output.response,
+                    if plan_agent_output.response is not None:
+                        messages.append(
+                            {"role": "assistant", "content": plan_agent_output.response}
                         )
-                    )
-                    continue
+                        render_chat(console, messages)
+                        user_conversations.append(
+                            UserConversation(
+                                user_query=user_input,
+                                assistant_answer=plan_agent_output.response,
+                            )
+                        )
+                        continue
 
                 tasks = plan_agent_output.tasks
                 user_context = plan_agent_output.context
