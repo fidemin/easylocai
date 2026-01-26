@@ -1,0 +1,18 @@
+USER_CONTEXT:
+{{ user_context }}
+
+ORIGINAL_USER_QUERY:
+{{ original_user_query }}
+
+PREVIOUS_PLAN:
+{% for task in previous_plan %}
+- {{ task }}
+{% endfor %}
+
+COMPLETED_TASKS:
+{% for task_result in task_results %}
+<task_result>
+- task: {{ task_result["task"] }}
+- result: {{ task_result["result"] }}
+</task_result>
+{% endfor %}
