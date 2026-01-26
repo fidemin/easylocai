@@ -17,6 +17,9 @@ from easylocai.agents.replan_agent import (
     ReplanAgent,
     ReplanAgentInput,
     ReplanAgentOutput,
+    ReplanAgentV2,
+    ReplanAgentV2Input,
+    ReplanAgentV2Output,
 )
 from easylocai.agents.single_task_agent import (
     SingleTaskAgent,
@@ -59,6 +62,8 @@ async def run_agent_flow(flag: str | None = None):
         client=ollama_client,
         tool_manager=tool_manager,
     )
+
+    replan_agent_v2 = ReplanAgentV2(client=ollama_client)
 
     single_task_agent = SingleTaskAgent(
         client=ollama_client,
@@ -127,7 +132,7 @@ async def run_agent_flow(flag: str | None = None):
                     next_task = tasks[0]
 
                     if flag == "beta":
-                        # Beta: tasks are strings, use SingleTaskAgentV2
+                        # Beta: tasks are strings, use SingleTaskAgentV2 and ReplanAgentV2
                         spinner.set_prefix(next_task)
 
                         task_agent_input_v2 = SingleTaskAgentV2Input(
@@ -149,14 +154,19 @@ async def run_agent_flow(flag: str | None = None):
                         )
 
                         spinner.set_prefix("Check for completion...")
-                        replan_agent_input = ReplanAgentInput(
+                        replan_agent_input_v2 = ReplanAgentV2Input(
                             user_query=user_input,
                             previous_plan=tasks,
                             task_results=previous_task_results,
                             user_context=user_context,
                         )
+
+                        replan_agent_output: ReplanAgentV2Output = (
+                            await replan_agent_v2.run(replan_agent_input_v2)
+                        )
+                        logger.debug(f"ReplanAgentV2 Response:\n{replan_agent_output}")
                     else:
-                        # Default: tasks are dicts, use SingleTaskAgent
+                        # Default: tasks are dicts, use SingleTaskAgent and ReplanAgent
                         spinner.set_prefix(next_task["description"])
 
                         task_agent_input = SingleTaskAgentInput(
@@ -186,10 +196,10 @@ async def run_agent_flow(flag: str | None = None):
                             user_context=user_context,
                         )
 
-                    replan_agent_output: ReplanAgentOutput = await replan_agent.run(
-                        replan_agent_input
-                    )
-                    logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
+                        replan_agent_output: ReplanAgentOutput = await replan_agent.run(
+                            replan_agent_input
+                        )
+                        logger.debug(f"ReplanAgent Response:\n{replan_agent_output}")
 
                     response = replan_agent_output.response
 
