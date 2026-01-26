@@ -1,10 +1,34 @@
-import pytest
+import logging
+import sys
 from contextlib import AsyncExitStack
 
 import chromadb
+import pytest
 from ollama import AsyncClient
 
 from easylocai.core.tool_manager import ToolManager
+
+
+@pytest.fixture(autouse=True)
+def setup_easylocai_logging():
+    """Set up DEBUG logging for easylocai module during tests."""
+    logger = logging.getLogger("easylocai")
+    logger.setLevel(logging.DEBUG)
+
+    # Add console handler to stdout if not already present
+    if not logger.handlers:
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+
+    yield
+
+    # Clean up after test
+    logger.handlers.clear()
 
 
 @pytest.fixture
