@@ -4,7 +4,7 @@ import logging
 import sys
 
 from easylocai.config import ensure_user_config
-from easylocai.main import run_agent_flow
+from easylocai.main import run_agent_workflow
 from easylocai.utlis.loggers.default_dict import default_logging_config
 
 logging.config.dictConfig(default_logging_config)
@@ -54,7 +54,7 @@ def run() -> int:
     ensure_user_config(overwrite=False)
 
     try:
-        asyncio.run(run_agent_flow(flag=args.flag))
+        asyncio.run(run_agent_workflow(flag=args.flag))
     except KeyboardInterrupt:
         print("\nExiting...")
         return 0

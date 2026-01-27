@@ -23,13 +23,14 @@ from easylocai.agents.single_task_agent import (
 )
 from easylocai.config import user_config_path
 from easylocai.core.tool_manager import ToolManager
+from easylocai.main_beta import run_agent_workflow_beta
 from easylocai.schemas.common import UserConversation
 from easylocai.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
 
 logger = logging.getLogger(__name__)
 
 
-async def run_agent_flow(flag: str | None = None):
+async def run_agent_workflow_main():
     console = get_console()
 
     ollama_client = AsyncClient(host="http://localhost:11434")
@@ -41,7 +42,7 @@ async def run_agent_flow(flag: str | None = None):
         config_dict = json.load(f)
 
     tool_manager = ToolManager(chromadb_client, mpc_servers=config_dict["mcpServers"])
-    plan_agent_beta = PlanAgent(client=ollama_client)
+    plan_agent = PlanAgent(client=ollama_client)
     replan_agent = ReplanAgent(client=ollama_client)
     single_task_agent = SingleTaskAgent(
         client=ollama_client,
@@ -72,7 +73,7 @@ async def run_agent_flow(flag: str | None = None):
             with ConsoleSpinner(console) as spinner:
                 spinner.set_prefix("Thinking...")
 
-                plan_agent_output: PlanAgentOutput = await plan_agent_beta.run(
+                plan_agent_output: PlanAgentOutput = await plan_agent.run(
                     plan_agent_input
                 )
                 logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
@@ -131,3 +132,20 @@ async def run_agent_flow(flag: str | None = None):
                 user_conversations.append(
                     UserConversation(user_query=user_input, assistant_answer=answer)
                 )
+
+
+workflow_dictionary = {
+    "main": run_agent_workflow_main,
+    "beta": run_agent_workflow_beta,
+}
+
+
+async def run_agent_workflow(flag: str | None = None):
+    if flag is None:
+        flag = "main"
+
+    workflow_function = workflow_dictionary.get(flag)
+    if workflow_function is None:
+        raise ValueError(f"Unknown workflow flag: {flag}")
+
+    await workflow_function()
