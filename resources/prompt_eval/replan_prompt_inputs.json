@@ -1,6 +1,6 @@
 [
   {
-    "id": "replan-v2-001",
+    "id": "replan-001",
     "messages": [
       {
         "role": "system",
@@ -32,7 +32,7 @@
     ]
   },
   {
-    "id": "replan-v2-002",
+    "id": "replan-002",
     "messages": [
       {
         "role": "system",
@@ -58,7 +58,7 @@
     ]
   },
   {
-    "id": "replan-v2-003",
+    "id": "replan-003",
     "messages": [
       {
         "role": "system",
@@ -88,7 +88,7 @@
     ]
   },
   {
-    "id": "replan-v2-004",
+    "id": "replan-004",
     "messages": [
       {
         "role": "system",

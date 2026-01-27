@@ -30,19 +30,19 @@ from easylocai.llm_calls.tool_selector import (
 logger = logging.getLogger(__name__)
 
 
-class SingleTaskAgentV2Input(BaseModel):
+class SingleTaskAgentInput(BaseModel):
     original_user_query: str
     task: str
     previous_task_results: list[dict] = []
     user_context: str | None
 
 
-class SingleTaskAgentV2Output(BaseModel):
+class SingleTaskAgentOutput(BaseModel):
     task: str
     result: str
 
 
-class SingleTaskAgentV2(Agent[SingleTaskAgentV2Input, SingleTaskAgentV2Output]):
+class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
     def __init__(
         self,
         *,
@@ -52,7 +52,7 @@ class SingleTaskAgentV2(Agent[SingleTaskAgentV2Input, SingleTaskAgentV2Output]):
         self._ollama_client = client
         self._tool_manager = tool_manager
 
-    async def run(self, input_: SingleTaskAgentV2Input) -> SingleTaskAgentV2Output:
+    async def run(self, input_: SingleTaskAgentInput) -> SingleTaskAgentOutput:
         task = input_.task
         user_context = input_.user_context
         previous_task_results = input_.previous_task_results
@@ -107,7 +107,7 @@ class SingleTaskAgentV2(Agent[SingleTaskAgentV2Input, SingleTaskAgentV2Output]):
             user_context=user_context,
         )
 
-        return SingleTaskAgentV2Output(
+        return SingleTaskAgentOutput(
             task=task,
             result=filtered_result,
         )

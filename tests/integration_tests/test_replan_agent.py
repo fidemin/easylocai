@@ -1,11 +1,10 @@
 import pytest
-
 from ollama import AsyncClient
 
 from easylocai.agents.replan_agent import (
-    ReplanAgentV2,
-    ReplanAgentV2Input,
-    ReplanAgentV2Output,
+    ReplanAgent,
+    ReplanAgentInput,
+    ReplanAgentOutput,
 )
 
 
@@ -14,14 +13,14 @@ def ollama_client():
     return AsyncClient(host="http://localhost:11434")
 
 
-class TestReplanAgentV2:
+class TestReplanAgent:
 
     @pytest.mark.asyncio
     async def test_replan_with_remaining_tasks(self, ollama_client):
-        """Test ReplanAgentV2 when tasks remain to be completed."""
-        agent = ReplanAgentV2(client=ollama_client)
+        """Test ReplanAgent when tasks remain to be completed."""
+        agent = ReplanAgent(client=ollama_client)
 
-        input_ = ReplanAgentV2Input(
+        input_ = ReplanAgentInput(
             user_query="Find notion documents related to redis and summarize them to redis.txt file",
             user_context=None,
             previous_plan=[
@@ -38,7 +37,7 @@ class TestReplanAgentV2:
             ],
         )
 
-        output: ReplanAgentV2Output = await agent.run(input_)
+        output: ReplanAgentOutput = await agent.run(input_)
 
         assert output.tasks is not None
         assert isinstance(output.tasks, list)
@@ -52,10 +51,10 @@ class TestReplanAgentV2:
 
     @pytest.mark.asyncio
     async def test_replan_all_tasks_completed(self, ollama_client):
-        """Test ReplanAgentV2 when all tasks are completed."""
-        agent = ReplanAgentV2(client=ollama_client)
+        """Test ReplanAgent when all tasks are completed."""
+        agent = ReplanAgent(client=ollama_client)
 
-        input_ = ReplanAgentV2Input(
+        input_ = ReplanAgentInput(
             user_query="Calculate (2+3) * 12 and save to file result.txt",
             user_context=None,
             previous_plan=[
@@ -74,7 +73,7 @@ class TestReplanAgentV2:
             ],
         )
 
-        output: ReplanAgentV2Output = await agent.run(input_)
+        output: ReplanAgentOutput = await agent.run(input_)
 
         # When all tasks are completed, tasks should be empty
         assert output.tasks == []
@@ -84,10 +83,10 @@ class TestReplanAgentV2:
 
     @pytest.mark.asyncio
     async def test_replan_with_user_context(self, ollama_client):
-        """Test ReplanAgentV2 with user context from previous conversation."""
-        agent = ReplanAgentV2(client=ollama_client)
+        """Test ReplanAgent with user context from previous conversation."""
+        agent = ReplanAgent(client=ollama_client)
 
-        input_ = ReplanAgentV2Input(
+        input_ = ReplanAgentInput(
             user_query="What was the result?",
             user_context="Previous conversation: User calculated (2+3) * 12 and saved to result.txt. The result was 60.",
             previous_plan=[
@@ -96,7 +95,7 @@ class TestReplanAgentV2:
             task_results=[],
         )
 
-        output: ReplanAgentV2Output = await agent.run(input_)
+        output: ReplanAgentOutput = await agent.run(input_)
 
         assert output is not None
         # Should either have tasks or a response

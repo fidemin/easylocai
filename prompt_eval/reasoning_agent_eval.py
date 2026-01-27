@@ -3,7 +3,7 @@ import asyncio
 from ollama import AsyncClient
 
 from easylocai.agents.reasoning_agent import ReasoningAgent
-from prompt_eval.v2.eval_workflow import EvalWorkflow
+from prompt_eval.eval_workflow import EvalWorkflow
 
 if __name__ == "__main__":
     ollama_client = AsyncClient(host="http://localhost:11434")

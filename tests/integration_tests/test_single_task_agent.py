@@ -4,10 +4,10 @@ import chromadb
 import pytest
 from ollama import AsyncClient
 
-from easylocai.agents.single_task_agent_v2 import (
-    SingleTaskAgentV2,
-    SingleTaskAgentV2Input,
-    SingleTaskAgentV2Output,
+from easylocai.agents.single_task_agent import (
+    SingleTaskAgent,
+    SingleTaskAgentInput,
+    SingleTaskAgentOutput,
 )
 from easylocai.core.tool_manager import ToolManager
 
@@ -36,29 +36,29 @@ def mcp_servers_config():
     }
 
 
-class TestSingleTaskAgentV2:
+class TestSingleTaskAgent:
     @pytest.mark.asyncio
     async def test_tool_task_read_file(
         self, ollama_client, chromadb_client, mcp_servers_config
     ):
-        """Test SingleTaskAgentV2 with a file read task."""
+        """Test SingleTaskAgent with a file read task."""
         async with AsyncExitStack() as stack:
             tool_manager = ToolManager(chromadb_client, mpc_servers=mcp_servers_config)
             await tool_manager.initialize(stack)
 
-            agent = SingleTaskAgentV2(
+            agent = SingleTaskAgent(
                 client=ollama_client,
                 tool_manager=tool_manager,
             )
 
-            input_ = SingleTaskAgentV2Input(
+            input_ = SingleTaskAgentInput(
                 original_user_query="List files in current directory",
                 task="List files in current directory",
                 previous_task_results=[],
                 user_context=None,
             )
 
-            output: SingleTaskAgentV2Output = await agent.run(input_)
+            output: SingleTaskAgentOutput = await agent.run(input_)
 
             assert output.result is not None
             assert len(output.result) > 0
@@ -67,24 +67,24 @@ class TestSingleTaskAgentV2:
     async def test_reasoning_task(
         self, ollama_client, chromadb_client, mcp_servers_config
     ):
-        """Test SingleTaskAgentV2 with a reasoning task."""
+        """Test SingleTaskAgent with a reasoning task."""
         async with AsyncExitStack() as stack:
             tool_manager = ToolManager(chromadb_client, mpc_servers=mcp_servers_config)
             await tool_manager.initialize(stack)
 
-            agent = SingleTaskAgentV2(
+            agent = SingleTaskAgent(
                 client=ollama_client,
                 tool_manager=tool_manager,
             )
 
-            input_ = SingleTaskAgentV2Input(
+            input_ = SingleTaskAgentInput(
                 original_user_query="What is 2 + 2?",
                 task="Calculate 2 + 2 and explain the result",
                 previous_task_results=[],
                 user_context=None,
             )
 
-            output: SingleTaskAgentV2Output = await agent.run(input_)
+            output: SingleTaskAgentOutput = await agent.run(input_)
 
             assert output.result is not None
             assert len(output.result) > 0

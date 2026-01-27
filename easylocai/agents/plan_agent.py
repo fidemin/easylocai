@@ -20,12 +20,12 @@ class PlanAgentInput(BaseModel):
     user_conversations: list[UserConversation] = []
 
 
-class PlanAgentOutputBeta(BaseModel):
+class PlanAgentOutput(BaseModel):
     context: str | None
     tasks: list[str]
 
 
-class PlanAgentBeta(Agent[PlanAgentInput, PlanAgentOutputBeta]):
+class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
     def __init__(
         self,
         *,
@@ -33,7 +33,7 @@ class PlanAgentBeta(Agent[PlanAgentInput, PlanAgentOutputBeta]):
     ):
         self._ollama_client = client
 
-    async def _run(self, input_: PlanAgentInput) -> PlanAgentOutputBeta:
+    async def _run(self, input_: PlanAgentInput) -> PlanAgentOutput:
         original_user_query = input_.user_query
         previous_conversations = input_.user_conversations
 
@@ -46,7 +46,7 @@ class PlanAgentBeta(Agent[PlanAgentInput, PlanAgentOutputBeta]):
 
         planner_output = await self._initial_plan(user_query, user_context)
 
-        revised_plan = PlanAgentOutputBeta(
+        revised_plan = PlanAgentOutput(
             tasks=planner_output.tasks,
             context=user_context,
         )

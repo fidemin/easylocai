@@ -8,18 +8,18 @@ from rich import get_console
 
 from easylocai.agents.plan_agent import (
     PlanAgentInput,
-    PlanAgentBeta,
-    PlanAgentOutputBeta,
+    PlanAgent,
+    PlanAgentOutput,
 )
 from easylocai.agents.replan_agent import (
-    ReplanAgentV2,
-    ReplanAgentV2Input,
-    ReplanAgentV2Output,
+    ReplanAgent,
+    ReplanAgentInput,
+    ReplanAgentOutput,
 )
-from easylocai.agents.single_task_agent_v2 import (
-    SingleTaskAgentV2,
-    SingleTaskAgentV2Input,
-    SingleTaskAgentV2Output,
+from easylocai.agents.single_task_agent import (
+    SingleTaskAgent,
+    SingleTaskAgentInput,
+    SingleTaskAgentOutput,
 )
 from easylocai.config import user_config_path
 from easylocai.core.tool_manager import ToolManager
@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
 
 async def run_agent_flow(flag: str | None = None):
     console = get_console()
-    ollama_client = AsyncClient(host="http://localhost:11434")
 
+    ollama_client = AsyncClient(host="http://localhost:11434")
     chromadb_client = chromadb.Client()
 
     config_path = user_config_path()
@@ -41,9 +41,9 @@ async def run_agent_flow(flag: str | None = None):
         config_dict = json.load(f)
 
     tool_manager = ToolManager(chromadb_client, mpc_servers=config_dict["mcpServers"])
-    plan_agent_beta = PlanAgentBeta(client=ollama_client)
-    replan_agent_v2 = ReplanAgentV2(client=ollama_client)
-    single_task_agent_v2 = SingleTaskAgentV2(
+    plan_agent_beta = PlanAgent(client=ollama_client)
+    replan_agent = ReplanAgent(client=ollama_client)
+    single_task_agent = SingleTaskAgent(
         client=ollama_client,
         tool_manager=tool_manager,
     )
@@ -72,7 +72,7 @@ async def run_agent_flow(flag: str | None = None):
             with ConsoleSpinner(console) as spinner:
                 spinner.set_prefix("Thinking...")
 
-                plan_agent_output: PlanAgentOutputBeta = await plan_agent_beta.run(
+                plan_agent_output: PlanAgentOutput = await plan_agent_beta.run(
                     plan_agent_input
                 )
                 logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
@@ -87,36 +87,36 @@ async def run_agent_flow(flag: str | None = None):
 
                     spinner.set_prefix(next_task)
 
-                    task_agent_input_v2 = SingleTaskAgentV2Input(
+                    task_agent_input = SingleTaskAgentInput(
                         original_user_query=user_input,
                         task=next_task,
                         previous_task_results=previous_task_results,
                         user_context=user_context,
                     )
 
-                    task_agent_response_v2: SingleTaskAgentV2Output = (
-                        await single_task_agent_v2.run(task_agent_input_v2)
+                    task_agent_response: SingleTaskAgentOutput = (
+                        await single_task_agent.run(task_agent_input)
                     )
 
                     previous_task_results.append(
                         {
-                            "task": task_agent_response_v2.task,
-                            "result": task_agent_response_v2.result,
+                            "task": task_agent_response.task,
+                            "result": task_agent_response.result,
                         }
                     )
 
                     spinner.set_prefix("Check for completion...")
-                    replan_agent_input_v2 = ReplanAgentV2Input(
+                    replan_agent_input = ReplanAgentInput(
                         user_query=user_input,
                         previous_plan=tasks,
                         task_results=previous_task_results,
                         user_context=user_context,
                     )
 
-                    replan_agent_output: ReplanAgentV2Output = (
-                        await replan_agent_v2.run(replan_agent_input_v2)
+                    replan_agent_output: ReplanAgentOutput = await replan_agent.run(
+                        replan_agent_input
                     )
-                    logger.debug(f"ReplanAgentV2 Response:\n{replan_agent_output}")
+                    logger.debug(f"ReplanAgent Response:\n{replan_agent_output}")
 
                     response = replan_agent_output.response
 

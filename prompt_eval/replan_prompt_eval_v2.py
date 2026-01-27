@@ -1,6 +1,6 @@
 import asyncio
 
-from easylocai.llm_calls.replanner import ReplannerV2Output
+from easylocai.llm_calls.replanner import ReplannerOutput
 from prompt_eval.prompt_eval_workflow import PromptEvalWorkflow
 
 if __name__ == "__main__":
@@ -18,6 +18,6 @@ if __name__ == "__main__":
         input_file_path=input_file_path,
         prompt_path_info=prompt_info,
         model_info=model_info,
-        output_model=ReplannerV2Output,
+        output_model=ReplannerOutput,
     )
     asyncio.run(workflow.run())

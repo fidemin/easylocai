@@ -3,14 +3,14 @@ from pydantic import BaseModel, Field
 from easylocai.core.llm_call import LLMCallV2
 
 
-class ReplannerV2Input(BaseModel):
+class ReplannerInput(BaseModel):
     user_context: str | None
     original_user_query: str
     previous_plan: list[str]
     task_results: list[dict]
 
 
-class ReplannerV2Output(BaseModel):
+class ReplannerOutput(BaseModel):
     tasks: list[str] = Field(
         description="A list of remaining tasks to complete the user query"
     )
@@ -19,7 +19,7 @@ class ReplannerV2Output(BaseModel):
     )
 
 
-class ReplannerV2(LLMCallV2[ReplannerV2Input, ReplannerV2Output]):
+class Replanner(LLMCallV2[ReplannerInput, ReplannerOutput]):
     def __init__(self, *, client):
         model = "gpt-oss:20b"
         system_prompt_path = "prompts/replanner_system_prompt.jinja2"
@@ -33,6 +33,6 @@ class ReplannerV2(LLMCallV2[ReplannerV2Input, ReplannerV2Output]):
             model=model,
             system_prompt_path=system_prompt_path,
             user_prompt_path=user_prompt_path,
-            output_model=ReplannerV2Output,
+            output_model=ReplannerOutput,
             options=options,
         )
