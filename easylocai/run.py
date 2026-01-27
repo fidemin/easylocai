@@ -39,6 +39,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Feature flag (e.g., --flag=beta)",
     )
+
     return parser
 
 

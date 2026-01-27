@@ -6,26 +6,10 @@ import chromadb
 from ollama import AsyncClient
 from rich import get_console
 
-from easylocai.agents.plan_agent import (
-    PlanAgentInput,
-    PlanAgent,
-    PlanAgentOutput,
-)
-from easylocai.agents.replan_agent import (
-    ReplanAgent,
-    ReplanAgentInput,
-    ReplanAgentOutput,
-)
-from easylocai.agents.single_task_agent import (
-    SingleTaskAgent,
-    SingleTaskAgentInput,
-    SingleTaskAgentOutput,
-)
 from easylocai.config import user_config_path
-from easylocai.core.tool_manager import ToolManager
-from easylocai.main_beta import run_agent_workflow_beta
 from easylocai.schemas.common import UserConversation
 from easylocai.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
+from easylocai.workflow import EasylocaiWorkflow
 
 logger = logging.getLogger(__name__)
 
@@ -41,12 +25,10 @@ async def run_agent_workflow_main():
     with open(config_path) as f:
         config_dict = json.load(f)
 
-    tool_manager = ToolManager(chromadb_client, mpc_servers=config_dict["mcpServers"])
-    plan_agent = PlanAgent(client=ollama_client)
-    replan_agent = ReplanAgent(client=ollama_client)
-    single_task_agent = SingleTaskAgent(
-        client=ollama_client,
-        tool_manager=tool_manager,
+    workflow = EasylocaiWorkflow(
+        config_dict=config_dict,
+        chromadb_client=chromadb_client,
+        ollama_client=ollama_client,
     )
 
     messages = []
@@ -54,7 +36,7 @@ async def run_agent_workflow_main():
 
     stack = AsyncExitStack()
     async with stack:
-        await tool_manager.initialize(stack)
+        await workflow.initialize(stack)
 
         while True:
             render_chat(console, messages)
@@ -65,78 +47,30 @@ async def run_agent_workflow_main():
             messages.append({"role": "user", "content": user_input})
             render_chat(console, messages)
 
-            plan_agent_input = PlanAgentInput(
-                user_query=user_input,
+            async_generator = workflow.run(
+                user_input,
                 user_conversations=user_conversations,
             )
 
+            answer = None
             with ConsoleSpinner(console) as spinner:
-                spinner.set_prefix("Thinking...")
+                async for output in async_generator:
+                    if output.type == "status":
+                        spinner.set_prefix(output.message)
+                        continue
 
-                plan_agent_output: PlanAgentOutput = await plan_agent.run(
-                    plan_agent_input
-                )
-                logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
-
-                tasks = plan_agent_output.tasks
-                user_context = plan_agent_output.context
-                previous_task_results = []
-
-                answer = None
-                while True:
-                    next_task = tasks[0]
-
-                    spinner.set_prefix(next_task)
-
-                    task_agent_input = SingleTaskAgentInput(
-                        original_user_query=user_input,
-                        task=next_task,
-                        previous_task_results=previous_task_results,
-                        user_context=user_context,
-                    )
-
-                    task_agent_response: SingleTaskAgentOutput = (
-                        await single_task_agent.run(task_agent_input)
-                    )
-
-                    previous_task_results.append(
-                        {
-                            "task": task_agent_response.task,
-                            "result": task_agent_response.result,
-                        }
-                    )
-
-                    spinner.set_prefix("Check for completion...")
-                    replan_agent_input = ReplanAgentInput(
-                        user_query=user_input,
-                        previous_plan=tasks,
-                        task_results=previous_task_results,
-                        user_context=user_context,
-                    )
-
-                    replan_agent_output: ReplanAgentOutput = await replan_agent.run(
-                        replan_agent_input
-                    )
-                    logger.debug(f"ReplanAgent Response:\n{replan_agent_output}")
-
-                    response = replan_agent_output.response
-
-                    if response is not None:
-                        answer = response
-                        break
-
-                    tasks = replan_agent_output.tasks
-
-                messages.append({"role": "assistant", "content": answer})
-                render_chat(console, messages)
-                user_conversations.append(
-                    UserConversation(user_query=user_input, assistant_answer=answer)
-                )
+                    if output.type == "result":
+                        answer = output.message
+                        messages.append({"role": "assistant", "content": answer})
+                        user_conversations.append(
+                            UserConversation(
+                                user_query=user_input, assistant_answer=answer
+                            )
+                        )
 
 
-workflow_dictionary = {
+workflow_registry = {
     "main": run_agent_workflow_main,
-    "beta": run_agent_workflow_beta,
 }
 
 
@@ -144,7 +78,7 @@ async def run_agent_workflow(flag: str | None = None):
     if flag is None:
         flag = "main"
 
-    workflow_function = workflow_dictionary.get(flag)
+    workflow_function = workflow_registry.get(flag)
     if workflow_function is None:
         raise ValueError(f"Unknown workflow flag: {flag}")
 
