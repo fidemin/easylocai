@@ -6,8 +6,8 @@ from prompt_eval.prompt_eval_workflow import PromptEvalWorkflow
 if __name__ == "__main__":
     input_file_path = "resources/prompt_eval/query_reformatter_prompt_inputs.json"
     prompt_info = {
-        "system": "resources/prompts/v2/query_reformatter_system_prompt.jinja2",
-        "user": "resources/prompts/v2/query_reformatter_user_prompt.jinja2",
+        "system": "resources/prompts/query_reformatter_system_prompt.jinja2",
+        "user": "resources/prompts/query_reformatter_user_prompt.jinja2",
     }
     model_info = {
         "host": "http://localhost:11434",

@@ -35,8 +35,8 @@ class ToolSelectorV2Output(BaseModel):
 class ToolSelectorV2(LLMCallV2[ToolSelectorV2Input, ToolSelectorV2Output]):
     def __init__(self, *, client):
         model = "gpt-oss:20b"
-        system_prompt_path = "prompts/v2/tool_selector_system_prompt.jinja2"
-        user_prompt_path = "prompts/v2/tool_selector_user_prompt.jinja2"
+        system_prompt_path = "prompts/tool_selector_system_prompt.jinja2"
+        user_prompt_path = "prompts/tool_selector_user_prompt.jinja2"
         options = {
             "temperature": 0.2,
         }

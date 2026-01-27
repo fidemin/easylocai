@@ -6,8 +6,8 @@ from prompt_eval.prompt_eval_workflow import PromptEvalWorkflow
 if __name__ == "__main__":
     input_file_path = "resources/prompt_eval/task_router_prompt_inputs.json"
     prompt_info = {
-        "system": "resources/prompts/v2/task_router_system_prompt.jinja2",
-        "user": "resources/prompts/v2/task_router_user_prompt.jinja2",
+        "system": "resources/prompts/task_router_system_prompt.jinja2",
+        "user": "resources/prompts/task_router_user_prompt.jinja2",
     }
     model_info = {
         "host": "http://localhost:11434",
