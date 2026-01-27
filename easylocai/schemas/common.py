@@ -1,4 +1,11 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
+
+
+class EasyLocaiWorkflowOutput(BaseModel):
+    type: Literal["status", "result"]
+    message: str
 
 
 class UserConversation(BaseModel):

@@ -55,12 +55,12 @@ async def run_agent_workflow_beta():
             answer = None
             with ConsoleSpinner(console) as spinner:
                 async for output in async_generator:
-                    if output["type"] == "status":
-                        spinner.set_prefix(output["message"])
+                    if output.type == "status":
+                        spinner.set_prefix(output.message)
                         continue
 
-                    if output["type"] == "result":
-                        answer = output["message"]
+                    if output.type == "result":
+                        answer = output.message
                         messages.append({"role": "assistant", "content": answer})
                         user_conversations.append(
                             UserConversation(

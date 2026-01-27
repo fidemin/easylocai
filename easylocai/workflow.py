@@ -17,7 +17,7 @@ from easylocai.agents.single_task_agent import (
     SingleTaskAgentOutput,
 )
 from easylocai.core.tool_manager import ToolManager
-from easylocai.schemas.common import UserConversation
+from easylocai.schemas.common import EasyLocaiWorkflowOutput, UserConversation
 
 logger = logging.getLogger(__name__)
 
@@ -66,16 +66,13 @@ class EasylocaiWorkflow:
         user_query: str,
         *,
         user_conversations: list,
-    ) -> AsyncGenerator[dict, None]:
+    ) -> AsyncGenerator[EasyLocaiWorkflowOutput, None]:
         plan_agent_input = PlanAgentInput(
             user_query=user_query,
             user_conversations=user_conversations,
         )
 
-        yield {
-            "type": "status",
-            "message": "Thinking...",
-        }
+        yield EasyLocaiWorkflowOutput(type="status", message="Thinking...")
 
         plan_agent_output: PlanAgentOutput = await self._plan_agent.run(
             plan_agent_input
@@ -91,10 +88,7 @@ class EasylocaiWorkflow:
         while True:
             next_task = tasks[0]
 
-            yield {
-                "type": "status",
-                "message": next_task,
-            }
+            yield EasyLocaiWorkflowOutput(type="status", message=next_task)
 
             task_agent_input = SingleTaskAgentInput(
                 original_user_query=user_query,
@@ -114,10 +108,7 @@ class EasylocaiWorkflow:
                 }
             )
 
-            yield {
-                "type": "status",
-                "message": "Check for completion...",
-            }
+            yield EasyLocaiWorkflowOutput(type="status", message="Check for completion...")
 
             replan_agent_input = ReplanAgentInput(
                 user_query=user_query,
@@ -142,7 +133,4 @@ class EasylocaiWorkflow:
         user_conversations.append(
             UserConversation(user_query=user_query, assistant_answer=answer)
         )
-        yield {
-            "type": "result",
-            "message": answer,
-        }
+        yield EasyLocaiWorkflowOutput(type="result", message=answer)
