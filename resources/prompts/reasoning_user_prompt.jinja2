@@ -11,3 +11,13 @@ PREVIOUS_TASK_RESULTS:
 - result: {{ task_result["result"] }}
 </task_result>
 {% endfor %}
+
+PREVIOUS_SUBTASK_RESULTS:
+{% for iteration_result in iteration_results %}
+<subtask_result>
+    - subtask:
+    {{ iteration_result["subtask"] }}
+    - result:
+    {{ iteration_result["result"] }}
+</subtask_result>
+{% endfor %}

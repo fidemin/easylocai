@@ -1,21 +1,44 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from easylocai.core.llm_call import LLMCall
+from easylocai.core.llm_call import LLMCallV2
 
 
 class ReasoningInput(BaseModel):
-    task: str
-    user_context: str | None
-    previous_task_results: list[dict]
+    task: str = Field(
+        title="Task",
+        description="The task to reason about.",
+    )
+    user_context: str | None = Field(
+        title="User Context",
+        description="Additional context provided by the user.",
+    )
+    previous_task_results: list[dict] = Field(
+        title="Previous Task Results",
+        description="Results from previous tasks.",
+    )
+    previous_subtask_results: list[dict] = Field(
+        default_factory=list,
+        title="Previous Subtask Results",
+        description="Results from previous subtasks within the current task.",
+    )
 
 
 class ReasoningOutput(BaseModel):
-    reasoning: str
-    final: str
-    confidence: int
+    reasoning: str = Field(
+        title="Reasoning",
+        description="The reasoning process.",
+    )
+    final: str = Field(
+        title="Final",
+        description="The final answer.",
+    )
+    confidence: int = Field(
+        title="Confidence",
+        description="Confidence level of the answer.",
+    )
 
 
-class Reasoning(LLMCall[ReasoningInput, ReasoningOutput]):
+class Reasoning(LLMCallV2[ReasoningInput, ReasoningOutput]):
     def __init__(self, *, client):
         model = "gpt-oss:20b"
         system_prompt_path = "prompts/reasoning_system_prompt.jinja2"

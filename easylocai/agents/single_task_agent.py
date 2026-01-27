@@ -89,6 +89,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
                     subtask=subtask,
                     user_context=user_context,
                     previous_task_results=previous_task_results,
+                    previous_subtask_results=iteration_results,
                 )
             else:
                 raise ValueError(f"Unknown subtask type: {subtask_type}")
@@ -196,11 +197,13 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         subtask: str,
         user_context: str | None,
         previous_task_results: list[dict],
+        previous_subtask_results: list[dict],
     ) -> dict[str, Any]:
         reasoning_agent_input = ReasoningAgentInput(
             task={"description": subtask},
             user_context=user_context,
             previous_task_results=previous_task_results,
+            previous_subtask_results=previous_subtask_results,
         )
 
         reasoning_agent = ReasoningAgent(client=self._ollama_client)
