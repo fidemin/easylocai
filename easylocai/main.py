@@ -7,24 +7,14 @@ from ollama import AsyncClient
 from rich import get_console
 
 from easylocai.agents.plan_agent import (
-    PlanAgent,
     PlanAgentInput,
-    PlanAgentOutput,
     PlanAgentBeta,
     PlanAgentOutputBeta,
 )
 from easylocai.agents.replan_agent import (
-    ReplanAgent,
-    ReplanAgentInput,
-    ReplanAgentOutput,
     ReplanAgentV2,
     ReplanAgentV2Input,
     ReplanAgentV2Output,
-)
-from easylocai.agents.single_task_agent import (
-    SingleTaskAgent,
-    SingleTaskAgentInput,
-    SingleTaskAgentOutput,
 )
 from easylocai.agents.single_task_agent_v2 import (
     SingleTaskAgentV2,
@@ -51,25 +41,8 @@ async def run_agent_flow(flag: str | None = None):
         config_dict = json.load(f)
 
     tool_manager = ToolManager(chromadb_client, mpc_servers=config_dict["mcpServers"])
-
-    plan_agent = PlanAgent(
-        client=ollama_client,
-        tool_manager=tool_manager,
-    )
     plan_agent_beta = PlanAgentBeta(client=ollama_client)
-
-    replan_agent = ReplanAgent(
-        client=ollama_client,
-        tool_manager=tool_manager,
-    )
-
     replan_agent_v2 = ReplanAgentV2(client=ollama_client)
-
-    single_task_agent = SingleTaskAgent(
-        client=ollama_client,
-        tool_manager=tool_manager,
-    )
-
     single_task_agent_v2 = SingleTaskAgentV2(
         client=ollama_client,
         tool_manager=tool_manager,
@@ -99,29 +72,10 @@ async def run_agent_flow(flag: str | None = None):
             with ConsoleSpinner(console) as spinner:
                 spinner.set_prefix("Thinking...")
 
-                if flag == "beta":
-                    plan_agent_output: PlanAgentOutputBeta = await plan_agent_beta.run(
-                        plan_agent_input
-                    )
-                    logger.debug(f"Plan Agent Beta Response:\n{plan_agent_output}")
-                else:
-                    plan_agent_output: PlanAgentOutput = await plan_agent.run(
-                        plan_agent_input
-                    )
-                    logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
-
-                    if plan_agent_output.response is not None:
-                        messages.append(
-                            {"role": "assistant", "content": plan_agent_output.response}
-                        )
-                        render_chat(console, messages)
-                        user_conversations.append(
-                            UserConversation(
-                                user_query=user_input,
-                                assistant_answer=plan_agent_output.response,
-                            )
-                        )
-                        continue
+                plan_agent_output: PlanAgentOutputBeta = await plan_agent_beta.run(
+                    plan_agent_input
+                )
+                logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
 
                 tasks = plan_agent_output.tasks
                 user_context = plan_agent_output.context
@@ -131,75 +85,38 @@ async def run_agent_flow(flag: str | None = None):
                 while True:
                     next_task = tasks[0]
 
-                    if flag == "beta":
-                        # Beta: tasks are strings, use SingleTaskAgentV2 and ReplanAgentV2
-                        spinner.set_prefix(next_task)
+                    spinner.set_prefix(next_task)
 
-                        task_agent_input_v2 = SingleTaskAgentV2Input(
-                            original_user_query=user_input,
-                            task=next_task,
-                            previous_task_results=previous_task_results,
-                            user_context=user_context,
-                        )
+                    task_agent_input_v2 = SingleTaskAgentV2Input(
+                        original_user_query=user_input,
+                        task=next_task,
+                        previous_task_results=previous_task_results,
+                        user_context=user_context,
+                    )
 
-                        task_agent_response_v2: SingleTaskAgentV2Output = (
-                            await single_task_agent_v2.run(task_agent_input_v2)
-                        )
+                    task_agent_response_v2: SingleTaskAgentV2Output = (
+                        await single_task_agent_v2.run(task_agent_input_v2)
+                    )
 
-                        previous_task_results.append(
-                            {
-                                "task": task_agent_response_v2.task,
-                                "result": task_agent_response_v2.result,
-                            }
-                        )
+                    previous_task_results.append(
+                        {
+                            "task": task_agent_response_v2.task,
+                            "result": task_agent_response_v2.result,
+                        }
+                    )
 
-                        spinner.set_prefix("Check for completion...")
-                        replan_agent_input_v2 = ReplanAgentV2Input(
-                            user_query=user_input,
-                            previous_plan=tasks,
-                            task_results=previous_task_results,
-                            user_context=user_context,
-                        )
+                    spinner.set_prefix("Check for completion...")
+                    replan_agent_input_v2 = ReplanAgentV2Input(
+                        user_query=user_input,
+                        previous_plan=tasks,
+                        task_results=previous_task_results,
+                        user_context=user_context,
+                    )
 
-                        replan_agent_output: ReplanAgentV2Output = (
-                            await replan_agent_v2.run(replan_agent_input_v2)
-                        )
-                        logger.debug(f"ReplanAgentV2 Response:\n{replan_agent_output}")
-                    else:
-                        # Default: tasks are dicts, use SingleTaskAgent and ReplanAgent
-                        spinner.set_prefix(next_task["description"])
-
-                        task_agent_input = SingleTaskAgentInput(
-                            original_tasks=tasks,
-                            original_user_query=user_input,
-                            task=next_task,
-                            previous_task_results=previous_task_results,
-                            user_context=user_context,
-                        )
-
-                        task_agent_response: SingleTaskAgentOutput = (
-                            await single_task_agent.run(task_agent_input)
-                        )
-
-                        previous_task_results.append(
-                            {
-                                "task": task_agent_response.task,
-                                "result": task_agent_response.result,
-                            }
-                        )
-
-                        spinner.set_prefix("Check for completion...")
-                        replan_agent_input = ReplanAgentInput(
-                            user_query=user_input,
-                            previous_plan=[task["description"] for task in tasks],
-                            task_results=previous_task_results,
-                            user_context=user_context,
-                        )
-
-                        replan_agent_output: ReplanAgentOutput = await replan_agent.run(
-                            replan_agent_input
-                        )
-                        logger.debug(f"ReplanAgent Response:\n{replan_agent_output}")
+                    replan_agent_output: ReplanAgentV2Output = (
+                        await replan_agent_v2.run(replan_agent_input_v2)
+                    )
+                    logger.debug(f"ReplanAgentV2 Response:\n{replan_agent_output}")
 
                     response = replan_agent_output.response
 
