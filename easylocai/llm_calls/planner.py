@@ -24,8 +24,8 @@ class PlannerOutput(BaseModel):
 class Planner(LLMCallV2[PlannerInput, PlannerOutput]):
     def __init__(self, *, client):
         model = "gpt-oss:20b"
-        system_prompt_path = "prompts/v2/planner_system_prompt_v2.jinja2"
-        user_prompt_path = "prompts/v2/planner_user_prompt_v2.jinja2"
+        system_prompt_path = "prompts/v2/planner_system_prompt.jinja2"
+        user_prompt_path = "prompts/v2/planner_user_prompt.jinja2"
         options = {
             "temperature": 0.2,
         }
