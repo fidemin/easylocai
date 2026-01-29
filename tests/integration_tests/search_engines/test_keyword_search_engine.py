@@ -34,6 +34,7 @@ class TestKeywordSearchEngineCollection:
                 Record(
                     id="ml-basics",
                     document="Machine learning is a subset of artificial intelligence. Python libraries like scikit-learn and TensorFlow are commonly used for ML tasks.",
+                    metadata=None,
                 ),
             ]
         )
@@ -60,13 +61,27 @@ class TestKeywordSearchEngineCollection:
         collection = KeywordSearchEngineCollection()
 
         await collection.add(
-            [Record(id="doc-1", document="Introduction to databases and SQL queries")]
+            [
+                Record(
+                    id="doc-1",
+                    document="Introduction to databases and SQL queries",
+                    metadata=None,
+                )
+            ]
         )
 
         await collection.add(
             [
-                Record(id="doc-2", document="NoSQL databases like MongoDB store documents"),
-                Record(id="doc-3", document="PostgreSQL is a powerful relational database"),
+                Record(
+                    id="doc-2",
+                    document="NoSQL databases like MongoDB store documents",
+                    metadata=None,
+                ),
+                Record(
+                    id="doc-3",
+                    document="PostgreSQL is a powerful relational database",
+                    metadata=None,
+                ),
             ]
         )
 

@@ -6,7 +6,7 @@ from pydantic import BaseModel
 class Record(BaseModel):
     id: str
     document: str
-    metadata: dict | None = None
+    metadata: dict | None
 
 
 class SearchEngineCollection:
