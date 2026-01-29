@@ -1,8 +1,6 @@
-import json
 import logging
 import os
 from contextlib import AsyncExitStack
-from pathlib import Path
 
 from chromadb import ClientAPI
 from mcp import StdioServerParameters, stdio_client, ClientSession
@@ -93,6 +91,18 @@ class ServerManager:
     def __init__(self):
         self._servers = {}
 
+    def add_servers_from_dict(self, mcp_servers_dict: dict):
+        for server_name, config in mcp_servers_dict.items():
+            if "env" in config:
+                env = {}
+                for k, v in config["env"].items():
+                    env[k] = os.path.expandvars(v)
+            server_params = StdioServerParameters(
+                **config,
+            )
+            server = Server(server_name, server_params)
+            self.add_server(server)
+
     def add_server(self, server: Server):
         self._servers[server.name] = server
 
@@ -123,42 +133,12 @@ class ServerManager:
         server = self.get_server(server_name)
         return await server.call_tool(tool_name, tool_args)
 
-    @staticmethod
-    def from_json_config_file(config_path: Path):
-        server_manager = ServerManager()
-        with open(config_path) as f:
-            servers = json.load(f)["mcpServers"]
-
-            for server_name, config in servers.items():
-                if "env" in config:
-                    env = {}
-                    for k, v in config["env"].items():
-                        env[k] = os.path.expandvars(v)
-                server_params = StdioServerParameters(
-                    **config,
-                )
-
-                server = Server(server_name, server_params)
-                server_manager.add_server(server)
-
-        return server_manager
-
 
 class ToolManager:
     def __init__(self, chromadb_client: ClientAPI, *, mpc_servers: dict):
         server_manager = ServerManager()
+        server_manager.add_servers_from_dict(mpc_servers)
 
-        for server_name, config in mpc_servers.items():
-            if "env" in config:
-                env = {}
-                for k, v in config["env"].items():
-                    env[k] = os.path.expandvars(v)
-            server_params = StdioServerParameters(
-                **config,
-            )
-
-            server = Server(server_name, server_params)
-            server_manager.add_server(server)
         self._server_manager = server_manager
         self._tool_collection = chromadb_client.get_or_create_collection("tools")
 

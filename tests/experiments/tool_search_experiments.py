@@ -6,7 +6,9 @@ from dataclasses import dataclass, asdict
 
 from chromadb import Client
 
-from easylocai.core.tool_manager import ToolManager
+from easylocai.core.search_engine import SearchEngineCollection, Record
+from easylocai.core.tool_manager import ServerManager
+from easylocai.search_engines.semantic_search_engine import SemanticSearchEngine
 
 # supress mcp stdio client logs (too noisy)
 logging.getLogger("mcp.client.stdio").setLevel(logging.CRITICAL)
@@ -136,8 +138,8 @@ def save_hitrate_to_csv(
     print(f"[System] Hit rate saved to: {filename}")
 
 
-def find_min_n_results(
-    tool_manager: ToolManager,
+async def find_min_n_results(
+    search_engine_collection: SearchEngineCollection,
     *,
     task: str,
     expected_tool: str,
@@ -148,24 +150,56 @@ def find_min_n_results(
     Returns None if the tool is not found even with max_n results.
     """
     for n in range(1, max_n + 1):
-        tools = tool_manager.search_tools([task], n_results=n)
-        tool_names = [f"{tool.server_name}:{tool.name}" for tool in tools]
+        list_of_record = await search_engine_collection.query([task], top_k=n)
+        tool_names = []
+        for records in list_of_record:
+            for record in records:
+                server_name = record.metadata.get("server_name", "unknown_server")
+                tool_name = record.metadata.get("tool_name", "unknown_tool")
+                tool_names.append(f"{server_name}:{tool_name}")
         if expected_tool in tool_names:
             return n
     return None
 
 
 async def run_test():
-    chromadb_client = Client()
-    tool_manager = ToolManager(chromadb_client, mpc_servers=mcp_servers)
+    chroma_db_client = Client()
 
+    semantic_search_engine = SemanticSearchEngine(chroma_db_client)
+
+    tool_collection = await semantic_search_engine.get_or_create_collection(
+        "tools",
+    )
+
+    server_manager = ServerManager()
+    server_manager.add_servers_from_dict(mcp_servers)
+
+    records = []
     async with AsyncExitStack() as stack:
-        await tool_manager.initialize(stack)
+        await server_manager.initialize_servers(stack)
+
         total_tools = 0
-        for server in tool_manager._server_manager.list_servers():
+        for server in server_manager.list_servers():
             this_tools = await server.list_tools()
             print(f"Server '{server.name}': {this_tools}")
             total_tools += len(this_tools)
+
+            for tool in this_tools:
+                id_ = f"{server.name}:{tool.name}"
+                metadata = {
+                    "server_name": server.name,
+                    "tool_name": tool.name,
+                }
+                records.append(
+                    Record(
+                        id=id_,
+                        document=tool.description,
+                        metadata=metadata,
+                    )
+                )
+
+        await tool_collection.add(records)
+
         print(f"Total tools indexed: {total_tools}\n")
 
     results: list[TestResult] = []
@@ -174,8 +208,8 @@ async def run_test():
         task = input_["task"]
         expected_tool = input_["expected_tool"]
 
-        min_n = find_min_n_results(
-            tool_manager,
+        min_n = await find_min_n_results(
+            tool_collection,
             task=task,
             expected_tool=expected_tool,
             max_n=20,
