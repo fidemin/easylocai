@@ -2,13 +2,14 @@ import asyncio
 import csv
 import logging
 from contextlib import AsyncExitStack
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 
 from chromadb import Client
 from tabulate import tabulate
 
 from easylocai.core.search_engine import SearchEngineCollection, Record
 from easylocai.core.tool_manager import ServerManager
+from easylocai.search_engines.advanced_search_engine import AdvancedSearchEngine
 from easylocai.search_engines.keyword_search_engine import KeywordSearchEngine
 from easylocai.search_engines.semantic_search_engine import SemanticSearchEngine
 
@@ -65,7 +66,11 @@ inputs = [
         "expected_tool": "web-search:search",
     },
     {
-        "task": "Fetch the k8s node status",
+        "task": "Fetch the kubernetes nodes status",
+        "expected_tool": "kubernetes:get_nodes",
+    },
+    {
+        "task": "Fetch the k8s nodes status",
         "expected_tool": "kubernetes:get_nodes",
     },
 ]
@@ -201,21 +206,22 @@ async def run_test():
 
     semantic_search_engine = SemanticSearchEngine(chroma_db_client)
     keyword_search_engine = KeywordSearchEngine()
+    advanced_search_engine = AdvancedSearchEngine(chroma_db_client)
 
     semantic_collection = await semantic_search_engine.get_or_create_collection(
-        "tools",
+        "semantic_tools",
     )
     keyword_collection = await keyword_search_engine.get_or_create_collection(
-        "tools",
+        "keyword_tools",
+    )
+    hybrid_collection = await advanced_search_engine.get_or_create_collection(
+        "hybrid_tools",
     )
 
-    exp_ids = ["semantic", "keyword"]
-    exp_collections = [semantic_collection, keyword_collection]
+    exp_ids = ["semantic", "keyword", "hybrid"]
+    exp_collections = [semantic_collection, keyword_collection, hybrid_collection]
 
-    exp_results = [
-        [],  # semantic results
-        [],  # keyword results
-    ]
+    exp_results = [[] for _ in range(len(exp_ids))]
 
     server_manager = ServerManager()
     server_manager.add_servers_from_dict(mcp_servers)
