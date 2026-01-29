@@ -34,6 +34,7 @@ class TestKeywordSearchEngineCollection:
                 Record(
                     id="doc1",
                     document="This is a test document",
+                    metadata=None,
                 )
             ]
         )
@@ -50,9 +51,21 @@ class TestKeywordSearchEngineCollection:
 
         await collection.add(
             [
-                Record(id="doc1", document="First document about Python programming"),
-                Record(id="doc2", document="Second document about machine learning"),
-                Record(id="doc3", document="Third document about data science"),
+                Record(
+                    id="doc1",
+                    document="First document about Python programming",
+                    metadata=None,
+                ),
+                Record(
+                    id="doc2",
+                    document="Second document about machine learning",
+                    metadata=None,
+                ),
+                Record(
+                    id="doc3",
+                    document="Third document about data science",
+                    metadata=None,
+                ),
             ]
         )
 
@@ -66,7 +79,9 @@ class TestKeywordSearchEngineCollection:
         """Test adding documents with metadata."""
         await collection.add(
             [
-                Record(id="doc1", document="Document one", metadata={"author": "Alice"}),
+                Record(
+                    id="doc1", document="Document one", metadata={"author": "Alice"}
+                ),
                 Record(id="doc2", document="Document two", metadata={"author": "Bob"}),
             ]
         )
@@ -76,9 +91,7 @@ class TestKeywordSearchEngineCollection:
 
     async def test_add_documents_without_metadata(self, collection, mock_bm25):
         """Test adding documents without metadata results in None."""
-        await collection.add(
-            [Record(id="doc1", document="Document without metadata")]
-        )
+        await collection.add([Record(id="doc1", document="Document without metadata", metadata=None)])
 
         assert collection._records[0].metadata is None
 
@@ -86,17 +99,17 @@ class TestKeywordSearchEngineCollection:
         "first_records,second_records",
         [
             (
-                [Record(id="doc1", document="First document")],
-                [Record(id="doc1", document="Other document")],
+                [Record(id="doc1", document="First document", metadata=None)],
+                [Record(id="doc1", document="Other document", metadata=None)],
             ),
             (
                 [
-                    Record(id="doc1", document="First document"),
-                    Record(id="doc2", document="Second document"),
+                    Record(id="doc1", document="First document", metadata=None),
+                    Record(id="doc2", document="Second document", metadata=None),
                 ],
                 [
-                    Record(id="doc2", document="Another document"),
-                    Record(id="doc3", document="Third document"),
+                    Record(id="doc2", document="Another document", metadata=None),
+                    Record(id="doc3", document="Third document", metadata=None),
                 ],
             ),
         ],
@@ -117,15 +130,13 @@ class TestKeywordSearchEngineCollection:
 
     async def test_add_duplicate_id_in_batch_raises_error(self, collection, mock_bm25):
         """Test that adding documents with duplicate id in same batch raises error."""
-        await collection.add(
-            [Record(id="doc1", document="First document")]
-        )
+        await collection.add([Record(id="doc1", document="First document", metadata=None)])
 
         with pytest.raises(ValueError, match="Document with id doc1 already exists"):
             await collection.add(
                 [
-                    Record(id="doc2", document="Second document"),
-                    Record(id="doc1", document="Duplicate document"),
+                    Record(id="doc2", document="Second document", metadata=None),
+                    Record(id="doc1", document="Duplicate document", metadata=None),
                 ]
             )
 
@@ -136,9 +147,13 @@ class TestKeywordSearchEngineCollection:
 
         await collection.add(
             [
-                Record(id="doc1", document="Python programming language"),
-                Record(id="doc2", document="Machine learning with Python"),
-                Record(id="doc3", document="Data science and analytics"),
+                Record(
+                    id="doc1", document="Python programming language", metadata=None
+                ),
+                Record(
+                    id="doc2", document="Machine learning with Python", metadata=None
+                ),
+                Record(id="doc3", document="Data science and analytics", metadata=None),
             ]
         )
 
@@ -169,8 +184,8 @@ class TestKeywordSearchEngineCollection:
 
         await collection.add(
             [
-                Record(id="doc1", document="Python is a programming language"),
-                Record(id="doc2", document="Machine learning uses Python"),
+                Record(id="doc1", document="Python is a programming language", metadata=None),
+                Record(id="doc2", document="Machine learning uses Python", metadata=None),
             ]
         )
 
@@ -185,13 +200,9 @@ class TestKeywordSearchEngineCollection:
         """Test that adding documents incrementally rebuilds the BM25 index."""
         mock_cls, mock_instance = mock_bm25
 
-        await collection.add(
-            [Record(id="doc1", document="First document")]
-        )
+        await collection.add([Record(id="doc1", document="First document", metadata=None)])
 
-        await collection.add(
-            [Record(id="doc2", document="Second document")]
-        )
+        await collection.add([Record(id="doc2", document="Second document", metadata=None)])
 
         assert mock_cls.call_count == 2
         assert len(collection._records) == 2

@@ -5,9 +5,11 @@ from contextlib import AsyncExitStack
 from dataclasses import dataclass, asdict
 
 from chromadb import Client
+from tabulate import tabulate
 
 from easylocai.core.search_engine import SearchEngineCollection, Record
 from easylocai.core.tool_manager import ServerManager
+from easylocai.search_engines.keyword_search_engine import KeywordSearchEngine
 from easylocai.search_engines.semantic_search_engine import SemanticSearchEngine
 
 # supress mcp stdio client logs (too noisy)
@@ -77,19 +79,34 @@ class TestResult:
     found: bool
 
 
-def save_results_to_csv(results: list[TestResult], filename: str = "temp_results.csv"):
-    """Saves the test results list to a CSV file."""
-    if not results:
+def save_results_to_csv(
+    exp_ids: list[str],
+    exp_results: list[list[TestResult]],
+    filename: str = "temp_results.csv",
+):
+    """Saves the combined test results to a single CSV file."""
+    if not exp_results or not exp_results[0]:
         return
 
-    # Use dataclass fields as CSV headers
-    headers = list(asdict(results[0]).keys())
+    fieldnames = [
+        "task",
+        "expected_tool",
+        *[f"min_n_results_{exp_id}" for exp_id in exp_ids],
+        *[f"found_{exp_id}" for exp_id in exp_ids],
+    ]
 
     with open(filename, mode="w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=headers)
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
-        for result in results:
-            writer.writerow(asdict(result))
+        for i in range(len(exp_results[0])):
+            row = {
+                "task": exp_results[0][i].task,
+                "expected_tool": exp_results[0][i].expected_tool,
+            }
+            for exp_id, results in zip(exp_ids, exp_results):
+                row[f"min_n_results_{exp_id}"] = results[i].min_n_results
+                row[f"found_{exp_id}"] = results[i].found
+            writer.writerow(row)
 
     print(f"\n[System] Results saved to: {filename}")
 
@@ -110,30 +127,47 @@ def calculate_hitrate_by_n(results: list[TestResult], max_n: int) -> dict[int, f
     return hitrate_by_n
 
 
-def print_hitrate_table(hitrate_by_n: dict[int, float]):
-    """Print hit rate table."""
+def print_hitrate_table(
+    exp_ids: list[str], list_of_hitrate_by_n: list[dict[int, float]]
+):
+    """Print a combined hit rate table comparing all collections side by side."""
+    if not list_of_hitrate_by_n:
+        return
+
+    headers = ["n", *[f"Hit Rate ({exp_id})" for exp_id in exp_ids]]
+    rows = []
+    all_ns = list_of_hitrate_by_n[0].keys()
+    for n in all_ns:
+        row = [n]
+        for hitrate_by_n in list_of_hitrate_by_n:
+            rate = hitrate_by_n.get(n, 0.0)
+            row.append(f"{rate:.1%}")
+        rows.append(row)
+
     print("\nHit Rate by n_results:")
-    print("-" * 30)
-    print(f"{'n':>5} | {'Hit Rate':>10} | {'Bar':<10}")
-    print("-" * 30)
-    for n, rate in hitrate_by_n.items():
-        bar = "█" * int(rate * 10)
-        print(f"{n:>5} | {rate:>9.1%} | {bar}")
-    print("-" * 30)
+    print(tabulate(rows, headers=headers, tablefmt="grid"))
 
 
 def save_hitrate_to_csv(
-    hitrate_by_n: dict[int, float], filename: str = "temp_hitrate.csv"
+    exp_ids: list[str],
+    list_of_hitrate_by_n: list[dict[int, float]],
+    filename: str = "temp_hitrate.csv",
 ):
-    """Saves the hit rate data to a CSV file."""
-    if not hitrate_by_n:
+    """Saves the combined hit rate data to a CSV file."""
+    if not list_of_hitrate_by_n:
         return
 
+    fieldnames = ["n", *[f"hitrate_{exp_id}" for exp_id in exp_ids]]
+    all_ns = list_of_hitrate_by_n[0].keys()
+
     with open(filename, mode="w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["n", "hitrate"])
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
-        for n, rate in hitrate_by_n.items():
-            writer.writerow({"n": n, "hitrate": rate})
+        for n in all_ns:
+            row = {"n": n}
+            for exp_id, hitrate_by_n in zip(exp_ids, list_of_hitrate_by_n):
+                row[f"hitrate_{exp_id}"] = hitrate_by_n.get(n, 0.0)
+            writer.writerow(row)
 
     print(f"[System] Hit rate saved to: {filename}")
 
@@ -166,10 +200,22 @@ async def run_test():
     chroma_db_client = Client()
 
     semantic_search_engine = SemanticSearchEngine(chroma_db_client)
+    keyword_search_engine = KeywordSearchEngine()
 
-    tool_collection = await semantic_search_engine.get_or_create_collection(
+    semantic_collection = await semantic_search_engine.get_or_create_collection(
         "tools",
     )
+    keyword_collection = await keyword_search_engine.get_or_create_collection(
+        "tools",
+    )
+
+    exp_ids = ["semantic", "keyword"]
+    exp_collections = [semantic_collection, keyword_collection]
+
+    exp_results = [
+        [],  # semantic results
+        [],  # keyword results
+    ]
 
     server_manager = ServerManager()
     server_manager.add_servers_from_dict(mcp_servers)
@@ -197,68 +243,94 @@ async def run_test():
                         metadata=metadata,
                     )
                 )
-
-        await tool_collection.add(records)
-
         print(f"Total tools indexed: {total_tools}\n")
 
-    results: list[TestResult] = []
+    for collection in exp_collections:
+        await collection.add(records)
 
     for input_ in inputs:
         task = input_["task"]
         expected_tool = input_["expected_tool"]
 
-        min_n = await find_min_n_results(
-            tool_collection,
-            task=task,
-            expected_tool=expected_tool,
-            max_n=20,
-        )
-        results.append(
-            TestResult(
+        for collection, results in zip(exp_collections, exp_results):
+            min_n = await find_min_n_results(
+                collection,
                 task=task,
                 expected_tool=expected_tool,
-                min_n_results=min_n,
-                found=min_n is not None,
+                max_n=20,
             )
-        )
+            results.append(
+                TestResult(
+                    task=task,
+                    expected_tool=expected_tool,
+                    min_n_results=min_n,
+                    found=min_n is not None,
+                )
+            )
 
     print("=" * 70)
     print("EXPERIMENT RESULTS")
     print("=" * 70)
 
-    for i, result in enumerate(results, 1):
-        status = f"n={result.min_n_results}" if result.found else "NOT FOUND"
-        print(f"\n[Test {i}] {status}")
-        print(f"  Task: {result.task}")
-        print(f"  Expected: {result.expected_tool}")
+    header = ["id", "task", "expected_tool", *[f"min n ({id_})" for id_ in exp_ids]]
+
+    rows = []
+
+    for i in range(len(inputs)):
+        row = [i + 1, inputs[i]["task"], inputs[i]["expected_tool"]]
+        for results in exp_results:
+            result = results[i]
+            status = f"n={result.min_n_results}" if result.found else "NOT FOUND"
+            row.append(status)
+        rows.append(row)
+
+    print(tabulate(rows, headers=header, tablefmt="grid"))
 
     print("\n" + "=" * 70)
     print("SUMMARY")
     print("=" * 70)
 
-    found_results = [r for r in results if r.found]
-    not_found_results = [r for r in results if not r.found]
+    print(f"Total tests: {len(exp_results[0])}")
 
-    print(f"Total tests: {len(results)}")
-    print(f"Found: {len(found_results)}")
-    print(f"Not found: {len(not_found_results)}")
+    list_of_found_results = []
+    list_of_not_found_results = []
 
-    if found_results:
-        max_n = max(r.min_n_results for r in found_results)
-        print(f"\nMaximum n_results needed: {max_n}")
-        print(f"Recommended n_results setting: {max_n}")
+    for exp_id, results in zip(exp_ids, exp_results):
+        this_found_results = [r for r in results if r.found]
+        list_of_found_results.append(this_found_results)
+        this_not_found_results = [r for r in results if not r.found]
+        list_of_not_found_results.append(this_not_found_results)
 
-    if not_found_results:
-        print("\nTools not found (may need larger n_results or different query):")
-        for r in not_found_results:
-            print(f"  - {r.expected_tool}")
+    found_row = ["Found", *[len(r) for r in list_of_found_results]]
+    not_found_count_row = ["Not found", *[len(r) for r in list_of_not_found_results]]
 
-    hitrate_by_n = calculate_hitrate_by_n(results, max_n=20)
-    print_hitrate_table(hitrate_by_n)
+    max_n_row = ["Max n_results needed"]
+    for found_results in list_of_found_results:
+        if found_results:
+            max_n_row.append(max(r.min_n_results for r in found_results))
+        else:
+            max_n_row.append("N/A")
 
-    save_results_to_csv(results)
-    save_hitrate_to_csv(hitrate_by_n)
+    not_found_tools_row = ["Not found tools"]
+    for not_found_results in list_of_not_found_results:
+        tools = [r.expected_tool for r in not_found_results]
+        not_found_tools_row.append(", ".join(tools) if tools else "None")
+
+    print(
+        tabulate(
+            [found_row, not_found_count_row, max_n_row, not_found_tools_row],
+            headers=["", *exp_ids],
+            tablefmt="grid",
+        )
+    )
+
+    list_of_hitrate_by_n = [
+        calculate_hitrate_by_n(results, max_n=20) for results in exp_results
+    ]
+    print_hitrate_table(exp_ids, list_of_hitrate_by_n)
+
+    save_results_to_csv(exp_ids, exp_results)
+    save_hitrate_to_csv(exp_ids, list_of_hitrate_by_n)
 
 
 if __name__ == "__main__":

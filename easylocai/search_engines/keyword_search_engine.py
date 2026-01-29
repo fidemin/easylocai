@@ -44,9 +44,7 @@ class KeywordSearchEngineCollection(SearchEngineCollection):
         # Rebuild BM25 index with all documents
         self._bm25 = BM25Okapi([r.tokenized for r in self._records])
 
-    async def query(
-        self, query_list: list[str], *, n_results: int
-    ) -> list[list[Record]]:
+    async def query(self, query_list: list[str], *, top_k: int) -> list[list[Record]]:
         if self._bm25 is None:
             raise ValueError("The collection is empty. Add documents before querying.")
 
@@ -56,7 +54,7 @@ class KeywordSearchEngineCollection(SearchEngineCollection):
             scores = self._bm25.get_scores(tokenized_query)
             top_n_indices = sorted(
                 range(len(scores)), key=lambda i: scores[i], reverse=True
-            )[:n_results]
+            )[:top_k]
 
             records = []
             for i in top_n_indices:
@@ -78,7 +76,7 @@ class KeywordSearchEngine(SearchEngine):
     def __init__(self):
         self._collections = {}
 
-    def get_or_create_collection(self, name: str) -> SearchEngineCollection:
+    async def get_or_create_collection(self, name: str) -> SearchEngineCollection:
         if name not in self._collections:
-            self._collections[name] = SearchEngineCollection()
+            self._collections[name] = KeywordSearchEngineCollection()
         return self._collections[name]
