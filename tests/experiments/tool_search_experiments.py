@@ -6,14 +6,10 @@ import time
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
 
-from chromadb import Client
 from tabulate import tabulate
 
 from easylocai.core.search_engine import SearchEngineCollection, Record
 from easylocai.core.tool_manager import ServerManager
-from easylocai.search_engines.advanced_search_engine import AdvancedSearchEngine
-from easylocai.search_engines.keyword_search_engine import KeywordSearchEngine
-from easylocai.search_engines.semantic_search_engine import SemanticSearchEngine
 
 # supress mcp stdio client logs (too noisy)
 logging.getLogger("mcp.client.stdio").setLevel(logging.CRITICAL)
@@ -259,35 +255,38 @@ class TestResult:
 
 
 def save_results_to_csv(
-    exp_ids: list[str],
-    exp_results: list[list[TestResult]],
-    filename: str = "temp_results.csv",
+    experiment_id: str,
+    case_ids: list[str],
+    case_results: list[list[TestResult]],
+    filename: str = "temp_results",
 ):
     """Saves the combined test results to a single CSV file."""
-    if not exp_results or not exp_results[0]:
+    if not case_results or not case_results[0]:
         return
+
+    full_file_name = f"{filename}_{experiment_id}.csv"
 
     fieldnames = [
         "task",
         "expected_tool",
-        *[f"min_n_results_{exp_id}" for exp_id in exp_ids],
-        *[f"found_{exp_id}" for exp_id in exp_ids],
+        *[f"min_n_results_{case_id}" for case_id in case_ids],
+        *[f"found_{case_id}" for case_id in case_ids],
     ]
 
-    with open(filename, mode="w", newline="", encoding="utf-8") as f:
+    with open(full_file_name, mode="w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
-        for i in range(len(exp_results[0])):
+        for i in range(len(case_results[0])):
             row = {
-                "task": exp_results[0][i].task,
-                "expected_tool": exp_results[0][i].expected_tool,
+                "task": case_results[0][i].task,
+                "expected_tool": case_results[0][i].expected_tool,
             }
-            for exp_id, results in zip(exp_ids, exp_results):
+            for exp_id, results in zip(case_ids, case_results):
                 row[f"min_n_results_{exp_id}"] = results[i].min_n_results
                 row[f"found_{exp_id}"] = results[i].found
             writer.writerow(row)
 
-    print(f"\n[System] Results saved to: {filename}")
+    print(f"\n[System] Results saved to: {full_file_name}")
 
 
 def calculate_hitrate_by_n(results: list[TestResult], max_n: int) -> dict[int, float]:
@@ -307,13 +306,13 @@ def calculate_hitrate_by_n(results: list[TestResult], max_n: int) -> dict[int, f
 
 
 def print_hitrate_table(
-    exp_ids: list[str], list_of_hitrate_by_n: list[dict[int, float]]
+    case_ids: list[str], list_of_hitrate_by_n: list[dict[int, float]]
 ):
     """Print a combined hit rate table comparing all collections side by side."""
     if not list_of_hitrate_by_n:
         return
 
-    headers = ["n", *[f"Hit Rate ({exp_id})" for exp_id in exp_ids]]
+    headers = ["n", *[f"Hit Rate ({case_id})" for case_id in case_ids]]
     rows = []
     all_ns = list_of_hitrate_by_n[0].keys()
     for n in all_ns:
@@ -328,27 +327,30 @@ def print_hitrate_table(
 
 
 def save_hitrate_to_csv(
-    exp_ids: list[str],
+    experiment_id: str,
+    case_ids: list[str],
     list_of_hitrate_by_n: list[dict[int, float]],
-    filename: str = "temp_hitrate.csv",
+    filename: str = "temp_hitrate",
 ):
     """Saves the combined hit rate data to a CSV file."""
     if not list_of_hitrate_by_n:
         return
 
-    fieldnames = ["n", *[f"hitrate_{exp_id}" for exp_id in exp_ids]]
+    full_file_name = f"{filename}_{experiment_id}.csv"
+
+    fieldnames = ["n", *[f"hitrate_{exp_id}" for exp_id in case_ids]]
     all_ns = list_of_hitrate_by_n[0].keys()
 
-    with open(filename, mode="w", newline="", encoding="utf-8") as f:
+    with open(full_file_name, mode="w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for n in all_ns:
             row = {"n": n}
-            for exp_id, hitrate_by_n in zip(exp_ids, list_of_hitrate_by_n):
+            for exp_id, hitrate_by_n in zip(case_ids, list_of_hitrate_by_n):
                 row[f"hitrate_{exp_id}"] = hitrate_by_n.get(n, 0.0)
             writer.writerow(row)
 
-    print(f"[System] Hit rate saved to: {filename}")
+    print(f"[System] Hit rate saved to: {full_file_name}")
 
 
 async def find_min_n_results(
@@ -375,43 +377,70 @@ async def find_min_n_results(
     return None
 
 
-async def run_test():
+experiments = [
+    {
+        "exp_id": "rrf_compare",
+        "exp_cases": [
+            {
+                "id": "semantic",
+                "engine": "easylocai.search_engines.semantic_search_engine.SemanticSearchEngine",
+                "collection_arguments": {},
+            },
+            {
+                "id": "keyword",
+                "engine": "easylocai.search_engines.keyword_search_engine.KeywordSearchEngine",
+                "collection_arguments": {},
+            },
+            {
+                "id": "keyword_ngram",
+                "engine": "easylocai.search_engines.keyword_search_engine.KeywordSearchEngine",
+                "collection_arguments": {"min_ngram": 3, "max_ngram": 5},
+            },
+            {
+                "id": "hybrid",
+                "engine": "easylocai.search_engines.advanced_search_engine.AdvancedSearchEngine",
+                "collection_arguments": {},
+            },
+            {
+                "id": "hybrid_ngram",
+                "engine": "easylocai.search_engines.advanced_search_engine.AdvancedSearchEngine",
+                "collection_arguments": {"min_ngram": 3, "max_ngram": 5},
+            },
+        ],
+    }
+]
+
+
+async def run_test(experiment: dict):
+    exp_id = experiment["exp_id"]
+    print("=" * 70)
+    print(f"RUNNING EXPERIMENT: {exp_id}")
+    print("=" * 70)
+
     start_time = time.time()
-    chroma_db_client = Client()
 
-    semantic_search_engine = SemanticSearchEngine(chroma_db_client)
-    keyword_search_engine = KeywordSearchEngine()
-    advanced_search_engine = AdvancedSearchEngine(chroma_db_client)
+    experiment_cases = experiment["exp_cases"]
 
-    semantic_collection = await semantic_search_engine.get_or_create_collection(
-        "semantic_tools",
-    )
-    keyword_collection = await keyword_search_engine.get_or_create_collection(
-        "keyword_tools"
-    )
-    keyword_ngram_collection = await keyword_search_engine.get_or_create_collection(
-        "keyword_ngram_tools", min_ngram=3, max_ngram=5
-    )
-    hybrid_collection = await advanced_search_engine.get_or_create_collection(
-        "hybrid_tools"
-    )
-
-    hybrid_ngram_collection = await advanced_search_engine.get_or_create_collection(
-        "hybrid_ngram_tools", min_ngram=3, max_ngram=5
-    )
-
-    exp_ids = ["semantic", "keyword", "keyword_ngram", "hybrid", "hybrid_ngram"]
-    exp_collections = [
-        semantic_collection,
-        keyword_collection,
-        keyword_ngram_collection,
-        hybrid_collection,
-        hybrid_ngram_collection,
-    ]
+    case_ids = []
+    case_collections = []
+    for case_dict in experiment_cases:
+        # Dynamically import the search engine class
+        module_path, class_name = case_dict["engine"].rsplit(".", 1)
+        module = __import__(module_path, fromlist=[class_name])
+        search_engine_class = getattr(module, class_name)
+        search_engine = search_engine_class()
+        collection: SearchEngineCollection = (
+            await search_engine.get_or_create_collection(
+                name=f"{case_dict['id']}_tools",
+                **case_dict["collection_arguments"],
+            )
+        )
+        case_ids.append(case_dict["id"])
+        case_collections.append(collection)
 
     print(f"\n[System] Collection ready time: {time.time()-start_time:.2f} seconds")
 
-    exp_results = [[] for _ in range(len(exp_ids))]
+    exp_results = [[] for _ in range(len(case_ids))]
 
     server_manager = ServerManager()
     server_manager.add_servers_from_dict(mcp_servers)
@@ -445,7 +474,7 @@ async def run_test():
         f"\n[System] Total server initialization time: {time.time()-start_time:.2f} seconds"
     )
 
-    for collection in exp_collections:
+    for collection in case_collections:
         await collection.add(records)
 
     print(f"\n[System] Total indexing time: {time.time()-start_time:.2f} seconds")
@@ -454,7 +483,7 @@ async def run_test():
         task = input_["task"]
         expected_tool = input_["expected_tool"]
 
-        for collection, results in zip(exp_collections, exp_results):
+        for collection, results in zip(case_collections, exp_results):
             min_n = await find_min_n_results(
                 collection,
                 task=task,
@@ -476,7 +505,7 @@ async def run_test():
     print("EXPERIMENT RESULTS")
     print("=" * 70)
 
-    header = ["id", "task", "expected_tool", *[f"min n ({id_})" for id_ in exp_ids]]
+    header = ["id", "task", "expected_tool", *[f"min n ({id_})" for id_ in case_ids]]
 
     rows = []
 
@@ -499,7 +528,7 @@ async def run_test():
     list_of_found_results = []
     list_of_not_found_results = []
 
-    for exp_id, results in zip(exp_ids, exp_results):
+    for exp_id, results in zip(case_ids, exp_results):
         this_found_results = [r for r in results if r.found]
         list_of_found_results.append(this_found_results)
         this_not_found_results = [r for r in results if not r.found]
@@ -523,7 +552,7 @@ async def run_test():
     print(
         tabulate(
             [found_row, not_found_count_row, max_n_row, not_found_tools_row],
-            headers=["", *exp_ids],
+            headers=["", *case_ids],
             tablefmt="grid",
         )
     )
@@ -531,14 +560,15 @@ async def run_test():
     list_of_hitrate_by_n = [
         calculate_hitrate_by_n(results, max_n=20) for results in exp_results
     ]
-    print_hitrate_table(exp_ids, list_of_hitrate_by_n)
+    print_hitrate_table(case_ids, list_of_hitrate_by_n)
     print(f"\n[System] Total calculation time: {time.time()-start_time:.2f} seconds")
 
-    save_results_to_csv(exp_ids, exp_results)
-    save_hitrate_to_csv(exp_ids, list_of_hitrate_by_n)
+    save_results_to_csv(exp_id, case_ids, exp_results)
+    save_hitrate_to_csv(exp_id, case_ids, list_of_hitrate_by_n)
 
     print(f"\n[System] Total experiment time: {time.time()-start_time:.2f} seconds")
 
 
 if __name__ == "__main__":
-    asyncio.run(run_test())
+    for experiment in experiments:
+        asyncio.run(run_test(experiment))

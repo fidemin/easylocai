@@ -61,10 +61,9 @@ class AdvancedSearchEngineCollection(SearchEngineCollection):
 
 
 class AdvancedSearchEngine(SearchEngine):
-    def __init__(self, chromadb_client):
-        self._chromadb_client = chromadb_client
+    def __init__(self):
         self._keyword_se = KeywordSearchEngine()
-        self._semantic_se = SemanticSearchEngine(chromadb_client)
+        self._semantic_se = SemanticSearchEngine()
 
     async def get_or_create_collection(
         self, name: str, **kwargs

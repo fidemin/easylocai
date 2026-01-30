@@ -1,4 +1,4 @@
-from chromadb import ClientAPI
+from chromadb.api.client import Client
 from chromadb.api.models import Collection
 
 from easylocai.core.search_engine import SearchEngine, SearchEngineCollection, Record
@@ -42,9 +42,9 @@ class SemanticSearchEngineCollection(SearchEngineCollection):
 
 
 class SemanticSearchEngine(SearchEngine):
-    def __init__(self, chromadb_client: ClientAPI):
+    def __init__(self):
         self._collections = {}
-        self._chromadb_client = chromadb_client
+        self._chromadb_client = Client()
 
     async def get_or_create_collection(self, name: str) -> SearchEngineCollection:
         if name not in self._collections:
