@@ -1,6 +1,7 @@
 import asyncio
 import csv
 import logging
+import os
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
 
@@ -28,7 +29,6 @@ mcp_servers = {
             "NOTION_TOKEN": "token_goes_here",
         },
     },
-    "kubernetes": {"command": "npx", "args": ["-y", "kubectl-mcp-server"]},
     "web-search": {
         "args": ["open-websearch@latest"],
         "command": "npx",
@@ -38,6 +38,18 @@ mcp_servers = {
             "ALLOWED_SEARCH_ENGINES": "duckduckgo,bing,exa",
         },
     },
+    "git": {
+        "command": "docker",
+        "args": [
+            "run",
+            "--rm",
+            "-i",
+            "--mount",
+            f"type=bind,src={os.environ["HOME"]}/git_test,dst={os.environ['HOME']}/git_test",
+            "mcp/git",
+        ],
+    },
+    "kubernetes": {"command": "npx", "args": ["-y", "kubectl-mcp-server"]},
 }
 
 inputs = [
@@ -50,20 +62,188 @@ inputs = [
         "expected_tool": "filesystem:read_file",
     },
     {
-        "task": "Search README.md in /docs directory",
+        "task": "Write the contents to summary.txt file",
+        "expected_tool": "filesystem:write_file",
+    },
+    {
+        "task": "View the directory structure of the current directory",
+        "expected_tool": "filesystem:directory_tree",
+    },
+    {
+        "task": "List all files in 'src' directory",
+        "expected_tool": "filesystem:list_directory",
+    },
+    {
+        "task": "Rename 'config.old.json' file to 'config.json' file",
+        "expected_tool": "filesystem:move_file",
+    },
+    {
+        "task": "Search README.md file in /docs directory",
         "expected_tool": "filesystem:search_files",
+    },
+    {
+        "task": "Create a new directory named 'logs/error'",
+        "expected_tool": "filesystem:create_directory",
+    },
+    {
+        "task": "Retrieve the metadata and permissions for 'private.key'",
+        "expected_tool": "filesystem:get_file_info",
+    },
+    {
+        "task": "Show me the directory structure of the 'backend' folder",
+        "expected_tool": "filesystem:directory_tree",
+    },
+    {
+        "task": "Retrieve the metadata and creation time for 'database.sqlite' file",
+        "expected_tool": "filesystem:get_file_info",
+    },
+    {
+        "task": "Read the contents of the image file 'logo.png'",
+        "expected_tool": "filesystem:read_media_file",
+    },
+    {
+        "task": "Read the source code from 'main.py' and 'utils.py' files",
+        "expected_tool": "filesystem:read_multiple_files",
+    },
+    {
+        "task": "Check which directories I am allowed to access",
+        "expected_tool": "filesystem:list_allowed_directories",
     },
     {
         "task": "Search redis documents in notion",
         "expected_tool": "notion_api:API-post-search",
     },
     {
-        "task": "List all pods in the default namespace",
-        "expected_tool": "kubernetes:get_pods",
+        "task": "Get a list of all users in the Notion workspace",
+        "expected_tool": "notion_api:API-get-users",
+    },
+    {
+        "task": "Archive the block with ID 'block-123'",
+        "expected_tool": "notion_api:API-delete-a-block",
+    },
+    {
+        "task": "Retrieve all comments from the document",
+        "expected_tool": "notion_api:API-retrieve-a-comment",
+    },
+    {
+        "task": "Create a new page in the 'Project Roadmap' database",
+        "expected_tool": "notion_api:API-post-page",
+    },
+    {
+        "task": "Get the details of the current Notion user",
+        "expected_tool": "notion_api:API-get-self",
+    },
+    {
+        "task": "Query the 'Engineering Tasks' database for open bugs",
+        "expected_tool": "notion_api:API-post-database-query",
+    },
+    {
+        "task": "Update the content of the text block 'block-888'",
+        "expected_tool": "notion_api:API-update-a-block",
+    },
+    {
+        "task": "Fetch the child blocks of the 'Meeting Notes' page",
+        "expected_tool": "notion_api:API-get-block-children",
+    },
+    {
+        "task": "Add a new comment to the project specification page",
+        "expected_tool": "notion_api:API-create-a-comment",
+    },
+    {
+        "task": "Retrieve the 'Status' property value for page 'page-456'",
+        "expected_tool": "notion_api:API-retrieve-a-page-property",
     },
     {
         "task": "Search for latest news about AI advancements",
         "expected_tool": "web-search:search",
+    },
+    {
+        "task": "Read the README.md from the official React repo on GitHub",
+        "expected_tool": "web-search:fetchGithubReadme",
+    },
+    {
+        "task": "Get the latest technical article about Docker from Linux.do",
+        "expected_tool": "web-search:fetchLinuxDoArticle",
+    },
+    {
+        "task": "Search for Python performance tips",
+        "expected_tool": "web-search:search",
+    },
+    {
+        "task": "Search for tutorials on CSDN regarding nginx configuration",
+        "expected_tool": "web-search:fetchCsdnArticle",
+    },
+    {
+        "task": "Read the technical discussion about RISC-V on Linux.do",
+        "expected_tool": "web-search:fetchLinuxDoArticle",
+    },
+    {
+        "task": "Fetch the documentation for the 'Axios' library from GitHub",
+        "expected_tool": "web-search:fetchGithubReadme",
+    },
+    {
+        "task": "Find articles about React Server Components",
+        "expected_tool": "web-search:search",
+    },
+    {
+        "task": "fetch the git logs of current branch",
+        "expected_tool": "git:git_log",
+    },
+    {
+        "task": "get the git status of the repository",
+        "expected_tool": "git:git_status",
+    },
+    {
+        "task": "Stage all modified files for git commit",
+        "expected_tool": "git:git_add",
+    },
+    {
+        "task": "Switch the repository to the 'develop' git branch",
+        "expected_tool": "git:git_checkout",
+    },
+    {
+        "task": "Create a new git branch called 'bugfix-login-error'",
+        "expected_tool": "git:git_create_branch",
+    },
+    {
+        "task": "Show the detailed changes in commit '7a2b3c4'",
+        "expected_tool": "git:git_show",
+    },
+    {
+        "task": "See the differences between staged changes and the last commit",
+        "expected_tool": "git:git_diff_staged",
+    },
+    {
+        "task": "See the unstaged changes in the current working directory",
+        "expected_tool": "git:git_diff_unstaged",
+    },
+    {
+        "task": "Commit the staged changes with the message 'fix: resolve race condition'",
+        "expected_tool": "git:git_commit",
+    },
+    {
+        "task": "Initialize a new git repository in the current folder",
+        "expected_tool": "git:git_init",
+    },
+    {
+        "task": "Reset the current branch head to the previous commit",
+        "expected_tool": "git:git_reset",
+    },
+    {
+        "task": "Show the differences between the 'main' and 'feature-api' branches",
+        "expected_tool": "git:git_diff",
+    },
+    {
+        "task": "Check which files are currently being tracked or modified with git",
+        "expected_tool": "git:git_status",
+    },
+    {
+        "task": "Look up the most recent commit history",
+        "expected_tool": "git:git_log",
+    },
+    {
+        "task": "List all pods in the default namespace",
+        "expected_tool": "kubernetes:get_pods",
     },
     {
         "task": "Fetch the kubernetes nodes status",

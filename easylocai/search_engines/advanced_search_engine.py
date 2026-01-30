@@ -21,12 +21,13 @@ class AdvancedSearchEngineCollection(SearchEngineCollection):
     async def query(
         self, queries: list[str], *, top_k: int, pool_multiplier: int = 3
     ) -> list[list[Record]]:
+        local_top_k = max(top_k * pool_multiplier, 30)
         rrf_k = 60
         keyword_list_of_records = await self._keyword_collection.query(
-            queries, top_k=top_k * pool_multiplier
+            queries, top_k=local_top_k
         )
         semantic_list_of_records = await self._semantic_collection.query(
-            queries, top_k=top_k * pool_multiplier
+            queries, top_k=local_top_k
         )
 
         result = []
