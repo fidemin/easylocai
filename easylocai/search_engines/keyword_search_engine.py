@@ -15,10 +15,16 @@ class KeywordRecord(BaseModel):
 
 
 class KeywordSearchEngineCollection(SearchEngineCollection):
-    def __init__(self):
+    def __init__(
+        self,
+        min_ngram: int | None = None,
+        max_ngram: int | None = None,
+    ):
         self._records: list[KeywordRecord] = []
         self._id_set = set()
         self._bm25 = None
+        self._min_ngram = min_ngram
+        self._max_ngram = max_ngram
 
     async def add(self, records: list[Record]):
         for idx, record in enumerate(records):
@@ -68,15 +74,44 @@ class KeywordSearchEngineCollection(SearchEngineCollection):
             list_of_records.append(records)
         return list_of_records
 
-    def _tokenize(self, text):
-        return re.sub(r"[^\w\s]", "", text.lower()).split()
+    def _tokenize(self, text: str) -> list[str]:
+        """
+        단어별 문자 N-gram 토큰화 (BM25를 위해 중복 보존)
+        """
+        # 1. 전처리: 마침표 분리 및 특수문자 제거
+        clean_text = text.replace(".", " ")
+        clean_text = re.sub(r"[^\w\s]", "", clean_text.lower())
+
+        words = clean_text.split()
+
+        all_tokens = []
+        for word in words:
+            # keep original word
+            all_tokens.append(word)
+
+            if self._min_ngram is None or self._max_ngram is None:
+                continue
+
+            if len(word) < self._min_ngram:
+                continue
+
+            for n in range(self._min_ngram, self._max_ngram + 1):
+                for i in range(len(word) - n + 1):
+                    ngram = word[i : i + n]
+                    all_tokens.append(ngram)
+
+        return all_tokens
 
 
 class KeywordSearchEngine(SearchEngine):
     def __init__(self):
         self._collections = {}
 
-    async def get_or_create_collection(self, name: str) -> SearchEngineCollection:
+    async def get_or_create_collection(
+        self, name: str, **kwargs
+    ) -> SearchEngineCollection:
         if name not in self._collections:
-            self._collections[name] = KeywordSearchEngineCollection()
+            self._collections[name] = KeywordSearchEngineCollection(
+                kwargs.get("min_ngram"), kwargs.get("max_ngram")
+            )
         return self._collections[name]

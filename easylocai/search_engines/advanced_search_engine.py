@@ -22,7 +22,6 @@ class AdvancedSearchEngineCollection(SearchEngineCollection):
         self, queries: list[str], *, top_k: int, pool_multiplier: int = 3
     ) -> list[list[Record]]:
         local_top_k = max(top_k * pool_multiplier, 30)
-        rrf_k = 60
         keyword_list_of_records = await self._keyword_collection.query(
             queries, top_k=local_top_k
         )
@@ -43,12 +42,14 @@ class AdvancedSearchEngineCollection(SearchEngineCollection):
             record_by_id = {**keyword_record_by_id, **semantic_record_by_id}
 
             scores_by_id = defaultdict(float)
+            rrf_k_keyword = 60
+            rrf_k_semantic = 60
             for rank, record in enumerate(keyword_records, 1):
-                score = 1 / (rrf_k + rank)
+                score = 1 / (rrf_k_keyword + rank)
                 scores_by_id[record.id] += score
 
             for rank, record in enumerate(semantic_records, 1):
-                score = 1 / (rrf_k + rank)
+                score = 1 / (rrf_k_semantic + rank)
                 scores_by_id[record.id] += score
 
             scores_sorted = sorted(
@@ -65,7 +66,11 @@ class AdvancedSearchEngine(SearchEngine):
         self._keyword_se = KeywordSearchEngine()
         self._semantic_se = SemanticSearchEngine(chromadb_client)
 
-    async def get_or_create_collection(self, name: str) -> SearchEngineCollection:
-        keyword_collection = await self._keyword_se.get_or_create_collection(name)
+    async def get_or_create_collection(
+        self, name: str, **kwargs
+    ) -> SearchEngineCollection:
+        keyword_collection = await self._keyword_se.get_or_create_collection(
+            name, **kwargs
+        )
         semantic_collection = await self._semantic_se.get_or_create_collection(name)
         return AdvancedSearchEngineCollection(keyword_collection, semantic_collection)

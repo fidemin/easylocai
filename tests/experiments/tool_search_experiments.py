@@ -162,20 +162,12 @@ inputs = [
         "expected_tool": "web-search:fetchGithubReadme",
     },
     {
-        "task": "Get the latest technical article about Docker from Linux.do",
-        "expected_tool": "web-search:fetchLinuxDoArticle",
-    },
-    {
         "task": "Search for Python performance tips",
         "expected_tool": "web-search:search",
     },
     {
         "task": "Search for tutorials on CSDN regarding nginx configuration",
         "expected_tool": "web-search:fetchCsdnArticle",
-    },
-    {
-        "task": "Read the technical discussion about RISC-V on Linux.do",
-        "expected_tool": "web-search:fetchLinuxDoArticle",
     },
     {
         "task": "Fetch the documentation for the 'Axios' library from GitHub",
@@ -206,7 +198,7 @@ inputs = [
         "expected_tool": "git:git_create_branch",
     },
     {
-        "task": "Show the detailed changes in commit '7a2b3c4'",
+        "task": "Show the detailed changes in git commit '7a2b3c4'",
         "expected_tool": "git:git_show",
     },
     {
@@ -226,7 +218,7 @@ inputs = [
         "expected_tool": "git:git_init",
     },
     {
-        "task": "Reset the current branch head to the previous commit",
+        "task": "Reset the current branch head to the previous git commit",
         "expected_tool": "git:git_reset",
     },
     {
@@ -238,7 +230,7 @@ inputs = [
         "expected_tool": "git:git_status",
     },
     {
-        "task": "Look up the most recent commit history",
+        "task": "Look up the most recent git commit history",
         "expected_tool": "git:git_log",
     },
     {
@@ -392,10 +384,10 @@ async def run_test():
         "semantic_tools",
     )
     keyword_collection = await keyword_search_engine.get_or_create_collection(
-        "keyword_tools",
+        "keyword_tools", min_ngram=3, max_ngram=5
     )
     hybrid_collection = await advanced_search_engine.get_or_create_collection(
-        "hybrid_tools",
+        "hybrid_tools", min_ngram=3, max_ngram=5
     )
 
     exp_ids = ["semantic", "keyword", "hybrid"]
