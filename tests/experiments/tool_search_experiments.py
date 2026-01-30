@@ -2,6 +2,7 @@ import asyncio
 import csv
 import logging
 import os
+import time
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
 
@@ -16,6 +17,7 @@ from easylocai.search_engines.semantic_search_engine import SemanticSearchEngine
 
 # supress mcp stdio client logs (too noisy)
 logging.getLogger("mcp.client.stdio").setLevel(logging.CRITICAL)
+# logger = _setup_easylocai_debug_logging()
 
 mcp_servers = {
     "filesystem": {
@@ -374,6 +376,7 @@ async def find_min_n_results(
 
 
 async def run_test():
+    start_time = time.time()
     chroma_db_client = Client()
 
     semantic_search_engine = SemanticSearchEngine(chroma_db_client)
@@ -384,14 +387,29 @@ async def run_test():
         "semantic_tools",
     )
     keyword_collection = await keyword_search_engine.get_or_create_collection(
-        "keyword_tools", min_ngram=3, max_ngram=5
+        "keyword_tools"
+    )
+    keyword_ngram_collection = await keyword_search_engine.get_or_create_collection(
+        "keyword_ngram_tools", min_ngram=3, max_ngram=5
     )
     hybrid_collection = await advanced_search_engine.get_or_create_collection(
-        "hybrid_tools", min_ngram=3, max_ngram=5
+        "hybrid_tools"
     )
 
-    exp_ids = ["semantic", "keyword", "hybrid"]
-    exp_collections = [semantic_collection, keyword_collection, hybrid_collection]
+    hybrid_ngram_collection = await advanced_search_engine.get_or_create_collection(
+        "hybrid_ngram_tools", min_ngram=3, max_ngram=5
+    )
+
+    exp_ids = ["semantic", "keyword", "keyword_ngram", "hybrid", "hybrid_ngram"]
+    exp_collections = [
+        semantic_collection,
+        keyword_collection,
+        keyword_ngram_collection,
+        hybrid_collection,
+        hybrid_ngram_collection,
+    ]
+
+    print(f"\n[System] Collection ready time: {time.time()-start_time:.2f} seconds")
 
     exp_results = [[] for _ in range(len(exp_ids))]
 
@@ -423,8 +441,14 @@ async def run_test():
                 )
         print(f"Total tools indexed: {total_tools}\n")
 
+    print(
+        f"\n[System] Total server initialization time: {time.time()-start_time:.2f} seconds"
+    )
+
     for collection in exp_collections:
         await collection.add(records)
+
+    print(f"\n[System] Total indexing time: {time.time()-start_time:.2f} seconds")
 
     for input_ in inputs:
         task = input_["task"]
@@ -445,6 +469,8 @@ async def run_test():
                     found=min_n is not None,
                 )
             )
+
+    print(f"\n[System] Total querying time: {time.time()-start_time:.2f} seconds")
 
     print("=" * 70)
     print("EXPERIMENT RESULTS")
@@ -492,7 +518,7 @@ async def run_test():
     not_found_tools_row = ["Not found tools"]
     for not_found_results in list_of_not_found_results:
         tools = [r.expected_tool for r in not_found_results]
-        not_found_tools_row.append(", ".join(tools) if tools else "None")
+        not_found_tools_row.append("\n".join(tools) if tools else "None")
 
     print(
         tabulate(
@@ -506,9 +532,12 @@ async def run_test():
         calculate_hitrate_by_n(results, max_n=20) for results in exp_results
     ]
     print_hitrate_table(exp_ids, list_of_hitrate_by_n)
+    print(f"\n[System] Total calculation time: {time.time()-start_time:.2f} seconds")
 
     save_results_to_csv(exp_ids, exp_results)
     save_hitrate_to_csv(exp_ids, list_of_hitrate_by_n)
+
+    print(f"\n[System] Total experiment time: {time.time()-start_time:.2f} seconds")
 
 
 if __name__ == "__main__":

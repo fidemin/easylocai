@@ -91,7 +91,9 @@ class TestKeywordSearchEngineCollection:
 
     async def test_add_documents_without_metadata(self, collection, mock_bm25):
         """Test adding documents without metadata results in None."""
-        await collection.add([Record(id="doc1", document="Document without metadata", metadata=None)])
+        await collection.add(
+            [Record(id="doc1", document="Document without metadata", metadata=None)]
+        )
 
         assert collection._records[0].metadata is None
 
@@ -130,7 +132,9 @@ class TestKeywordSearchEngineCollection:
 
     async def test_add_duplicate_id_in_batch_raises_error(self, collection, mock_bm25):
         """Test that adding documents with duplicate id in same batch raises error."""
-        await collection.add([Record(id="doc1", document="First document", metadata=None)])
+        await collection.add(
+            [Record(id="doc1", document="First document", metadata=None)]
+        )
 
         with pytest.raises(ValueError, match="Document with id doc1 already exists"):
             await collection.add(
@@ -157,7 +161,7 @@ class TestKeywordSearchEngineCollection:
             ]
         )
 
-        result = await collection.query(["Python"], n_results=2)
+        result = await collection.query(["Python"], top_k=2)
 
         assert len(result) == 1
         assert len(result[0]) == 2
@@ -184,8 +188,14 @@ class TestKeywordSearchEngineCollection:
 
         await collection.add(
             [
-                Record(id="doc1", document="Python is a programming language", metadata=None),
-                Record(id="doc2", document="Machine learning uses Python", metadata=None),
+                Record(
+                    id="doc1",
+                    document="Python is a programming language",
+                    metadata=None,
+                ),
+                Record(
+                    id="doc2", document="Machine learning uses Python", metadata=None
+                ),
             ]
         )
 
@@ -200,9 +210,13 @@ class TestKeywordSearchEngineCollection:
         """Test that adding documents incrementally rebuilds the BM25 index."""
         mock_cls, mock_instance = mock_bm25
 
-        await collection.add([Record(id="doc1", document="First document", metadata=None)])
+        await collection.add(
+            [Record(id="doc1", document="First document", metadata=None)]
+        )
 
-        await collection.add([Record(id="doc2", document="Second document", metadata=None)])
+        await collection.add(
+            [Record(id="doc2", document="Second document", metadata=None)]
+        )
 
         assert mock_cls.call_count == 2
         assert len(collection._records) == 2
@@ -213,22 +227,22 @@ class TestKeywordSearchEngine:
     def search_engine(self):
         return KeywordSearchEngine()
 
-    def test_get_or_create_collection_creates_new(self, search_engine):
-        collection = search_engine.get_or_create_collection("test_collection")
+    async def test_get_or_create_collection_creates_new(self, search_engine):
+        collection = await search_engine.get_or_create_collection("test_collection")
 
         assert isinstance(collection, SearchEngineCollection)
         assert "test_collection" in search_engine._collections
 
-    def test_get_or_create_collection_returns_existing(self, search_engine):
-        collection1 = search_engine.get_or_create_collection("test_collection")
-        collection2 = search_engine.get_or_create_collection("test_collection")
+    async def test_get_or_create_collection_returns_existing(self, search_engine):
+        collection1 = await search_engine.get_or_create_collection("test_collection")
+        collection2 = await search_engine.get_or_create_collection("test_collection")
 
         assert collection1 is collection2
         assert len(search_engine._collections) == 1
 
-    def test_multiple_collections(self, search_engine):
-        collection1 = search_engine.get_or_create_collection("collection1")
-        collection2 = search_engine.get_or_create_collection("collection2")
+    async def test_multiple_collections(self, search_engine):
+        collection1 = await search_engine.get_or_create_collection("collection1")
+        collection2 = await search_engine.get_or_create_collection("collection2")
 
         assert collection1 is not collection2
         assert "collection1" in search_engine._collections

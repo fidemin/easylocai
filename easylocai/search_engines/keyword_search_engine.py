@@ -1,9 +1,12 @@
+import logging
 import re
 
 from pydantic import BaseModel
 from rank_bm25 import BM25Okapi
 
 from easylocai.core.search_engine import SearchEngine, SearchEngineCollection, Record
+
+logger = logging.getLogger(__name__)
 
 
 class KeywordRecord(BaseModel):
@@ -56,23 +59,27 @@ class KeywordSearchEngineCollection(SearchEngineCollection):
 
         list_of_records = []
         for query in query_list:
-            tokenized_query = self._tokenize(query)
-            scores = self._bm25.get_scores(tokenized_query)
-            top_n_indices = sorted(
-                range(len(scores)), key=lambda i: scores[i], reverse=True
-            )[:top_k]
-
-            records = []
-            for i in top_n_indices:
-                records.append(
-                    Record(
-                        id=self._records[i].id,
-                        document=self._records[i].document,
-                        metadata=self._records[i].metadata,
-                    )
-                )
+            records = self._handle_one_query(query, top_k)
             list_of_records.append(records)
         return list_of_records
+
+    def _handle_one_query(self, query: str, top_k: int) -> list[Record]:
+        tokenized_query = self._tokenize(query)
+        scores = self._bm25.get_scores(tokenized_query)
+        top_n_indices = sorted(
+            range(len(scores)), key=lambda i: scores[i], reverse=True
+        )[:top_k]
+
+        records = []
+        for i in top_n_indices:
+            records.append(
+                Record(
+                    id=self._records[i].id,
+                    document=self._records[i].document,
+                    metadata=self._records[i].metadata,
+                )
+            )
+        return records
 
     def _tokenize(self, text: str) -> list[str]:
         """

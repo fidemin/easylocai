@@ -43,7 +43,7 @@ class TestKeywordSearchEngineCollection:
     async def test_search_with_queries(self, programming_docs_collection):
         result = await programming_docs_collection.query(
             ["Java enterprise", "Rust memory safety", "machine learning"],
-            n_results=2,
+            top_k=2,
         )
 
         assert len(result) == 3
@@ -85,7 +85,7 @@ class TestKeywordSearchEngineCollection:
             ]
         )
 
-        result = await collection.query(["SQL relational database"], n_results=3)
+        result = await collection.query(["SQL relational database"], top_k=3)
 
         assert len(result[0]) == 3
         assert result[0][0].id == "doc-3"

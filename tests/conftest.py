@@ -12,6 +12,15 @@ from easylocai.core.tool_manager import ToolManager
 @pytest.fixture(autouse=True)
 def setup_easylocai_logging():
     """Set up DEBUG logging for easylocai module during tests."""
+    logger = _setup_easylocai_debug_logging()
+
+    yield
+
+    # Clean up after test
+    logger.handlers.clear()
+
+
+def _setup_easylocai_debug_logging():
     logger = logging.getLogger("easylocai")
     logger.setLevel(logging.DEBUG)
 
@@ -24,11 +33,7 @@ def setup_easylocai_logging():
         )
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-
-    yield
-
-    # Clean up after test
-    logger.handlers.clear()
+    return logger
 
 
 @pytest.fixture
