@@ -49,6 +49,7 @@ FinalResponse --> End((Ready for next user input))
 
 ### Workflow in Agents
 #### PlanAgent
+The PlanAgent acts as the intake manifold. It uses a QueryReformatter to de-reference pronouns (e.g., "it," "that") and inject historical context before the Planner breaks the query into a list of discrete strings.
 
 ```mermaid
 graph TD
@@ -56,7 +57,7 @@ graph TD
     Start((Start)) --> Input
 
     %% Internal Processing Sequence
-    subgraph PlanAgent ["PlanAgent._run()"]
+    subgraph PlanAgent ["PlanAgent.run()"]
         direction LR
         Input[PlanAgentInput]
         
@@ -74,6 +75,7 @@ graph TD
 ```
 
 #### SingleTaskAgent
+The SingleTaskAgent is to complete the given task using tools or a reasoning agent. It utilizes a TaskRouter to decide on a step-by-step basis whether to call a tool or use pure reasoning. This loop continues until the Router determines the specific task is complete.
 
 ```mermaid
 graph TD
@@ -111,6 +113,7 @@ graph TD
 ```
 
 #### ReplanAgent
+The ReplanAgent is the exit logic for the system. It inspects the task_results accumulated so far. If it can provide a final response, the workflow ends. Otherwise, it generates a new set of tasks to continue the loop.
 
 ```mermaid
 graph TD
@@ -118,7 +121,7 @@ graph TD
     Start((Start)) --> Input[ReplanAgentInput]
 
     %% Internal Processing Sequence
-    subgraph ReplanAgent ["ReplanAgent._run()"]
+    subgraph ReplanAgent ["ReplanAgent.run()"]
         direction TB
        
         Input --> Prep[Prepare ReplannerInput]
