@@ -2,8 +2,9 @@ import json
 import logging
 from contextlib import AsyncExitStack
 
-import chromadb
 from ollama import AsyncClient
+
+from easylocai.search_engines.advanced_search_engine import AdvancedSearchEngine
 from rich import get_console
 
 from easylocai.config import user_config_path
@@ -18,7 +19,7 @@ async def run_agent_workflow_main():
     console = get_console()
 
     ollama_client = AsyncClient(host="http://localhost:11434")
-    chromadb_client = chromadb.Client()
+    search_engine = AdvancedSearchEngine()
 
     config_path = user_config_path()
 
@@ -27,7 +28,7 @@ async def run_agent_workflow_main():
 
     workflow = EasylocaiWorkflow(
         config_dict=config_dict,
-        chromadb_client=chromadb_client,
+        search_engine=search_engine,
         ollama_client=ollama_client,
     )
 

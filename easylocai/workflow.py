@@ -2,7 +2,6 @@ import logging
 from contextlib import AsyncExitStack
 from typing import AsyncGenerator
 
-from chromadb import ClientAPI
 from ollama import AsyncClient
 
 from easylocai.agents.plan_agent import PlanAgent, PlanAgentInput, PlanAgentOutput
@@ -17,6 +16,7 @@ from easylocai.agents.single_task_agent import (
     SingleTaskAgentOutput,
 )
 from easylocai.core.tool_manager import ToolManager
+from easylocai.search_engines.advanced_search_engine import AdvancedSearchEngine
 from easylocai.schemas.common import EasyLocaiWorkflowOutput, UserConversation
 
 logger = logging.getLogger(__name__)
@@ -40,13 +40,13 @@ class EasylocaiWorkflow:
         self,
         *,
         config_dict: dict,
-        chromadb_client: ClientAPI,
+        search_engine: AdvancedSearchEngine,
         ollama_client: AsyncClient,
     ):
         self._config_dict = config_dict
 
         self._tool_manager = ToolManager(
-            chromadb_client, mpc_servers=config_dict["mcpServers"]
+            search_engine, mpc_servers=config_dict["mcpServers"]
         )
         self._plan_agent = PlanAgent(client=ollama_client)
         self._replan_agent = ReplanAgent(client=ollama_client)

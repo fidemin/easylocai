@@ -1,6 +1,5 @@
 from contextlib import AsyncExitStack
 
-import chromadb
 import pytest
 from ollama import AsyncClient
 
@@ -10,6 +9,7 @@ from easylocai.agents.single_task_agent import (
     SingleTaskAgentOutput,
 )
 from easylocai.core.tool_manager import ToolManager
+from easylocai.search_engines.advanced_search_engine import AdvancedSearchEngine
 
 
 @pytest.fixture
@@ -18,8 +18,8 @@ def ollama_client():
 
 
 @pytest.fixture
-def chromadb_client():
-    return chromadb.Client()
+def search_engine():
+    return AdvancedSearchEngine()
 
 
 @pytest.fixture
@@ -39,11 +39,11 @@ def mcp_servers_config():
 class TestSingleTaskAgent:
     @pytest.mark.asyncio
     async def test_tool_task_read_file(
-        self, ollama_client, chromadb_client, mcp_servers_config
+        self, ollama_client, search_engine, mcp_servers_config
     ):
         """Test SingleTaskAgent with a file read task."""
         async with AsyncExitStack() as stack:
-            tool_manager = ToolManager(chromadb_client, mpc_servers=mcp_servers_config)
+            tool_manager = ToolManager(search_engine, mpc_servers=mcp_servers_config)
             await tool_manager.initialize(stack)
 
             agent = SingleTaskAgent(
@@ -65,11 +65,11 @@ class TestSingleTaskAgent:
 
     @pytest.mark.asyncio
     async def test_reasoning_task(
-        self, ollama_client, chromadb_client, mcp_servers_config
+        self, ollama_client, search_engine, mcp_servers_config
     ):
         """Test SingleTaskAgent with a reasoning task."""
         async with AsyncExitStack() as stack:
-            tool_manager = ToolManager(chromadb_client, mpc_servers=mcp_servers_config)
+            tool_manager = ToolManager(search_engine, mpc_servers=mcp_servers_config)
             await tool_manager.initialize(stack)
 
             agent = SingleTaskAgent(

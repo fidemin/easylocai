@@ -2,9 +2,11 @@ import logging
 import os
 from contextlib import AsyncExitStack
 
-from chromadb import ClientAPI
 from mcp import StdioServerParameters, stdio_client, ClientSession
 from mcp import Tool as McpTool
+
+from easylocai.core.search_engine import Record
+from easylocai.search_engines.advanced_search_engine import AdvancedSearchEngine
 
 logger = logging.getLogger(__name__)
 
@@ -135,54 +137,47 @@ class ServerManager:
 
 
 class ToolManager:
-    def __init__(self, chromadb_client: ClientAPI, *, mpc_servers: dict):
+    def __init__(self, search_engine: AdvancedSearchEngine, *, mpc_servers: dict):
         server_manager = ServerManager()
         server_manager.add_servers_from_dict(mpc_servers)
 
         self._server_manager = server_manager
-        self._tool_collection = chromadb_client.get_or_create_collection("tools")
+        self._search_engine = search_engine
+        self._tool_collection = None
 
     async def initialize(self, async_stack: AsyncExitStack):
         await self._server_manager.initialize_servers(async_stack)
+        self._tool_collection = await self._search_engine.get_or_create_collection("tools")
         await self._initialize_tools()
 
     async def _initialize_tools(self):
-        # initialize chromadb tool
-        ids = []
-        metadatas = []
-        documents = []
+        records = []
         for server in self._server_manager.list_servers():
             for tool in await server.list_tools():
-                id_ = f"{server.name}:{tool.name}"
-                metadata = {
-                    "server_name": server.name,
-                    "tool_name": tool.name,
-                }
-                ids.append(id_)
-                documents.append(tool.description)
-                metadatas.append(metadata)
+                record = Record(
+                    id=f"{server.name}:{tool.name}",
+                    document=tool.description,
+                    metadata={
+                        "server_name": server.name,
+                        "tool_name": tool.name,
+                    },
+                )
+                records.append(record)
 
-        if len(ids) == 0:
+        if len(records) == 0:
             logger.warning("No tools found to initialize in ToolManager.")
             return
 
-        self._tool_collection.add(
-            documents=documents,
-            ids=ids,
-            metadatas=metadatas,
-        )
+        await self._tool_collection.add(records)
 
-    def search_tools(self, queries: list[str], *, n_results: int) -> list[Tool]:
-        search_result = self._tool_collection.query(
-            query_texts=queries,
-            n_results=n_results,
-        )
+    async def search_tools(self, queries: list[str], *, n_results: int) -> list[Tool]:
+        results = await self._tool_collection.query(queries, top_k=n_results)
         tools: list[Tool] = []
 
-        for metadata_list in search_result["metadatas"]:
-            for metadata in metadata_list:
-                server_name = metadata["server_name"]
-                tool_name = metadata["tool_name"]
+        for result_set in results:
+            for record in result_set:
+                server_name = record.metadata["server_name"]
+                tool_name = record.metadata["tool_name"]
                 tool = self._server_manager.get_server(server_name).get_tool(tool_name)
                 tools.append(tool)
         return tools

@@ -57,7 +57,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         user_context = input_.user_context
         previous_task_results = input_.previous_task_results
 
-        tool_candidates = self._get_tool_candidates(task)
+        tool_candidates = await self._get_tool_candidates(task)
         iteration_results = []
 
         while True:
@@ -113,8 +113,8 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             result=filtered_result,
         )
 
-    def _get_tool_candidates(self, task: str) -> list[dict]:
-        tools = self._tool_manager.search_tools([task], n_results=10)
+    async def _get_tool_candidates(self, task: str) -> list[dict]:
+        tools = await self._tool_manager.search_tools([task], n_results=10)
 
         tool_candidates = []
         for tool in tools:

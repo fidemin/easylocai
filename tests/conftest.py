@@ -2,11 +2,11 @@ import logging
 import sys
 from contextlib import AsyncExitStack
 
-import chromadb
 import pytest
 from ollama import AsyncClient
 
 from easylocai.core.tool_manager import ToolManager
+from easylocai.search_engines.advanced_search_engine import AdvancedSearchEngine
 
 
 @pytest.fixture(autouse=True)
@@ -42,8 +42,8 @@ def ollama_client():
 
 
 @pytest.fixture
-def chromadb_client():
-    return chromadb.Client()
+def search_engine():
+    return AdvancedSearchEngine()
 
 
 @pytest.fixture
@@ -61,8 +61,8 @@ def mcp_servers_config():
 
 
 @pytest.fixture
-async def tool_manager(chromadb_client, mcp_servers_config):
-    tool_manager = ToolManager(chromadb_client, mpc_servers=mcp_servers_config)
+async def tool_manager(search_engine, mcp_servers_config):
+    tool_manager = ToolManager(search_engine, mpc_servers=mcp_servers_config)
     async with AsyncExitStack() as stack:
         await tool_manager.initialize(stack)
         yield tool_manager
