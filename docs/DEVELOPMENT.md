@@ -4,14 +4,12 @@ The system is built on a **Modular Agentic Workflow** following a "Plan-Execute-
 
 ## Core Components
 
-| Component | Responsibility | Key Input |
-| :--- | :--- | :--- |
-| **PlanAgent** | Analyzes the user query and generates a high-level roadmap of tasks. | User Query, History |
-| **SingleTaskAgent** | The "Worker" agent. Executes a specific task via LLM reasoning or iterative tool-calling. | Single Task, Tools |
-| **ReplanAgent** | The "Supervisor." Evaluates task results to decide if the goal is met or if the plan needs a pivot. | Task Results, Previous Plan |
-| **ServerManager** | Manages the lifecycle and execution of external tools (MCP/Servers). | Config File, Tool Schema |
-| **ChromaDB** | Acts as a Vector Store for Tool Discovery (RAG for tools). | Task Descriptions |
-
+| Component           | Responsibility                                                                                      | Key Input |
+|:--------------------|:----------------------------------------------------------------------------------------------------| :--- |
+| **PlanAgent**       | Analyzes the user query and generates a high-level roadmap of tasks.                                | User Query, History |
+| **SingleTaskAgent** | The "Worker" agent. Executes a specific task via LLM reasoning or iterative tool-calling.           | Single Task, Tools |
+| **ReplanAgent**     | The "Supervisor." Evaluates task results to decide if the goal is met or if the plan needs a pivot. | Task Results, Previous Plan |
+| **ToolManager**     | Manages the lifecycle and execution of external mcp tools.                                          | Config File, Tool Schema |
 ---
 
 ## System Workflow
@@ -24,26 +22,27 @@ The coordination between agents is managed in a dynamic loop that ensures high r
 graph TD
 %% Entry Point
 Start((User Input)) --> PlanAgent[PlanAgent]
+
 %% Initial Phase
 subgraph Initialization ["1. Initial Planning"]
-    PlanAgent -->|PlanAgent output| IsDirectAnswer{direct response?}
+    PlanAgent -->|Generate Initial Tasks| TaskInit[Initialize Task List]
 end
 
 %% Execution Loop
 subgraph ExecutionLoop ["2. Iterative Task Execution"]
     direction TB
-    IsDirectAnswer -->|No: initial tasks| SingleTaskAgent[SingleTaskAgent]
-
+    TaskInit --> SingleTaskAgent[SingleTaskAgent]
+    
     SingleTaskAgent -->|Task Result| ReplanAgent[ReplanAgent]
-
-    ReplanAgent -->|Replanned Tasks| CheckCompletion{Is Goal Met?}
-
-    CheckCompletion -->|No: Replanned Tasks| SingleTaskAgent
+    
+    ReplanAgent -->|Check response| IsGoalMet{Is Goal met?}
+    
+    IsGoalMet -->|Updated Tasks| SingleTaskAgent
 end
 
 %% Exit Paths
-IsDirectAnswer -->|Yes| FinalResponse[Display Answer]
-CheckCompletion -->|Yes: Final Answer| FinalResponse
+IsGoalMet -->|Yes: Final Answer| UpdateContext[Update User Conversation]
+UpdateContext --> FinalResponse[Display Answer]
 
 FinalResponse --> End((Ready for next user input))
 ```
@@ -57,25 +56,18 @@ graph TD
     Start((Start)) --> Input
 
     %% Internal Processing Sequence
-    subgraph PlanAgent ["PlanAgent.run()"]
+    subgraph PlanAgent ["PlanAgent._run()"]
         direction LR
         Input[PlanAgentInput]
         
-        Input --> Normalizer[QueryNormalizer]
+        Input --> Reformatter[QueryReformatter]
         
-        Normalizer --> |Refined Query + User Context| Planner[Planner]
+        Reformatter --> |Reformed Query + User Context| Planner[Planner]
     
-        Planner --> |Inital Plan| ToolSearch[(Tool Candidates Search)]
-        
-        Replanner[Replanner]
-        
-        Planner --> |Inital Plan| Replanner
-        ToolSearch --> |Tool candidates| Replanner
-        Normalizer --> |User Context| Replanner
+        Planner --> |Initial Tasks| OutputPrep[Prepare PlanAgentOutput]
     
-        Replanner --> |Final Tasks & Response| FinalOutput[PlanAgentOutput]
+        OutputPrep --> FinalOutput[PlanAgentOutput]
     end
-
 
     %% Output
     FinalOutput --> End((End))
@@ -90,28 +82,29 @@ graph TD
     subgraph SingleTaskAgent ["SingleTaskAgent.run()"]
         direction TB
         
-        Input --> TypeCheck{Check task type}
+        Input --> Search[(Tool Candidate Search)]
         
-        %% LLM Branch
-        TypeCheck -->|task type 'llm'| Reasoning[ReasoningAgent]
-        Reasoning -->|reasoning output| Filter[TaskResultFilter]
-        
-        %% Tool Branch
-        TypeCheck -->|task type 'tool'| Search[(Tool Search)]
-        Search -->|tool candidates| LoopStart
+        Search --> LoopStart[TaskRouter]
 
-        subgraph ToolLoop ["Execution Loop (while True)"]
+        subgraph IterationLoop ["Execution Loop (while True)"]
             direction TB
-            LoopStart[ToolSelector] --> Finished{finished?}
+            LoopStart --> Finished{task finished?}
             
-            Finished -->|finished == False| Call[Call Tools]
-            Call -->|tool_results| LoopStart
+            Finished -->|No| Route{Subtask Type?}
+            
+            Route -->|tool| ToolExec[Execute Tool Subtask]
+            Route -->|reasoning| ReasonExec[Execute Reasoning Subtask]
+            
+            ToolExec --> Append[Append to Iteration Results]
+            ReasonExec --> Append
+            
+            Append --> LoopStart
         end
         
-        Finished -->|finished == True| Filter
+        Finished -->|Yes| Filter[TaskResultFilter]
         
         %% Final Synthesis
-        Filter -->|Cleaned Result String| Out[SingleTaskAgentOutput]
+        Filter -->|Filtered Result| Out[SingleTaskAgentOutput]
     end
 
     Out --> End((End))
@@ -121,22 +114,24 @@ graph TD
 
 ```mermaid
 graph TD
+    %% Input Node
     Start((Start)) --> Input[ReplanAgentInput]
 
-    subgraph ReplanAgent ["ReplanAgent.run()"]
+    %% Internal Processing Sequence
+    subgraph ReplanAgent ["ReplanAgent._run()"]
         direction TB
        
-        Input --> |previous plan| Search[(Tool Search)]
+        Input --> Prep[Prepare ReplannerInput]
         
-        Search -->|tool candidates| Replan[Replanner]
+        %% Core Logic
+        Prep --> ReplannerCall[Replanner LLM Call]
         
-        %% Mapping Multiple Inputs to Replanner
-        Input -.-> |user_query + user_context| Replan
-        Input -.-> |task_results| Replan
-        Input -.-> |previous plan| Replan
-
-        Replan --> Out[ReplanAgentOutput]
+        %% Output Mapping
+        ReplannerCall --> MapOutput[Map to ReplanAgentOutput]
+        
+        MapOutput --> Out[ReplanAgentOutput]
     end
 
+    %% Final Output
     Out --> End((End))
 ```
