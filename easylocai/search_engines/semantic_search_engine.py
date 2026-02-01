@@ -46,7 +46,9 @@ class SemanticSearchEngine(SearchEngine):
         self._collections = {}
         self._chromadb_client = Client()
 
-    async def get_or_create_collection(self, name: str) -> SearchEngineCollection:
+    async def get_or_create_collection(
+        self, name: str, **kwargs
+    ) -> SearchEngineCollection:
         if name not in self._collections:
             chromadb_collection = self._chromadb_client.get_or_create_collection(
                 name=name

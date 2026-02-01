@@ -24,5 +24,7 @@ class SearchEngineCollection:
 
 class SearchEngine(metaclass=ABCMeta):
     @abstractmethod
-    async def get_or_create_collection(self, name: str) -> SearchEngineCollection:
+    async def get_or_create_collection(
+        self, name: str, **kwargs
+    ) -> SearchEngineCollection:
         pass

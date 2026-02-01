@@ -66,7 +66,9 @@ class AdvancedSearchEngine(SearchEngine):
         self._semantic_se = SemanticSearchEngine()
 
     async def get_or_create_collection(
-        self, name: str, **kwargs
+        self,
+        name: str,
+        **kwargs,
     ) -> SearchEngineCollection:
         keyword_collection = await self._keyword_se.get_or_create_collection(
             name, **kwargs
