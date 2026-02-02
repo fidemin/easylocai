@@ -1,6 +1,5 @@
 import asyncio
 
-from easylocai.llm_calls.task_result_filter import TaskResultFilterOutput
 from prompt_eval.prompt_eval_workflow import PromptEvalWorkflow
 
 if __name__ == "__main__":
@@ -18,6 +17,6 @@ if __name__ == "__main__":
         input_file_path=input_file_path,
         prompt_path_info=prompt_info,
         model_info=model_info,
-        output_model=TaskResultFilterOutput,
+        output_model=None,
     )
     asyncio.run(workflow.run())

@@ -67,6 +67,13 @@ class LLMCallV2(ABC, Generic[InModel, OutModel]):
             pretty_prompt_text(f"{self.__class__.__name__} User Prompt", user_prompt)
         )
 
+        output_model_format = None
+
+        if issubclass(self._output_model, BaseModel):
+            output_model_format = self._output_model.model_json_schema()
+        else:
+            output_model_format = None
+
         llm_call_response = await self._client.chat(
             model=self._model,
             messages=[
