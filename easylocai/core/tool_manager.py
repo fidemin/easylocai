@@ -147,7 +147,11 @@ class ToolManager:
 
     async def initialize(self, async_stack: AsyncExitStack):
         await self._server_manager.initialize_servers(async_stack)
-        self._tool_collection = await self._search_engine.get_or_create_collection("tools")
+        self._tool_collection = await self._search_engine.get_or_create_collection(
+            "tools",
+            min_ngram=3,
+            max_ngram=5,
+        )
         await self._initialize_tools()
 
     async def _initialize_tools(self):

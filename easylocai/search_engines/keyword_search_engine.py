@@ -117,6 +117,16 @@ class KeywordSearchEngine(SearchEngine):
     async def get_or_create_collection(
         self, name: str, **kwargs
     ) -> SearchEngineCollection:
+        """
+
+        Args:
+            name (str): collection name
+            kwargs: keyword search engine collection parameters
+                kwargs[min_ngram] (int | None): minimum n-gram length for per-keyword ngram tokenization
+                kwargs[max_ngram] (int | None): maximum n-gram length for per-keyword ngram tokenization
+        Returns:
+            SearchEngineCollection: keyword search engine collection
+        """
         if name not in self._collections:
             self._collections[name] = KeywordSearchEngineCollection(
                 kwargs.get("min_ngram"), kwargs.get("max_ngram")

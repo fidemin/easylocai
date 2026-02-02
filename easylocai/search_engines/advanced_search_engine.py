@@ -70,6 +70,18 @@ class AdvancedSearchEngine(SearchEngine):
         name: str,
         **kwargs,
     ) -> SearchEngineCollection:
+        """
+        Get or create an advanced search engine collection.
+
+        Args:
+            name (str): collection name
+            kwargs: keyword search engine collection parameters
+              kwargs[min_ngram] (int | None): minimum n-gram length for keyword search engine
+              kwargs[max_ngram] (int | None): maximum n-gram length for keyword search
+
+        Returns:
+            AdvancedSearchEngineCollection: search engine collection
+        """
         keyword_collection = await self._keyword_se.get_or_create_collection(
             name, **kwargs
         )
