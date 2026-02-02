@@ -1,3 +1,3 @@
 
 
-pipx install --python python3.12 .
+pipx install --force --python python3.12 .
