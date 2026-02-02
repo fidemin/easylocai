@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from pydantic import RootModel, Field
 
-from easylocai.core.llm_call import LLMCall
+from easylocai.core.llm_call import LLMCallV2
 
 
 class TaskResultFilterInput(BaseModel):
@@ -15,7 +15,7 @@ class TaskResultFilterOutput(RootModel[str]):
     root: str = Field(description="Filtered task result")
 
 
-class TaskResultFilter(LLMCall[TaskResultFilterInput, TaskResultFilterOutput]):
+class TaskResultFilter(LLMCallV2[TaskResultFilterInput, TaskResultFilterOutput]):
     def __init__(self, *, client):
         model = "gpt-oss:20b"
         system_prompt_path = "prompts/task_result_filter_system_prompt.jinja2"
