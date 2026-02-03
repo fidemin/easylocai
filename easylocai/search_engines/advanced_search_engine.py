@@ -76,8 +76,8 @@ class AdvancedSearchEngine(SearchEngine):
         Args:
             name (str): collection name
             kwargs: keyword search engine collection parameters
-              kwargs[min_ngram] (int | None): minimum n-gram length for keyword search engine
-              kwargs[max_ngram] (int | None): maximum n-gram length for keyword search
+              kwargs[min_gram] (int | None): minimum n-gram length for keyword tokenizer
+              kwargs[max_gram] (int | None): maximum n-gram length for keyword tokenizer
 
         Returns:
             AdvancedSearchEngineCollection: search engine collection

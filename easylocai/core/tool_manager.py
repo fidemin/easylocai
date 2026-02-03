@@ -149,8 +149,8 @@ class ToolManager:
         await self._server_manager.initialize_servers(async_stack)
         self._tool_collection = await self._search_engine.get_or_create_collection(
             "tools",
-            min_ngram=3,
-            max_ngram=5,
+            min_gram=3,
+            max_gram=5,
         )
         await self._initialize_tools()
 

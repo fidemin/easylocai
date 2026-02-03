@@ -20,14 +20,14 @@ class KeywordRecord(BaseModel):
 class KeywordSearchEngineCollection(SearchEngineCollection):
     def __init__(
         self,
-        min_ngram: int | None = None,
-        max_ngram: int | None = None,
+        min_gram: int | None = None,
+        max_gram: int | None = None,
     ):
         self._records: list[KeywordRecord] = []
         self._id_set = set()
         self._bm25 = None
-        self._min_ngram = min_ngram
-        self._max_ngram = max_ngram
+        self._min_gram = min_gram
+        self._max_gram = max_gram
 
     async def add(self, records: list[Record]):
         for idx, record in enumerate(records):
@@ -96,13 +96,13 @@ class KeywordSearchEngineCollection(SearchEngineCollection):
             # keep original word
             all_tokens.append(word)
 
-            if self._min_ngram is None or self._max_ngram is None:
+            if self._min_gram is None or self._max_gram is None:
                 continue
 
-            if len(word) < self._min_ngram:
+            if len(word) < self._min_gram:
                 continue
 
-            for n in range(self._min_ngram, self._max_ngram + 1):
+            for n in range(self._min_gram, self._max_gram + 1):
                 for i in range(len(word) - n + 1):
                     ngram = word[i : i + n]
                     all_tokens.append(ngram)
@@ -122,13 +122,13 @@ class KeywordSearchEngine(SearchEngine):
         Args:
             name (str): collection name
             kwargs: keyword search engine collection parameters
-                kwargs[min_ngram] (int | None): minimum n-gram length for per-keyword ngram tokenization
-                kwargs[max_ngram] (int | None): maximum n-gram length for per-keyword ngram tokenization
+                kwargs[min_gram] (int | None): minimum n-gram length for per-keyword ngram tokenization
+                kwargs[max_gram] (int | None): maximum n-gram length for per-keyword ngram tokenization
         Returns:
             SearchEngineCollection: keyword search engine collection
         """
         if name not in self._collections:
             self._collections[name] = KeywordSearchEngineCollection(
-                kwargs.get("min_ngram"), kwargs.get("max_ngram")
+                kwargs.get("min_gram"), kwargs.get("max_gram")
             )
         return self._collections[name]

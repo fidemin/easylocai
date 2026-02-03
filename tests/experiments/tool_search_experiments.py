@@ -394,7 +394,7 @@ experiments = [
             {
                 "id": "keyword_ngram",
                 "engine": "easylocai.search_engines.keyword_search_engine.KeywordSearchEngine",
-                "collection_arguments": {"min_ngram": 3, "max_ngram": 5},
+                "collection_arguments": {"min_gram": 3, "max_gram": 5},
             },
             {
                 "id": "hybrid",
@@ -404,7 +404,7 @@ experiments = [
             {
                 "id": "hybrid_ngram",
                 "engine": "easylocai.search_engines.advanced_search_engine.AdvancedSearchEngine",
-                "collection_arguments": {"min_ngram": 3, "max_ngram": 5},
+                "collection_arguments": {"min_gram": 3, "max_gram": 5},
             },
         ],
     }
