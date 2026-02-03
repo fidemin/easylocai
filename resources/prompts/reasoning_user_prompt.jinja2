@@ -13,11 +13,11 @@ PREVIOUS_TASK_RESULTS:
 {% endfor %}
 
 PREVIOUS_SUBTASK_RESULTS:
-{% for iteration_result in iteration_results %}
+{% for subtask_result in previous_subtask_results %}
 <subtask_result>
     - subtask:
-    {{ iteration_result["subtask"] }}
+    {{ subtask_result["subtask"] }}
     - result:
-    {{ iteration_result["result"] }}
+    {{ subtask_result["result"] }}
 </subtask_result>
 {% endfor %}

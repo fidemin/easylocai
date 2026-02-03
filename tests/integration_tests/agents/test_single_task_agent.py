@@ -1,3 +1,4 @@
+import os
 from contextlib import AsyncExitStack
 
 import pytest
@@ -30,7 +31,8 @@ def mcp_servers_config():
             "args": [
                 "-y",
                 "@modelcontextprotocol/server-filesystem",
-                "/tmp",
+                # current directory
+                f"{os.getcwd()}",
             ],
         }
     }
