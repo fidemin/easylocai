@@ -1,13 +1,13 @@
 import asyncio
 
-from easylocai.llm_calls.tool_selector import ToolSelectorOutputV2
+from easylocai.llm_calls.tool_selector import ToolSelectorV2Output
 from prompt_eval.prompt_eval_workflow import PromptEvalWorkflow
 
 if __name__ == "__main__":
-    input_file_path = "resources/prompt_eval/tool_selector_prompt_inputs_v2.json"
+    input_file_path = "resources/prompt_eval/tool_selector_prompt_inputs.json"
     prompt_info = {
-        "system": "resources/prompts/tool_selector_system_prompt_v2.jinja2",
-        "user": "resources/prompts/tool_selector_user_prompt_v2.jinja2",
+        "system": "resources/prompts/tool_selector_system_prompt.jinja2",
+        "user": "resources/prompts/tool_selector_user_prompt.jinja2",
     }
     model_info = {
         "host": "http://localhost:11434",
@@ -18,6 +18,6 @@ if __name__ == "__main__":
         input_file_path=input_file_path,
         prompt_path_info=prompt_info,
         model_info=model_info,
-        output_model=ToolSelectorOutputV2,
+        output_model=ToolSelectorV2Output,
     )
     asyncio.run(workflow.run())

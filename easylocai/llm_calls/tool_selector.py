@@ -11,7 +11,7 @@ class ToolInput(BaseModel):
         description="The tool_name selected based on subtask requirements"
     )
     tool_args: dict[str, Any] = Field(
-        description="Parameters for tool execution following the tool's input_schema"
+        description="Parameters for tool execution following the tool's input_schema. Do not include extra parameters not defined in the tool's input_schema."
     )
 
 
@@ -32,7 +32,29 @@ class ToolSelectorV2Output(BaseModel):
     )
 
 
-class ToolSelectorV2(LLMCallV2[ToolSelectorV2Input, ToolSelectorV2Output]):
+class ToolSelectorInput(BaseModel):
+    subtasks: list[str]
+    user_context: str | None
+    tool_candidates: list[dict]
+    previous_task_results: list[dict]
+    iteration_results: list[dict]
+
+
+class SubtaskWithTool(BaseModel):
+    subtask: str = Field(description="The actual subtask for which tool is selected.")
+    selected_tool: ToolInput | None = Field(
+        description="The tool selected to execute the given subtask. None if no matching tool found."
+    )
+    failure_reason: str | None = Field(
+        description="Reason why tool can not be selected. None if a tool was successfully selected."
+    )
+
+
+class ToolSelectorOutputV2(BaseModel):
+    results: list[SubtaskWithTool]
+
+
+class ToolSelector(LLMCallV2[ToolSelectorInput, ToolSelectorV2Output]):
     def __init__(self, *, client):
         model = "gpt-oss:20b"
         system_prompt_path = "prompts/tool_selector_system_prompt.jinja2"

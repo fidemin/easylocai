@@ -22,8 +22,8 @@ from easylocai.llm_calls.task_router import (
 )
 from easylocai.llm_calls.tool_selector import (
     ToolInput,
-    ToolSelectorV2,
-    ToolSelectorV2Input,
+    ToolSelector,
+    ToolSelectorInput,
     ToolSelectorV2Output,
 )
 
@@ -161,7 +161,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         previous_task_results: list[dict],
         iteration_results: list[dict],
     ) -> dict[str, Any]:
-        tool_selector_input = ToolSelectorV2Input(
+        tool_selector_input = ToolSelectorInput(
             subtask=subtask,
             user_context=user_context,
             tool_candidates=tool_candidates,
@@ -169,7 +169,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             iteration_results=iteration_results,
         )
 
-        tool_selector = ToolSelectorV2(client=self._ollama_client)
+        tool_selector = ToolSelector(client=self._ollama_client)
 
         try:
             tool_selector_output: ToolSelectorV2Output = await tool_selector.call(
