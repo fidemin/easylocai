@@ -82,7 +82,7 @@ class ToolSelector(LLMCallV2[ToolSelectorInput, ToolSelectorOutput]):
         )
 
 
-class ToolSelectorV2(LLMCallV2[ToolSelectorInput, ToolSelectorOutput]):
+class ToolSelectorV2(LLMCallV2[ToolSelectorInputV2, ToolSelectorOutputV2]):
     def __init__(self, *, client):
         model = GPT_OSS_20B
         system_prompt_path = "prompts/tool_selector_system_prompt_v2.jinja2"

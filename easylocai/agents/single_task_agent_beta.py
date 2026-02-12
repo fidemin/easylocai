@@ -16,15 +16,16 @@ from easylocai.llm_calls.task_result_filter import (
     TaskResultFilterInput,
 )
 from easylocai.llm_calls.task_router import (
-    TaskRouter,
     TaskRouterInput,
-    TaskRouterOutput,
+    TaskRouterOutputV2,
+    TaskRouterV2,
+    Subtask,
 )
 from easylocai.llm_calls.tool_selector import (
     ToolInput,
-    ToolSelector,
-    ToolSelectorInput,
-    ToolSelectorOutput,
+    ToolSelectorInputV2,
+    ToolSelectorV2,
+    ToolSelectorOutputV2,
 )
 
 logger = logging.getLogger(__name__)
@@ -61,7 +62,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         iteration_results = []
 
         while True:
-            task_router_output = await self._route_task(
+            task_router_output: TaskRouterOutputV2 = await self._route_task(
                 task=task,
                 user_context=user_context,
                 tool_candidates=tool_candidates,
@@ -73,33 +74,46 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
                 logger.debug(f"Task finished: {task_router_output.finished_reason}")
                 break
 
-            subtask = task_router_output.subtask
-            subtask_type = task_router_output.subtask_type
+            subtasks: list[Subtask] = task_router_output.subtasks
+            tool_subtasks = []
+            reasoning_subtasks = []
 
-            if subtask_type == "tool":
-                result = await self._execute_tool_subtask(
-                    subtask=subtask,
+            for subtask in subtasks:
+                if subtask.subtask_type == "tool":
+                    tool_subtasks.append(subtask)
+                elif subtask.subtask_type == "reasoning":
+                    reasoning_subtasks.append(subtask)
+                else:
+                    logger.error(
+                        f"Unknown subtask type: {task_router_output.subtask_type}"
+                    )
+                    continue
+
+            if tool_subtasks:
+                subtask_list: list[str] = [subtask.subtask for subtask in tool_subtasks]
+                subtask_results = await self._execute_tool_subtask(
+                    subtasks=subtask_list,
                     user_context=user_context,
                     tool_candidates=tool_candidates,
                     previous_task_results=previous_task_results,
                     iteration_results=iteration_results,
                 )
-            elif subtask_type == "reasoning":
-                result = await self._execute_reasoning_subtask(
-                    subtask=subtask,
-                    user_context=user_context,
-                    previous_task_results=previous_task_results,
-                    previous_subtask_results=iteration_results,
-                )
-            else:
-                raise ValueError(f"Unknown subtask type: {subtask_type}")
+                iteration_results.extend(subtask_results)
 
-            iteration_results.append(
-                {
-                    "subtask": subtask,
-                    "result": result,
-                }
-            )
+            if reasoning_subtasks:
+                for subtask in reasoning_subtasks:
+                    result = await self._execute_reasoning_subtask(
+                        subtask=subtask.subtask,
+                        user_context=user_context,
+                        previous_task_results=previous_task_results,
+                        previous_subtask_results=iteration_results,
+                    )
+                    iteration_results.append(
+                        {
+                            "subtask": subtask.subtask,
+                            "result": result,
+                        }
+                    )
 
         filtered_result = await self._filter_task_result(
             original_user_query=input_.original_user_query,
@@ -137,7 +151,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         tool_candidates: list[dict],
         previous_task_results: list[dict],
         iteration_results: list[dict],
-    ) -> TaskRouterOutput:
+    ) -> TaskRouterOutputV2:
         task_router_input = TaskRouterInput(
             task=task,
             user_context=user_context,
@@ -146,8 +160,10 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             iteration_results=iteration_results,
         )
 
-        task_router = TaskRouter(client=self._ollama_client)
-        task_router_output: TaskRouterOutput = await task_router.call(task_router_input)
+        task_router = TaskRouterV2(client=self._ollama_client)
+        task_router_output: TaskRouterOutputV2 = await task_router.call(
+            task_router_input
+        )
 
         logger.debug(f"TaskRouter output: {task_router_output}")
         return task_router_output
@@ -155,24 +171,25 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
     async def _execute_tool_subtask(
         self,
         *,
-        subtask: str,
+        subtasks: list[str],
         user_context: str | None,
         tool_candidates: list[dict],
         previous_task_results: list[dict],
         iteration_results: list[dict],
-    ) -> dict[str, Any]:
-        tool_selector_input = ToolSelectorInput(
-            subtask=subtask,
+    ) -> list[dict[str, Any]]:
+        tool_selector_input = ToolSelectorInputV2(
+            subtasks=subtasks,
             user_context=user_context,
             tool_candidates=tool_candidates,
             previous_task_results=previous_task_results,
             iteration_results=iteration_results,
         )
 
-        tool_selector = ToolSelector(client=self._ollama_client)
+        tool_selector = ToolSelectorV2(client=self._ollama_client)
 
+        subtask_results = []
         try:
-            tool_selector_output: ToolSelectorOutput = await tool_selector.call(
+            tool_selector_output: ToolSelectorOutputV2 = await tool_selector.call(
                 tool_selector_input
             )
         except ValidationError:
@@ -180,16 +197,35 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             logger.error(
                 f"Failed to parse ToolSelectorV2 response: {llm_call_response['message']['content']}"
             )
-            return {"error": "Failed to parse tool selector response"}
+            for subtask in subtasks:
+                subtask_results.append(
+                    {"subtask": subtask, "result": "tool select fail: parsing error"}
+                )
+            return subtask_results
 
-        if tool_selector_output.selected_tool is None:
-            logger.warning(
-                f"No tool selected for subtask: {subtask}. Reason: {tool_selector_output.failure_reason}"
+        for tool_selector_result in tool_selector_output.results:
+            subtask = tool_selector_result.subtask
+            selected_tool = tool_selector_result.selected_tool
+            failure_reason = tool_selector_result.failure_reason
+
+            if selected_tool is None:
+                logger.warning(
+                    f"No tool selected for subtask: {subtask}. Reason: {failure_reason}"
+                )
+                subtask_results.append(
+                    {"subtask": subtask, "result": f"no tool found: {failure_reason}"}
+                )
+                continue
+
+            tool_result = await self._call_tool(selected_tool)
+            subtask_results.append(
+                {
+                    "subtask": subtask,
+                    "result": tool_result,
+                }
             )
-            return {"error": tool_selector_output.failure_reason}
 
-        tool_result = await self._call_tool(tool_selector_output.selected_tool)
-        return tool_result
+        return subtask_results
 
     async def _execute_reasoning_subtask(
         self,

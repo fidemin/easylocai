@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 
+from easylocai.constants.model import GPT_OSS_20B
 from easylocai.core.llm_call import LLMCallV2
 
 
@@ -21,9 +22,28 @@ class ReplannerOutput(BaseModel):
 
 class Replanner(LLMCallV2[ReplannerInput, ReplannerOutput]):
     def __init__(self, *, client):
-        model = "gpt-oss:20b"
+        model = GPT_OSS_20B
         system_prompt_path = "prompts/replanner_system_prompt.jinja2"
         user_prompt_path = "prompts/replanner_user_prompt.jinja2"
+        options = {
+            "temperature": 0.2,
+        }
+
+        super().__init__(
+            client=client,
+            model=model,
+            system_prompt_path=system_prompt_path,
+            user_prompt_path=user_prompt_path,
+            output_model=ReplannerOutput,
+            options=options,
+        )
+
+
+class ReplannerV2(LLMCallV2[ReplannerInput, ReplannerOutput]):
+    def __init__(self, *, client):
+        model = GPT_OSS_20B
+        system_prompt_path = "prompts/replanner_system_prompt_v2.jinja2"
+        user_prompt_path = "prompts/replanner_user_prompt_v2.jinja2"
         options = {
             "temperature": 0.2,
         }

@@ -32,6 +32,34 @@
     ]
   },
   {
+    "id": "replan-multi-source-task",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "user_context": null,
+          "original_user_query": "Find notion documents related to redis and summarize them to redis.txt file",
+          "previous_plan": [
+            "Search for notion documents related to redis",
+            "Iterate through the found documents and extract relevant information about redis",
+            "Summarize the extracted information into a concise summary",
+            "Save the summary to a file named redis.txt"
+          ],
+          "task_results": [
+            {
+              "task": "Search for notion documents related to redis",
+              "result": "https://notion.com/abcdef2\nhttps://notion.com/ghijkl3"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
     "id": "replan-002",
     "messages": [
       {

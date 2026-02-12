@@ -14,7 +14,7 @@ class TaskRouterInput(BaseModel):
     iteration_results: list[dict]
 
 
-class SubTask(BaseModel):
+class Subtask(BaseModel):
     subtask: str = Field(
         description="The next subtask to execute. Do not refer to tool names directly here."
     )
@@ -37,7 +37,7 @@ class TaskRouterOutput(BaseModel):
 
 
 class TaskRouterOutputV2(BaseModel):
-    subtasks: list[SubTask] = Field(
+    subtasks: list[Subtask] = Field(
         description="A list of next subtasks which can be executed in parallel to achieve the goal of task. Empty if finished=True."
     )
     finished: bool = Field(description="Whether the task is completed or failed.")
@@ -65,7 +65,7 @@ class TaskRouter(LLMCallV2[TaskRouterInput, TaskRouterOutput]):
         )
 
 
-class TaskRouterV2(LLMCallV2[TaskRouterInput, TaskRouterOutput]):
+class TaskRouterV2(LLMCallV2[TaskRouterInput, TaskRouterOutputV2]):
     def __init__(self, *, client):
         model = GPT_OSS_20B
         system_prompt_path = "prompts/task_router_system_prompt_v2.jinja2"
