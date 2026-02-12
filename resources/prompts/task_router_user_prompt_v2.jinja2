@@ -1,0 +1,33 @@
+Task:
+{{ task }}
+
+USER_CONTEXT:
+{{ user_context }}
+
+TOOL_CANDIDATES:
+{% for tool in tool_candidates %}
+<tool>
+- server_name: {{ tool["server_name"] }}
+- tool_name: {{ tool["tool_name"] }}
+- tool_description: {{ tool["tool_description"] }}
+- input_schema: {{ tool["tool_input_schema"] }}
+</tool>
+{% endfor %}
+
+PREVIOUS_TASK_RESULTS (chronological order):
+{% for task_result in previous_task_results %}
+<task_result>
+- task: {{ task_result["task"] }}
+- result: {{ task_result["result"] }}
+</task_result>
+{% endfor %}
+
+PREVIOUS_SUBTASK_RESULTS (chronological order):
+{% for iteration_result in iteration_results %}
+<subtask_result>
+    - subtask:
+    {{ iteration_result["subtask"] }}
+    - result:
+    {{ iteration_result["result"] }}
+</subtask_result>
+{% endfor %}

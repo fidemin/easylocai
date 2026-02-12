@@ -13,12 +13,31 @@ class TaskRouterInput(BaseModel):
     iteration_results: list[dict]
 
 
+class SubTask(BaseModel):
+    subtask: str = Field(
+        description="The next subtask to execute. Do not refer to tool names directly here."
+    )
+    subtask_type: Literal["tool", "reasoning"] = Field(
+        description="'tool' for tool-based execution, 'reasoning' for reasoning subtask (e.g. coding, problem solving, inference)."
+    )
+
+
 class TaskRouterOutput(BaseModel):
     subtask: str | None = Field(
         description="The next subtask to execute. None if finished=True. Do not refer to tool names directly here."
     )
     subtask_type: Literal["tool", "reasoning"] | None = Field(
         description="'tool' for tool-based execution, 'reasoning' for reasoning agent. None if finished=True"
+    )
+    finished: bool = Field(description="Whether the task is completed or failed.")
+    finished_reason: str | None = Field(
+        description="Explanation of why the task is finished. None if finished is False."
+    )
+
+
+class TaskRouterOutputV2(BaseModel):
+    subtasks: list[SubTask] = Field(
+        description="A list of next subtasks which can be executed in parallel to achieve the goal of task. Empty if finished=True."
     )
     finished: bool = Field(description="Whether the task is completed or failed.")
     finished_reason: str | None = Field(
