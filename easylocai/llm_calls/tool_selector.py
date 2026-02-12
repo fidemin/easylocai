@@ -2,6 +2,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from easylocai.constants.model import GPT_OSS_20B
 from easylocai.core.llm_call import LLMCallV2
 
 
@@ -23,7 +24,7 @@ class ToolSelectorV2Input(BaseModel):
     iteration_results: list[dict]
 
 
-class ToolSelectorV2Output(BaseModel):
+class ToolSelectorOutput(BaseModel):
     selected_tool: ToolInput | None = Field(
         description="The tool selected to execute the given subtask. None if no matching tool found."
     )
@@ -33,6 +34,14 @@ class ToolSelectorV2Output(BaseModel):
 
 
 class ToolSelectorInput(BaseModel):
+    subtask: list[str]
+    user_context: str | None
+    tool_candidates: list[dict]
+    previous_task_results: list[dict]
+    iteration_results: list[dict]
+
+
+class ToolSelectorInputV2(BaseModel):
     subtasks: list[str]
     user_context: str | None
     tool_candidates: list[dict]
@@ -54,7 +63,7 @@ class ToolSelectorOutputV2(BaseModel):
     results: list[SubtaskWithTool]
 
 
-class ToolSelector(LLMCallV2[ToolSelectorInput, ToolSelectorV2Output]):
+class ToolSelector(LLMCallV2[ToolSelectorInput, ToolSelectorOutput]):
     def __init__(self, *, client):
         model = "gpt-oss:20b"
         system_prompt_path = "prompts/tool_selector_system_prompt.jinja2"
@@ -68,6 +77,25 @@ class ToolSelector(LLMCallV2[ToolSelectorInput, ToolSelectorV2Output]):
             model=model,
             system_prompt_path=system_prompt_path,
             user_prompt_path=user_prompt_path,
-            output_model=ToolSelectorV2Output,
+            output_model=ToolSelectorOutput,
+            options=options,
+        )
+
+
+class ToolSelectorV2(LLMCallV2[ToolSelectorInput, ToolSelectorOutput]):
+    def __init__(self, *, client):
+        model = GPT_OSS_20B
+        system_prompt_path = "prompts/tool_selector_system_prompt_v2.jinja2"
+        user_prompt_path = "prompts/tool_selector_user_prompt_v2.jinja2"
+        options = {
+            "temperature": 0.2,
+        }
+
+        super().__init__(
+            client=client,
+            model=model,
+            system_prompt_path=system_prompt_path,
+            user_prompt_path=user_prompt_path,
+            output_model=ToolSelectorOutputV2,
             options=options,
         )

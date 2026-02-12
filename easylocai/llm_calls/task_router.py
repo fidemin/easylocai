@@ -2,6 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from easylocai.constants.model import GPT_OSS_20B
 from easylocai.core.llm_call import LLMCallV2
 
 
@@ -60,5 +61,24 @@ class TaskRouter(LLMCallV2[TaskRouterInput, TaskRouterOutput]):
             system_prompt_path=system_prompt_path,
             user_prompt_path=user_prompt_path,
             output_model=TaskRouterOutput,
+            options=options,
+        )
+
+
+class TaskRouterV2(LLMCallV2[TaskRouterInput, TaskRouterOutput]):
+    def __init__(self, *, client):
+        model = GPT_OSS_20B
+        system_prompt_path = "prompts/task_router_system_prompt_v2.jinja2"
+        user_prompt_path = "prompts/task_router_user_prompt_v2.jinja2"
+        options = {
+            "temperature": 0.2,
+        }
+
+        super().__init__(
+            client=client,
+            model=model,
+            system_prompt_path=system_prompt_path,
+            user_prompt_path=user_prompt_path,
+            output_model=TaskRouterOutputV2,
             options=options,
         )

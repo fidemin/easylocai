@@ -1,6 +1,6 @@
 import asyncio
 
-from easylocai.llm_calls.tool_selector import ToolSelectorV2Output
+from easylocai.llm_calls.tool_selector import ToolSelectorOutput
 from prompt_eval.prompt_eval_workflow import PromptEvalWorkflow
 
 if __name__ == "__main__":
@@ -18,6 +18,6 @@ if __name__ == "__main__":
         input_file_path=input_file_path,
         prompt_path_info=prompt_info,
         model_info=model_info,
-        output_model=ToolSelectorV2Output,
+        output_model=ToolSelectorOutput,
     )
     asyncio.run(workflow.run())
