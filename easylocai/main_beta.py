@@ -40,7 +40,12 @@ async def run_agent_workflow_main_beta():
 
         while True:
             render_chat(console, messages)
-            user_input = await multiline_input("> ")
+            try:
+                user_input = await multiline_input("> ")
+            except KeyboardInterrupt:
+                print("\nExiting...")
+                break
+
             if user_input.strip().lower() in {"exit", "quit"}:
                 break
 
