@@ -34,7 +34,7 @@ class ToolSelectorOutput(BaseModel):
 
 
 class ToolSelectorInput(BaseModel):
-    subtask: list[str]
+    subtask: str
     user_context: str | None
     tool_candidates: list[dict]
     previous_task_results: list[dict]
