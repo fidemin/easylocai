@@ -12,7 +12,7 @@
           "task": "Extract failed pod information from kubectl output",
           "iteration_results": [
             {
-              "subtask": "Parse kubectl get pods output",
+              "subtask": "kubectl get pods output",
               "result": {
                 "pods": [
                   {
@@ -30,7 +30,7 @@
               }
             },
             {
-              "subtask": "Parse kubectl describe pod worker-5b6d9c",
+              "subtask": "describe kubernetes pod worker-5b6d9c",
               "result": {
                 "name": "worker-5b6d9c",
                 "namespace": "batch",

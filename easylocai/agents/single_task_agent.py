@@ -11,6 +11,10 @@ from easylocai.agents.reasoning_agent import (
 )
 from easylocai.core.agent import Agent
 from easylocai.core.tool_manager import ToolManager
+from easylocai.llm_calls.subtask_result_filter import (
+    SubtaskResultFilter,
+    SubtaskResultFilterInput,
+)
 from easylocai.llm_calls.task_result_filter import (
     TaskResultFilter,
     TaskResultFilterInput,
@@ -94,10 +98,15 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             else:
                 raise ValueError(f"Unknown subtask type: {subtask_type}")
 
+            filtered_subtask_result = await self._filter_subtask_result(
+                subtask=subtask,
+                result=result,
+            )
+
             iteration_results.append(
                 {
                     "subtask": subtask,
-                    "result": result,
+                    "result": filtered_subtask_result,
                 }
             )
 
@@ -229,6 +238,23 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             return tool_result.structuredContent
         else:
             return {"content": tool_result.content}
+
+    async def _filter_subtask_result(
+        self,
+        subtask: str,
+        result: dict[str, Any],
+    ) -> str:
+        subtask_result_filter_input = SubtaskResultFilterInput(
+            subtask=subtask,
+            result=result,
+        )
+
+        subtask_result_filter = SubtaskResultFilter(client=self._ollama_client)
+        subtask_result_filter_output = await subtask_result_filter.call(
+            subtask_result_filter_input
+        )
+
+        return subtask_result_filter_output.root
 
     async def _filter_task_result(
         self,
