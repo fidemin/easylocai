@@ -1,0 +1,79 @@
+[
+  {
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "subtask": "Get kubectl pods status",
+          "result": {
+            "pods": [
+              {
+                "name": "api-server-7c9d8f",
+                "namespace": "default",
+                "status": "Running"
+              },
+              {
+                "name": "worker-5b6d9c",
+                "namespace": "batch",
+                "status": "CrashLoopBackOff",
+                "reason": "OOMKilled"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "subtask": "Describe pod worker-5b6d9c",
+          "result": {
+            "name": "worker-5b6d9c",
+            "namespace": "batch",
+            "events": [
+              {
+                "type": "Warning",
+                "reason": "OOMKilled",
+                "message": "Container ran out of memory"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "subtask": "Find memory usage of pod worker-5b6d9c",
+          "result": {
+            "metrics": {
+              "cpu": "250m",
+              "network_in": "1.2MB",
+              "network_out": "0.8MB",
+              "disk_read": "50KB/s",
+              "disk_write": "30KB/s"
+            }
+          }
+        }
+      }
+    ]
+  }
+]

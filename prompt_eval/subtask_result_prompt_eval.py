@@ -1,0 +1,22 @@
+import asyncio
+
+from prompt_eval.prompt_eval_workflow import PromptEvalWorkflow
+
+if __name__ == "__main__":
+    input_file_path = "resources/prompt_eval/subtask_result_prompt_inputs.json"
+    prompt_info = {
+        "system": "resources/prompts/subtask_result_filter_system_prompt.jinja2",
+        "user": "resources/prompts/subtask_result_filter_user_prompt.jinja2",
+    }
+    model_info = {
+        "host": "http://localhost:11434",
+        "model": "gpt-oss:20b",
+        "options": {"temperature": 0.1},
+    }
+    workflow = PromptEvalWorkflow(
+        input_file_path=input_file_path,
+        prompt_path_info=prompt_info,
+        model_info=model_info,
+        output_model=None,
+    )
+    asyncio.run(workflow.run())
