@@ -10,7 +10,7 @@
         "arguments": {
           "original_user_query": "List failed Kubernetes pods and their failure reasons",
           "task": "Extract failed pod information from kubectl output",
-          "iteration_results": [
+          "subtask_results": [
             {
               "subtask": "kubectl get pods output",
               "result": {

@@ -116,9 +116,8 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
                     )
 
         filtered_result = await self._filter_task_result(
-            original_user_query=input_.original_user_query,
             task=task,
-            iteration_results=iteration_results,
+            subtask_results=iteration_results,
             user_context=user_context,
         )
 
@@ -268,15 +267,13 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
 
     async def _filter_task_result(
         self,
-        original_user_query: str,
         task: str,
-        iteration_results: list[dict],
+        subtask_results: list[dict],
         user_context: str | None,
     ) -> str:
         task_result_filter_input = TaskResultFilterInput(
-            original_user_query=original_user_query,
             task=task,
-            iteration_results=iteration_results,
+            subtask_results=subtask_results,
             user_context=user_context,
         )
 

@@ -1,18 +1,15 @@
-Original User Query:
-{{ original_user_query }}
+TASK:
+{{ task }}
 
 USER_CONTEXT:
 {{ user_context }}
 
-Task:
-{{ task }}
-
-Iteration Results:
-{% for iteration_result in iteration_results %}
-<iteration_result>
+SUBTASK_RESULTS:
+{% for subtask_result in subtask_results %}
+<subtask_result>
     - subtask:
-    {{ iteration_result["subtask"] }}
+    {{ subtask_result["subtask"] }}
     - result:
-    {{ iteration_result["result"] }}
-</iteration_result>
+    {{ subtask_result["result"] }}
+</subtask_result>
 {% endfor %}

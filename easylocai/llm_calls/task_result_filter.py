@@ -1,13 +1,13 @@
 from pydantic import BaseModel
 from pydantic import RootModel, Field
 
+from easylocai.constants.model import GPT_OSS_20B
 from easylocai.core.llm_call import LLMCallV2
 
 
 class TaskResultFilterInput(BaseModel):
-    original_user_query: str
     task: str
-    iteration_results: list[dict]
+    subtask_results: list[dict]
     user_context: str | None
 
 
@@ -17,7 +17,7 @@ class TaskResultFilterOutput(RootModel[str]):
 
 class TaskResultFilter(LLMCallV2[TaskResultFilterInput, TaskResultFilterOutput]):
     def __init__(self, *, client):
-        model = "gpt-oss:20b"
+        model = GPT_OSS_20B
         system_prompt_path = "prompts/task_result_filter_system_prompt.jinja2"
         user_prompt_path = "prompts/task_result_filter_user_prompt.jinja2"
         options = {
