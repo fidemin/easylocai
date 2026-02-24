@@ -16,8 +16,8 @@ from easylocai.agents.single_task_agent import (
     SingleTaskAgentOutput,
 )
 from easylocai.core.tool_manager import ToolManager
+from easylocai.schemas.common import EasyLocaiWorkflowOutput
 from easylocai.search_engines.advanced_search_engine import AdvancedSearchEngine
-from easylocai.schemas.common import EasyLocaiWorkflowOutput, UserConversation
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +108,9 @@ class EasylocaiWorkflow:
                 }
             )
 
-            yield EasyLocaiWorkflowOutput(type="status", message="Check for completion...")
+            yield EasyLocaiWorkflowOutput(
+                type="status", message="Check for completion..."
+            )
 
             replan_agent_input = ReplanAgentInput(
                 user_query=user_query,
@@ -130,7 +132,4 @@ class EasylocaiWorkflow:
 
             tasks = replan_agent_output.tasks
 
-        user_conversations.append(
-            UserConversation(user_query=user_query, assistant_answer=answer)
-        )
         yield EasyLocaiWorkflowOutput(type="result", message=answer)
