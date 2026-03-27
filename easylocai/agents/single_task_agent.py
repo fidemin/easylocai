@@ -47,6 +47,8 @@ class SingleTaskAgentOutput(BaseModel):
 
 
 class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
+    N_TOOL_RESULTS = 18
+
     def __init__(
         self,
         *,
@@ -122,7 +124,9 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         )
 
     async def _get_tool_candidates(self, task: str) -> list[dict]:
-        tools = await self._tool_manager.search_tools([task], n_results=10)
+        tools = await self._tool_manager.search_tools(
+            [task], n_results=self.N_TOOL_RESULTS
+        )
 
         tool_candidates = []
         for tool in tools:
