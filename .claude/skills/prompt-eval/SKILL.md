@@ -7,17 +7,36 @@ description: Run prompt evaluation for an easylocai component, score each result
 
 Runs the prompt evaluation test suite for a given component, compares each LLM output against the expected answer defined in the input JSON, scores every test case, and prints a summary report.
 
-## Component Map
+## Config Files
 
-| Component | Eval module | Input JSON | System prompt | User prompt |
-|-----------|-------------|------------|---------------|-------------|
-| `plan` | `prompt_eval.plan_prompt_eval_v2` | `resources/prompt_eval/plan_prompt_inputs.json` | `resources/prompts/planner_system_prompt_v2.jinja2` | `resources/prompts/planner_user_prompt_v2.jinja2` |
-| `task_router` | `prompt_eval.task_router_prompt_eval_v2` | `resources/prompt_eval/task_router_prompt_inputs_v2.json` | `resources/prompts/task_router_system_prompt_v2.jinja2` | `resources/prompts/task_router_user_prompt_v2.jinja2` |
-| `tool_select` | `prompt_eval.tool_select_prompt_eval_v2` | `resources/prompt_eval/tool_selector_prompt_inputs_v2.json` | `resources/prompts/tool_selector_system_prompt_v2.jinja2` | `resources/prompts/tool_selector_user_prompt_v2.jinja2` |
-| `replan` | `prompt_eval.replan_prompt_eval_v2` | `resources/prompt_eval/replan_prompt_inputs.json` | `resources/prompts/replanner_system_prompt_v2.jinja2` | `resources/prompts/replanner_user_prompt_v2.jinja2` |
-| `query_reformatter` | `prompt_eval.query_reformatter_prompt_eval` | `resources/prompt_eval/query_reformatter_prompt_inputs.json` | `resources/prompts/query_reformatter_system_prompt.jinja2` | `resources/prompts/query_reformatter_user_prompt.jinja2` |
-| `task_result_filter` | `prompt_eval.task_result_filter_prompt_eval` | `resources/prompt_eval/task_result_prompt_inputs.json` | `resources/prompts/task_result_filter_system_prompt.jinja2` | `resources/prompts/task_result_filter_user_prompt.jinja2` |
-| `subtask_result` | `prompt_eval.subtask_result_prompt_eval` | `resources/prompt_eval/subtask_result_prompt_inputs.json` | `resources/prompts/subtask_result_filter_system_prompt.jinja2` | `resources/prompts/subtask_result_filter_user_prompt.jinja2` |
+Each prompt set has its own config file in `resources/prompt_eval/configs/`. Input data lives separately in `resources/prompt_eval/inputs/`. Multiple configs can share the same input file (e.g. v1 and v2 variants).
+
+| Config file | Input file |
+|-------------|------------|
+| `plan_prompt_config.json` | `plan_prompt_inputs.json` |
+| `plan_prompt_v2_config.json` | `plan_prompt_inputs.json` |
+| `task_router_prompt_config.json` | `task_router_prompt_inputs.json` |
+| `task_router_prompt_v2_config.json` | `task_router_prompt_inputs_v2.json` |
+| `tool_select_prompt_config.json` | `tool_selector_prompt_inputs.json` |
+| `tool_select_prompt_v2_config.json` | `tool_selector_prompt_inputs_v2.json` |
+| `replan_prompt_config.json` | `replan_prompt_inputs.json` |
+| `replan_prompt_v2_config.json` | `replan_prompt_inputs.json` |
+| `query_reformatter_prompt_config.json` | `query_reformatter_prompt_inputs.json` |
+| `task_result_filter_prompt_config.json` | `task_result_prompt_inputs.json` |
+| `subtask_result_prompt_config.json` | `subtask_result_prompt_inputs.json` |
+
+Config file format:
+```json
+{
+  "input_file": "resources/prompt_eval/inputs/plan_prompt_inputs.json",
+  "prompt_info": {
+    "system": "resources/prompts/planner_system_prompt_v2.jinja2",
+    "user": "resources/prompts/planner_user_prompt_v2.jinja2"
+  },
+  "output_model": "easylocai.llm_calls.planner.PlannerOutput"
+}
+```
+`model_info` is optional — defaults to `gpt-oss:20b` at `localhost:11434` with `temperature: 0.2`.
 
 ## Input JSON Format
 
@@ -45,9 +64,9 @@ Map the user's argument to the table above. If unclear, list available component
 
 From the project root:
 ```bash
-python -m <eval_module>
+python -m prompt_eval.run <config_file>
 ```
-Example: `python -m prompt_eval.plan_prompt_eval_v2`
+Example: `python -m prompt_eval.run resources/prompt_eval/configs/plan_prompt_v2_config.json`
 
 Capture the full stdout. Each test case is delimited by:
 ```
@@ -58,7 +77,7 @@ Capture the full stdout. Each test case is delimited by:
 
 ### Step 3 — Read input JSON for expected answers
 
-Read the input JSON file for the component to get `expected` and `scoring_criteria` for each test case (matched by `id`).
+Read the `input_file` from the config to get `expected` and `scoring_criteria` for each test case (matched by `id`).
 
 ### Step 4 — Score each test case
 
@@ -107,4 +126,5 @@ After the report, offer:
 
 - Always run from the project root. Eval scripts use relative paths.
 - `PromptEvalWorkflow.run_and_collect()` returns `{id, messages, response, thinking, expected, scoring_criteria}` — use this if you need to call the workflow from a Python snippet instead of running the script.
+- To add a new prompt set, create a config in `resources/prompt_eval/configs/` and input data in `resources/prompt_eval/inputs/`. No Python changes needed.
 - Scoring is semantic: "2 tasks vs 1 task" matters; exact wording does not.

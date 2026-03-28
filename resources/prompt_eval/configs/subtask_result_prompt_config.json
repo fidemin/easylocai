@@ -1,0 +1,8 @@
+{
+  "input_file": "resources/prompt_eval/inputs/subtask_result_prompt_inputs.json",
+  "prompt_info": {
+    "system": "resources/prompts/subtask_result_filter_system_prompt.jinja2",
+    "user": "resources/prompts/subtask_result_filter_user_prompt.jinja2"
+  },
+  "output_model": "easylocai.llm_calls.subtask_result_filter.SubtaskResultFilterOutput"
+}
