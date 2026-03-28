@@ -1,5 +1,6 @@
 [
   {
+    "id": "1",
     "messages": [
       {
           "role": "system",
@@ -12,9 +13,14 @@
             "user_context": ""
         }
       }
-    ]
+    ],
+    "expected": {
+      "tasks": ["Read README.md and install.sh files in parallel", "Summarize the content of both files"]
+    },
+    "scoring_criteria": "Should merge parallel file reads into one task. Total tasks should be 2."
   },
   {
+    "id": "2",
     "messages": [
       {
           "role": "system",
@@ -27,10 +33,15 @@
             "user_context": "user query:\nread README.md file\n- assistant answer:\n# easylocai-cli\n- very simple automatic AI agent for your local machine \n\n# Requirements\n- Only working for MacOS\n- Python 3.10+\n- Ollama and gpt-oss:20b model should be installed  \n\n# Installation\n```bash\nbash install.sh\n````\n\n# Configuration\n\n### MCP server configuration\n\n- file_name: `mcp_server_config.json`\n- example\n    ```json\n    {\n      \"mcpServers\": {\n        \"filesystem\": {\n          \"command\": \"npx\",\n          \"args\": [\n            \"-y\",\n            \"@modelcontextprotocol/server-filesystem\",\n            \".\"\n          ]\n        },\n        \"kubernetes\": {\n          \"command\": \"python\",\n          \"args\": [\n            \"-m\",\n            \"kubectl_mcp_tool.mcp_server\"\n          ],\n          \"cwd\": \"~/Programming/kubectl-mcp-server\",\n          \"env\": {\n            \"KUBECONFIG\": \"~/.kube/config\",\n            \"KUBECTL_MCP_LOG_LEVEL\": \"ERROR\",\n            \"PYTHONUNBUFFERED\": \"1\"\n          }\n        },\n        \"notion_api\": {\n          \"command\": \"docker\",\n          \"args\": [\n            \"run\",\n            \"--rm\",\n            \"-i\",\n            \"-e\", \"NOTION_TOKEN\",\n            \"mcp/notion\"\n          ],\n          \"env\": {\n            \"NOTION_TOKEN\": \"<token>\"\n          }\n        }\n      }\n    }\n    ```\n\n\n# Run\n```bash\n./easylocai\n```\n"
         }
       }
-    ]
+    ],
+    "expected": {
+      "tasks": ["Summarize README.md using the content in USER_CONTEXT"]
+    },
+    "scoring_criteria": "USER_CONTEXT already contains the README content, so no read task is needed. Should be a single summarization task."
   },
 
   {
+    "id": "3",
     "messages": [
       {
           "role": "system",
@@ -42,9 +53,14 @@
             "user_query": "Find notion documents related to redis and summarize them to redis.txt file"
         }
       }
-    ]
+    ],
+    "expected": {
+      "tasks": ["Find notion documents related to redis", "Summarize the found documents and save to redis.txt"]
+    },
+    "scoring_criteria": "Should have exactly 2 tasks: find then summarize+save. Should not split summarize and save into separate tasks."
   },
   {
+    "id": "4",
     "messages": [
       {
           "role": "system",
@@ -56,9 +72,14 @@
             "user_query": "I want to know where Korea's capital is"
         }
       }
-    ]
+    ],
+    "expected": {
+      "tasks": ["Find Korea's capital"]
+    },
+    "scoring_criteria": "Simple factual query. Should produce a single task. Should not break into multiple steps."
   },
   {
+    "id": "5",
     "messages": [
       {
           "role": "system",
@@ -70,9 +91,14 @@
             "user_query": "Create a to-do list for my trip to Japan"
         }
       }
-    ]
+    ],
+    "expected": {
+      "tasks": ["Create a to-do list for a trip to Japan"]
+    },
+    "scoring_criteria": "Pure reasoning/generation task. Should be a single task, not decomposed."
   },
   {
+    "id": "6",
     "messages": [
       {
           "role": "system",
@@ -84,9 +110,14 @@
             "user_query": "Generate a weekly meal plan for a vegetarian diet"
         }
       }
-    ]
+    ],
+    "expected": {
+      "tasks": ["Generate a weekly meal plan for a vegetarian diet"]
+    },
+    "scoring_criteria": "Pure generation task. Should be a single task."
   },
   {
+    "id": "7",
     "messages": [
       {
           "role": "system",
@@ -98,9 +129,14 @@
             "user_query": "What is (2+3) * 12 ?"
         }
       }
-    ]
+    ],
+    "expected": {
+      "tasks": ["Calculate (2+3) * 12"]
+    },
+    "scoring_criteria": "Math should not be decomposed into sub-calculations. Single task."
   },
   {
+    "id": "8",
     "messages": [
       {
           "role": "system",
@@ -112,6 +148,10 @@
             "user_query": "Calculate (2+3) * 12 and save to file result.txt"
         }
       }
-    ]
+    ],
+    "expected": {
+      "tasks": ["Calculate (2+3) * 12", "Save the result to result.txt"]
+    },
+    "scoring_criteria": "Two tasks: calculate (as one atomic task, not decomposed) then save. Math must not be split into sub-steps."
   }
 ]

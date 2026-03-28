@@ -23,28 +23,26 @@ class PromptEvalWorkflow:
         self._output_model = output_model
 
     async def run(self):
-        """
-        input_dict structure
+        results = await self.run_and_collect()
+        for result in results:
+            self._print(
+                {"id": result["id"], "messages": result["messages"]},
+                result["response"],
+                result["thinking"],
+            )
 
-        input_dict = {
-          "messages": [
-            {
-              "role": "system",
-              "argument": {}
-            },
-            {
-              "role": "user",
-              "argument": {
-                "user_query": "Explain the theory of relativity."
-              }
-            }
-          ]
-        }
+    async def run_and_collect(self) -> list[dict]:
         """
-        input_dict_list = None
+        Run all test cases and return structured results.
+
+        Each result dict contains:
+          - id: test case id (may be None)
+          - messages: rendered chat messages [{"role": ..., "content": ...}]
+          - response: raw LLM response string
+          - thinking: model thinking/reasoning string (may be None)
+        """
         with open(self._input_file_path, "r") as file:
-            input_ = file.read()
-            input_dict_list = json.loads(input_)
+            input_dict_list = json.loads(file.read())
 
         system_prompt_path = self._prompt_path_info.get("system")
         system_prompt_template = self._get_prompt_template(system_prompt_path)
@@ -67,7 +65,6 @@ class PromptEvalWorkflow:
                             "System prompt template is not provided for system role."
                         )
 
-                    system_prompt_template.render(**argument)
                     chat_messages.append(
                         {
                             "role": "system",
@@ -101,10 +98,13 @@ class PromptEvalWorkflow:
                 {
                     "id": id_,
                     "messages": chat_messages,
+                    "expected": input_dict.get("expected"),
+                    "scoring_criteria": input_dict.get("scoring_criteria"),
                 }
             )
 
         ollama_client = AsyncClient(host=self._model_info["host"])
+        results = []
 
         for chat_input in chat_input_list:
             if self._output_model:
@@ -120,11 +120,18 @@ class PromptEvalWorkflow:
                     messages=chat_input["messages"],
                     options=self._model_info.get("options"),
                 )
-            self._print(
-                chat_input,
-                response["message"]["content"],
-                response["message"]["thinking"],
+            results.append(
+                {
+                    "id": chat_input["id"],
+                    "messages": chat_input["messages"],
+                    "response": response["message"]["content"],
+                    "thinking": response["message"]["thinking"],
+                    "expected": chat_input.get("expected"),
+                    "scoring_criteria": chat_input.get("scoring_criteria"),
+                }
             )
+
+        return results
 
     def _get_prompt_template(self, prompt_path: str | None) -> Template | None:
         if prompt_path is None:
