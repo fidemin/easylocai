@@ -63,17 +63,20 @@ For each candidate prompt variant:
   - Improve Jinja2 variable usage and context injection
 
 ### Step 6: Report Results
-After convergence or reaching 10 iterations, produce a structured report:
+After convergence or reaching 10 iterations:
+
+1. **Save results to agent-memory** (for future reference across conversations).
+
+2. **Return a concise summary as your final message** so the caller can see the outcome without reading agent-memory. Include:
 
 ```
 ## Prompt Optimization Report
 
 **Original Prompt:** <path>
+**Best Candidate:** <path to winning candidate file>
 **Iterations Run:** <N>/10
 **Status:** ✅ Converged / ⚠️ Max iterations reached
-
-### Best Candidate Prompt
-<full prompt content>
+**Score:** X/Y test cases pass
 
 ### Changes from Original
 - Change 1: <description and rationale>
@@ -83,12 +86,15 @@ After convergence or reaching 10 iterations, produce a structured report:
 ### Evaluation Summary
 | Iteration | Key Change | Score | Failure Mode |
 |-----------|-----------|-------|-------------|
-| 1 | ... | X/4 | ... |
+| Baseline | original | X/Y | ... |
+| 1 | ... | X/Y | ... |
 ...
 
 ### Recommendation
 <Action to take: replace original, use as beta variant, etc.>
 ```
+
+The final message is the primary output — agent-memory is a secondary record.
 
 ## Codebase-Specific Context
 
