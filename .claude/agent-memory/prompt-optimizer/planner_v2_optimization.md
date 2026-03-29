@@ -1,6 +1,6 @@
 ---
 name: Planner v2 prompt optimization results
-description: Optimization history, failure modes, and winning rules for planner_system_prompt_v2.jinja2
+description: Optimization history, failure modes, and winning rules for planner_system_prompt.jinja2
 type: project
 ---
 

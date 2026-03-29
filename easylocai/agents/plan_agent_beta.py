@@ -4,7 +4,7 @@ from ollama import AsyncClient
 from pydantic import BaseModel
 
 from easylocai.core.agent import Agent
-from easylocai.llm_calls.planner import Planner, PlannerInput, PlannerOutput, PlannerV2
+from easylocai.llm_calls.planner import Planner, PlannerInput, PlannerOutput
 from easylocai.llm_calls.query_reformatter import (
     QueryReformatterInput,
     QueryReformatter,
@@ -71,7 +71,7 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
         return reformatter_output
 
     async def _initial_plan(self, user_query: str, user_context: str) -> PlannerOutput:
-        planner = PlannerV2(client=self._ollama_client)
+        planner = Planner(client=self._ollama_client)
         planner_input = PlannerInput(
             user_query=user_query,
             user_context=user_context,
