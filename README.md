@@ -101,6 +101,19 @@ easylocai init --force
 easylocai
 ```
 
+## Run beta workflow variant
+```bash
+easylocai --flag=beta
+```
 
 # Development
+
+## Run without installing
+```bash
+python -m easylocai.run
+
+# Beta variant
+python -m easylocai.run --flag=beta
+```
+
 - refer to [DEVELOPMENT.md](docs/DEVELOPMENT.md)

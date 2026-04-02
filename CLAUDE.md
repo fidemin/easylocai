@@ -8,15 +8,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Install (uses pipx with Python 3.12)
 bash install.sh
 
-# Run the agent
+# Run the agent (after install)
 easylocai
+
+# Run during development (without install)
+python -m easylocai.run
 
 # Initialize user config (~/.config/easylocai/config.json)
 easylocai init
 easylocai init --force
 
-# Run beta workflow variant
+# Run beta workflow variant (after install)
 easylocai --flag=beta
+
+# Run beta workflow variant during development
+python -m easylocai.run --flag=beta
 
 # Run tests (all async, auto mode)
 pytest
