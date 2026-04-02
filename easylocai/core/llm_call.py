@@ -104,7 +104,11 @@ class LLMCallV2(ABC, Generic[InModel, OutModel]):
                 # BaseModel object output: JSON validate
                 response = self._output_model.model_validate_json(content)
         except ValidationError as e:
-            logger.error(f"Failed to parse LLMCallV2 response: {content}")
+            thinking = llm_call_response["message"].get("thinking")
+            logger.error(
+                f"Failed to parse LLMCallV2 response: {content}"
+                + (f"\nThinking: {thinking}" if thinking else "")
+            )
             raise e
 
         logger.debug(f"{self.__class__.__name__} Response:\n{response}")
