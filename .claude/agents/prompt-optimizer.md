@@ -36,6 +36,8 @@ Based on the observed failures:
 - Create a matching config: `resources/prompt_eval/configs/<component>_candidate_v<N>_config.json` pointing to the candidate prompt and the same input file as the baseline config.
 - Make minimal, targeted changes addressing the specific failure modes observed in Step 2.
 
+**Avoid overfitting — do NOT copy test cases into the prompt as examples.** If a test case fails, fix the underlying rule or generalize the pattern; do not add the failing input as a direct shot. Examples in the prompt must use different domains, values, and phrasing than the test inputs. Overfitting produces prompts that pass eval but fail on real-world inputs.
+
 ### Step 4: Evaluate the Candidate
 For each candidate prompt variant:
 1. **Create or update a config file** in `resources/prompt_eval/configs/` pointing to the candidate prompt files and the shared input file.
@@ -49,7 +51,13 @@ For each candidate prompt variant:
    - ✅ Semantic correctness: Correctness ≥ 4 on all cases
    - ✅ Completeness: Completeness ≥ 4 on all cases
    - ✅ No regressions: Cases that passed before still pass
-4. **Document the score and failure modes** for this iteration.
+4. **Return a concise per-iteration summary** after scoring each candidate:
+   ```
+   Iteration <N> — Score: X/Y — <one-line description of key change and outcome>
+   Failures: <list failing cases and why, or "none">
+   Next: <planned change for next iteration, or "converged">
+   ```
+   This allows the caller to track progress in real time, not just at the end.
 
 ### Step 5: Refine and Iterate
 - If the candidate passes all criteria → **done**, report success.

@@ -16,10 +16,10 @@ Your job is to rewrite USER_QUERY into a clean, actionable reformed_query and ex
   - The relevant data already appears in USER_CONVERSATIONS.
   - The previous conversation is unrelated to the current query.
 - Set to a non-null string ONLY when the user provides factual setup information as a PREAMBLE before stating a separate action.
-  - Pattern for non-null: "[facts about the user's setup, data, or context]. [Do something with those facts]."
-  - Example: "The server runs Ubuntu 20.04 and has 8GB RAM. Optimize the nginx config for high traffic." → query_context = "Server: Ubuntu 20.04, 8GB RAM." (facts are setup, action is separate)
-  - Example: "Python is a dynamically typed language. Is this correct?" → query_context = null (statement is the subject being verified, keep it in reformed_query)
-  - Example: "Sort the list [3, 1, 4, 1, 5]" → query_context = null (expression IS the action)
+  - Pattern for non-null: "[facts about my environment/system]. [Do something with those facts]."
+  - Example: "My cluster has 3 nodes and runs version 1.28. Check for crashing pods." → query_context = "Kubernetes cluster has 3 nodes and is running version 1.28." (facts are setup, action is separate)
+  - Example: "X is open-source. Is this true?" → query_context = null (X is the subject being verified, keep it in reformed_query)
+  - Example: "Calculate (2+3) * 12" → query_context = null (expression IS the action)
 
 ## Decision Rule (apply in order)
 
@@ -27,7 +27,7 @@ Your job is to rewrite USER_QUERY into a clean, actionable reformed_query and ex
    - YES → resolve the reference in reformed_query; set query_context = null (data is already in prior conversation).
 2. Does USER_QUERY contain a statement/claim that the user is asking to verify, explain, or evaluate?
    - YES → keep the statement embedded in reformed_query; set query_context = null.
-3. Does USER_QUERY start with factual setup information of any kind (environment, configuration, data structures, schemas, or other context) as preamble, followed by a separate action?
+3. Does USER_QUERY start with factual environment/system information as preamble, followed by a separate action?
    - YES → extract the preamble facts into query_context; state only the action in reformed_query.
    - NO → query_context = null.
 

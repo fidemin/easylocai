@@ -13,7 +13,12 @@
           "user_query": "What is (2+3) * 12 ?"
         }
       }
-    ]
+    ],
+    "expected": {
+      "reformed_query": "Solve (2+3) * 12.",
+      "query_context": null
+    },
+    "scoring_criteria": "No previous conversations. The reformed query should convert the question form into an actionable imperative (e.g. 'Solve ...'). query_context should be null."
   },
   {
     "id": "No previous conversations. Context is fully in the query.",
@@ -29,7 +34,12 @@
           "user_query": "Kubernetes is an open-source platform that can automate the management, deployment, and scale of containerized applications. \n\n Is this true?"
         }
       }
-    ]
+    ],
+    "expected": {
+      "reformed_query": "Is it true that Kubernetes is an open-source platform that can automate the management, deployment, and scale of containerized applications?",
+      "query_context": null
+    },
+    "scoring_criteria": "No previous conversations. The query is self-contained — the Kubernetes statement is part of the question itself, not separate context. Reformed query should preserve the full question. query_context should be null."
   },
   {
     "id": "With previous conversations",
@@ -50,7 +60,12 @@
           "user_query": "summarize it"
         }
       }
-    ]
+    ],
+    "expected": {
+      "reformed_query": "Summarize the README.md content from the previous conversation.",
+      "query_context": null
+    },
+    "scoring_criteria": "The pronoun 'it' must be resolved to the README.md content in the reformed_query. query_context must be null because the README.md content is already present in the previous conversation — duplicating it would bloat the context unnecessarily."
   },
   {
     "id": "With previous conversation not relevant",
@@ -71,6 +86,53 @@
           "user_query": "Calculate (2+3) * 12 and save to file result.txt"
         }
       }
-    ]
+    ],
+    "expected": {
+      "reformed_query": "Calculate (2+3) * 12 and save the result to a file named result.txt.",
+      "query_context": null
+    },
+    "scoring_criteria": "The previous conversation about green tea is completely unrelated to the current query. Reformed query should preserve the original intent unchanged. Context should be null or empty since no prior conversation is relevant."
+  },
+  {
+    "id": "Inline facts in current query — context should be extracted",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "previous_conversations": [],
+          "user_query": "My Kubernetes cluster has 3 nodes and is running version 1.28. Check if any pods are in CrashLoopBackOff state."
+        }
+      }
+    ],
+    "expected": {
+      "reformed_query": "Check if any pods are in CrashLoopBackOff state in the Kubernetes cluster.",
+      "query_context": "Kubernetes cluster has 3 nodes and is running version 1.28."
+    },
+    "scoring_criteria": "The user embeds cluster facts inline in the query. reformed_query should state the action cleanly. query_context should contain the inline facts (3 nodes, version 1.28) since they are new information provided directly in the current query, not from prior conversations."
+  },
+  {
+    "id": "Inline schema facts — context should be extracted",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "previous_conversations": [],
+          "user_query": "My database has three tables: users (id, name, email), orders (id, user_id, total), and products (id, name, price). Write a SQL query to find users who placed more than 3 orders."
+        }
+      }
+    ],
+    "expected": {
+      "reformed_query": "Write a SQL query to find users who placed more than 3 orders.",
+      "query_context": "Database tables: users (id, name, email), orders (id, user_id, total), products (id, name, price)."
+    },
+    "scoring_criteria": "The user provides database schema as preamble facts before stating the action. reformed_query should contain only the action. query_context should contain the schema info (table names and columns) since it is new information provided inline, not from prior conversations."
   }
 ]

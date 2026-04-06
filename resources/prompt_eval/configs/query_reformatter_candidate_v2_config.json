@@ -1,0 +1,8 @@
+{
+  "input_file": "resources/prompt_eval/inputs/query_reformatter_prompt_inputs.json",
+  "prompt_info": {
+    "system": "resources/prompts/query_reformatter_system_prompt_candidate_v2.jinja2",
+    "user": "resources/prompts/query_reformatter_user_prompt.jinja2"
+  },
+  "output_model": "easylocai.llm_calls.query_reformatter.QueryReformatterOutput"
+}
