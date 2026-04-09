@@ -10,6 +10,26 @@ type: project
 **Best candidate:** `resources/prompts/planner_system_prompt_v2_candidate_v4.jinja2`
 **Result:** 8/8 pass (converged at iteration 4)
 
+## Overfitting fix: planner_system_prompt.jinja2
+
+**Date:** 2026-04-09
+**Candidate:** `resources/prompts/planner_system_prompt_candidate_v1.jinja2`
+**Result:** 8/8 pass (converged at iteration 1)
+**Applied to:** `resources/prompts/planner_system_prompt.jinja2` (original file updated)
+
+### What changed
+Replaced 5 inline examples that exactly mirrored test cases with different-domain alternatives. Rules unchanged.
+
+| Original (overfitting) | Replacement |
+|---|---|
+| `Calculate (2 + 12) * 15` | `Convert 72 Fahrenheit to Celsius` |
+| `Calculate (2 + 12) * 15 and save to result.txt` | `Convert 72 Fahrenheit to Celsius and save to output.txt` |
+| `Where is the capital of France?` | `What is the population of Australia?` |
+| `Generate a weekly meal plan for a vegetarian diet` | `Write a cover letter for a software engineer position` |
+| `Create a to-do list for a trip to Japan` | `Draft a weekly workout schedule for a beginner` |
+| `Find Notion documents about redis` (in external data rule) | `Search Slack messages about the deployment outage` |
+| `Read README.md and install.sh files in parallel` (in external data rule) | `Read config.yaml and requirements.txt files in parallel` |
+
 ## Baseline failures (original prompt, 6/8)
 
 - **ID 4** (simple factual query): Model added a "present the answer" second task and split "Korea" into South/North Korea. Root cause: no rule against "present the answer" tasks; no guidance for single-task factual queries.
