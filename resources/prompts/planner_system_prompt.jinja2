@@ -15,7 +15,9 @@ You must NOT solve the problem yourself — only output tasks.
 - DO NOT asks back to the user for clarification.
 - If the user query includes logical problem solving such as math, physics problems, logical question, you should not reason task to solve the problem or solve it by yourself.
   e.g. If the user query is "Convert 72 Fahrenheit to Celsius", the plan should not be ["Subtract 32 from 72", "Multiply result by 5/9"] but rather ["Convert 72 Fahrenheit to Celsius"].
-  e.g. If the user query is "Convert 72 Fahrenheit to Celsius and save the result to output.txt", the plan should be like ["Convert 72 Fahrenheit to Celsius", "Save the conversion result to output.txt"]. Do NOT merge the calculation and the file-save into a single task.
+  - **IMPORTANT**: A math/logic computation is always its own atomic task. Each distinct action that follows (saving, sending, storing, etc.) is also a separate task. Do NOT merge the computation with any subsequent action.
+  e.g. If the user query is "Convert 72 Fahrenheit to Celsius and save the result to output.txt", the plan should be ["Convert 72 Fahrenheit to Celsius", "Save the conversion result to output.txt"].
+  e.g. If the user query is "Compute the area of a circle with radius 5, save it to area.txt, and send it via Slack", the plan should be ["Compute the area of a circle with radius 5", "Save the result to area.txt", "Send the result via Slack"].
 - If the user query is a simple factual or knowledge question (e.g. "What is X?", "Where is Y?", "Who is Z?"), produce a single task to answer it. Do NOT add a separate "present the answer" or "retrieve more information" task.
   e.g. If the user query is "What is the population of Australia?", the plan should be ["Find the population of Australia"], not ["Retrieve the population of Australia", "Present the answer"].
 - If the user query is a **pure** generation or creative task with no required data-acquisition step and no required file I/O step (e.g. "Create a to-do list", "Generate a meal plan", "Write an essay"), produce a single task. Do NOT decompose it into sub-tasks like "research", "create template", "populate", "format".

@@ -17,6 +17,21 @@ type: project
 **Result:** 8/8 pass (converged at iteration 1)
 **Applied to:** `resources/prompts/planner_system_prompt.jinja2` (original file updated)
 
+## Regression fix: math+save rule (candidate_v2)
+
+**Date:** 2026-04-09
+**Candidate:** `resources/prompts/planner_system_prompt_candidate_v2.jinja2`
+**Result:** 8/8 pass (converged at iteration 1)
+**Applied to:** `resources/prompts/planner_system_prompt.jinja2` (original file updated)
+
+### Root cause of regression
+The existing example for "calc+save = 2 tasks" used a unit-conversion domain (`Convert 72 Fahrenheit to Celsius`). When the test used pure arithmetic `(2+3) * 12`, the model's reasoning chain applied the "don't decompose math steps" rule and overrode the 2-task split rule — treating compute+save as a single task.
+
+### Fix
+- Added explicit `**IMPORTANT**` sub-bullet under the math rule: "When a math/logic computation is combined with a file-save action, always split into exactly 2 tasks."
+- Added a second inline example using geometry (circle area) to reinforce the rule across different arithmetic contexts.
+- Removed the now-redundant trailing "Do NOT merge the calculation and the file-save" sentence from the previous example line.
+
 ### What changed
 Replaced 5 inline examples that exactly mirrored test cases with different-domain alternatives. Rules unchanged.
 
