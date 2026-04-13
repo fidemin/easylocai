@@ -63,7 +63,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         user_context = input_.user_context
         previous_task_results = input_.previous_task_results
 
-        tool_candidates = await self._get_tool_candidates(task)
+        tool_candidates = await self._get_tool_candidates([task])
         iteration_results = []
 
         while True:
@@ -86,7 +86,6 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
                 result = await self._execute_tool_subtask(
                     subtask=subtask,
                     user_context=user_context,
-                    tool_candidates=tool_candidates,
                     previous_task_results=previous_task_results,
                     iteration_results=iteration_results,
                 )
@@ -123,9 +122,9 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             result=filtered_result,
         )
 
-    async def _get_tool_candidates(self, task: str) -> list[dict]:
+    async def _get_tool_candidates(self, queries: list[str]) -> list[dict]:
         tools = await self._tool_manager.search_tools(
-            [task], n_results=self.N_TOOL_RESULTS
+            queries, n_results=self.N_TOOL_RESULTS
         )
 
         tool_candidates = []
@@ -169,14 +168,14 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         *,
         subtask: str,
         user_context: str | None,
-        tool_candidates: list[dict],
         previous_task_results: list[dict],
         iteration_results: list[dict],
     ) -> dict[str, Any]:
+        subtask_tool_candidates = await self._get_tool_candidates([subtask])
         tool_selector_input = ToolSelectorInput(
             subtask=subtask,
             user_context=user_context,
-            tool_candidates=tool_candidates,
+            tool_candidates=subtask_tool_candidates,
             previous_task_results=previous_task_results,
             iteration_results=iteration_results,
         )
@@ -190,7 +189,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
         except ValidationError:
             llm_call_response = tool_selector.current_llm_call_response
             logger.error(
-                f"Failed to parse ToolSelectorV2 response: {llm_call_response['message']['content']}"
+                f"Failed to parse ToolSelector response: {llm_call_response['message']['content']}"
             )
             return {"error": "Failed to parse tool selector response"}
 
