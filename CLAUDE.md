@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Rules
+
+- **Never run `git commit` or `git push` without explicit user request.** Only commit or push when the user explicitly asks.
+- **Update `docs/DEVELOPMENT.md`** whenever the main structure or flow changes (e.g. new agent, workflow variant, LLM call, tool management change, or core loop modification).
+
 ## Commands
 
 ```bash
@@ -14,15 +19,13 @@ easylocai
 # Run during development (without install)
 python -m easylocai.run
 
+# Run with a workflow flag (beta, alpha, or any registered variant)
+easylocai --flag=<flag>
+python -m easylocai.run --flag=<flag>
+
 # Initialize user config (~/.config/easylocai/config.json)
 easylocai init
 easylocai init --force
-
-# Run beta workflow variant (after install)
-easylocai --flag=beta
-
-# Run beta workflow variant during development
-python -m easylocai.run --flag=beta
 
 # Run tests (all async, auto mode)
 pytest
@@ -56,7 +59,6 @@ User Input
 - **`SingleTaskAgent`** — searches tool candidates, then loops: `TaskRouter` decides tool-call vs reasoning per subtask until task complete, then `TaskResultFilter` cleans output
 - **`ReplanAgent`** — runs `Replanner` → either final response or new tasks
 
-Beta variants (`*_beta.py`) are experimental and toggled via `--flag=beta`.
 
 ### LLM Abstraction (`easylocai/core/llm_call.py`, `easylocai/llm_calls/`)
 
@@ -69,6 +71,20 @@ Beta variants (`*_beta.py`) are experimental and toggled via `--flag=beta`.
 ### Search (`easylocai/search_engines/`, `easylocai/core/search_engine.py`)
 
 `AdvancedSearchEngine` combines `KeywordSearchEngine` (BM25) and `SemanticSearchEngine` (ChromaDB embeddings) using Reciprocal Rank Fusion (RRF). Used by `SingleTaskAgent` to find relevant tool candidates before execution.
+
+### Workflow Flags
+
+`--flag=<name>` selects a workflow variant at runtime. Flags are registered in `workflow_registry` in `easylocai/main.py`:
+
+```python
+workflow_registry = {
+    "main": run_agent_workflow_main,
+    "beta": run_agent_workflow_main_beta,   # example
+    "alpha": run_agent_workflow_main_alpha, # example
+}
+```
+
+To add a new variant: create a workflow class (e.g. `easylocai/workflow_<name>.py`), a runner function in `easylocai/main_<name>.py`, and register it in `workflow_registry`.
 
 ### Key Patterns
 
