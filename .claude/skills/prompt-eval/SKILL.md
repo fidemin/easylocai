@@ -68,11 +68,18 @@ python -m prompt_eval.run <config_file>
 ```
 Example: `python -m prompt_eval.run resources/prompt_eval/configs/plan_prompt_v2_config.json`
 
-Capture the full stdout. Each test case is delimited by:
+Capture the full stdout. The output is a Markdown table followed by a Summary block:
 ```
------ Prompt Eval Result (ID: <id>) -----
+## Eval Results — <config_name> — <date>
+
+| ID  | Response | Expected | Thinking |
+|-----|----------|----------|----------|
+| 1   | ...      | ...      | ...      |
+
+## Summary
+Config:        resources/prompt_eval/configs/...
+System prompt: resources/prompts/...
 ...
--------------------------
 ```
 
 ### Step 3 — Read input JSON for expected answers

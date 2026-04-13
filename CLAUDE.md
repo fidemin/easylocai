@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Never run `git commit` or `git push` without explicit user request.** Only commit or push when the user explicitly asks.
 - **Update `docs/DEVELOPMENT.md`** whenever the main structure or flow changes (e.g. new agent, workflow variant, LLM call, tool management change, or core loop modification).
+- **Python type annotations are required only when the type is not obvious.** Skip annotations when the type is evident from context (e.g. `x = 0`, `name = "foo"`, simple list/dict literals). Always annotate function signatures, dataclass fields, and any variable where the type is ambiguous.
 
 ## Commands
 
