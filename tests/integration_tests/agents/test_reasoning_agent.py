@@ -13,6 +13,7 @@ def assert_reasoning_output(output: ReasoningAgentOutput) -> None:
     assert isinstance(output.final, str)
     assert len(output.final) > 0
     assert isinstance(output.confidence, int)
+    assert 0 <= output.confidence <= 100
 
 
 class TestReasoningAgent:
