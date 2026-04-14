@@ -2,7 +2,6 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from easylocai.constants.model import GPT_OSS_20B
 from easylocai.core.llm_call import LLMCallV2
 
 
@@ -78,24 +77,5 @@ class ToolSelector(LLMCallV2[ToolSelectorInput, ToolSelectorOutput]):
             system_prompt_path=system_prompt_path,
             user_prompt_path=user_prompt_path,
             output_model=ToolSelectorOutput,
-            options=options,
-        )
-
-
-class ToolSelectorV2(LLMCallV2[ToolSelectorInputV2, ToolSelectorOutputV2]):
-    def __init__(self, *, client):
-        model = GPT_OSS_20B
-        system_prompt_path = "prompts/tool_selector_system_prompt_v2.jinja2"
-        user_prompt_path = "prompts/tool_selector_user_prompt_v2.jinja2"
-        options = {
-            "temperature": 0.2,
-        }
-
-        super().__init__(
-            client=client,
-            model=model,
-            system_prompt_path=system_prompt_path,
-            user_prompt_path=user_prompt_path,
-            output_model=ToolSelectorOutputV2,
             options=options,
         )
