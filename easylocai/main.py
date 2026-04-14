@@ -9,6 +9,7 @@ from easylocai.config import user_config_path
 from easylocai.schemas.common import UserConversation
 from easylocai.search_engines.advanced_search_engine import AdvancedSearchEngine
 from easylocai.utlis.console_util import multiline_input, render_chat, ConsoleSpinner
+from easylocai.main_contextimprove import run_agent_workflow_contextimprove
 from easylocai.workflow import EasylocaiWorkflow
 
 logger = logging.getLogger(__name__)
@@ -73,8 +74,6 @@ async def run_agent_workflow_main():
                             )
                         )
 
-
-from easylocai.main_contextimprove import run_agent_workflow_contextimprove
 
 workflow_registry = {
     "main": run_agent_workflow_main,
