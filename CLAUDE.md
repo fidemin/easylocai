@@ -7,6 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Never run `git commit` or `git push` without explicit user request.** Only commit or push when the user explicitly asks.
 - **Update `docs/DEVELOPMENT.md`** whenever the main structure or flow changes (e.g. new agent, workflow variant, LLM call, tool management change, or core loop modification).
 - **Python type annotations are required only when the type is not obvious.** Skip annotations when the type is evident from context (e.g. `x = 0`, `name = "foo"`, simple list/dict literals). Always annotate function signatures, dataclass fields, and any variable where the type is ambiguous.
+- **Never use `cd <dir> && git <cmd>` compound commands.** Use `git -C <path> <cmd>` instead to avoid bare repository attack detection and unnecessary permission prompts.
+- **Never use multiline `python -c` commands.** Write to a temp file and execute instead, or use a single-line `-c` argument to avoid shell injection detection and permission prompts.
 
 ## Commands
 
@@ -93,3 +95,21 @@ To add a new variant: create a workflow class (e.g. `easylocai/workflow_<name>.p
 - **Prompt templates** in `resources/prompts/*.jinja2` — loaded at runtime via `installed_resources_dir()` in `easylocai/utlis/resource_util.py`
 - **Pydantic v2** for all input/output models in `easylocai/schemas/`
 - Tests use `pytest-asyncio` with `asyncio_mode = "auto"`; integration tests cover agent behavior end-to-end
+
+---
+
+## Superpowers
+
+### Spec 저장 위치
+
+Superpowers brainstorming을 통해 생성된 design spec은 `.claude/superpowers/specs/` 에 저장한다.
+
+```
+.claude/superpowers/specs/YYYY-MM-DD-<topic>-design.md
+```
+
+Implementation plan은 `.claude/superpowers/plans/` 에 저장한다.
+
+```
+.claude/superpowers/plans/YYYY-MM-DD-<topic>-plan.md
+```
