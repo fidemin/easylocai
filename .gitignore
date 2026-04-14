@@ -27,3 +27,4 @@ wheels/
 # temp files
 temp_*
 temp-*
+.worktrees/
