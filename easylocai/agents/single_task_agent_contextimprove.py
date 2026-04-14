@@ -155,7 +155,10 @@ class SingleTaskAgentContextImprove(Agent[SingleTaskAgentContext, SingleTaskAgen
         try:
             tool_selector_output: ToolSelectorOutput = await tool_selector.call(tool_selector_input)
         except ValidationError:
-            logger.error("Failed to parse ToolSelector response")
+            llm_call_response = tool_selector.current_llm_call_response
+            logger.error(
+                f"Failed to parse ToolSelector response: {llm_call_response['message']['content']}"
+            )
             return {"error": "Failed to parse tool selector response"}
 
         if tool_selector_output.selected_tool is None:

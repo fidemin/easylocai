@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 from ollama import AsyncClient
 from pydantic import BaseModel
@@ -17,7 +16,7 @@ class ReplanAgentContextImproveInput(BaseModel):
 
 class ReplanAgentContextImproveOutput(BaseModel):
     tasks: list[str]
-    response: Optional[str]
+    response: str | None
 
 
 class ReplanAgentContextImprove(Agent[ReplanAgentContextImproveInput, ReplanAgentContextImproveOutput]):
