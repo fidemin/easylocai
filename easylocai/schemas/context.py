@@ -32,13 +32,13 @@ class WorkflowContext(BaseModel):
 
 
 class SingleTaskAgentContext(BaseModel):
-    # WorkflowContext 필드 전체
+    # All WorkflowContext fields
     conversation_histories: list[ConversationHistory] = []
     original_user_query: str
     query_context: str | None = None
     reformatted_user_query: str | None = None
     task_list: list[str] = []
     executed_task_results: list[ExecutedTaskResult] = []
-    # SingleTaskAgent 전용
+    # SingleTaskAgent-specific fields
     original_task: str
     subtask_results: list[SubtaskResult] = []
