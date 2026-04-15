@@ -43,7 +43,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentContext, SingleTaskAgentOutput]):
         self._ollama_client = client
         self._tool_manager = tool_manager
 
-    async def run(self, input_: SingleTaskAgentContext) -> SingleTaskAgentOutput:
+    async def _run(self, input_: SingleTaskAgentContext) -> SingleTaskAgentOutput:
         ctx = input_
         tool_candidates = await self._get_tool_candidates([ctx.original_task])
 
