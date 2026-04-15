@@ -4,7 +4,11 @@ from typing import AsyncGenerator
 
 from ollama import AsyncClient
 
-from easylocai.agents.plan_agent import PlanAgent, PlanAgentInput, PlanAgentOutput
+from easylocai.agents.plan_agent import (
+    PlanAgent,
+    PlanAgentInput,
+    PlanAgentOutput,
+)
 from easylocai.agents.replan_agent import (
     ReplanAgent,
     ReplanAgentInput,
@@ -12,11 +16,17 @@ from easylocai.agents.replan_agent import (
 )
 from easylocai.agents.single_task_agent import (
     SingleTaskAgent,
-    SingleTaskAgentInput,
     SingleTaskAgentOutput,
 )
 from easylocai.core.tool_manager import ToolManager
 from easylocai.schemas.common import EasyLocaiWorkflowOutput
+from easylocai.schemas.context import (
+    ConversationHistory,
+    ExecutedTaskResult,
+    GlobalContext,
+    SingleTaskAgentContext,
+    WorkflowContext,
+)
 from easylocai.search_engines.advanced_search_engine import AdvancedSearchEngine
 
 logger = logging.getLogger(__name__)
@@ -27,7 +37,7 @@ def ensure_initialized(func):
         if not self._initialized:
             raise RuntimeError(
                 "EasylocaiWorkflow is not initialized. "
-                "Please call 'initialize' method before running the workflow."
+                "Please call 'initialize' before running."
             )
         async for item in func(self, *args, **kwargs):
             yield item
@@ -43,8 +53,6 @@ class EasylocaiWorkflow:
         search_engine: AdvancedSearchEngine,
         ollama_client: AsyncClient,
     ):
-        self._config_dict = config_dict
-
         self._tool_manager = ToolManager(
             search_engine, mpc_servers=config_dict["mcpServers"]
         )
@@ -65,71 +73,71 @@ class EasylocaiWorkflow:
         self,
         user_query: str,
         *,
-        user_conversations: list,
+        global_context: GlobalContext,
     ) -> AsyncGenerator[EasyLocaiWorkflowOutput, None]:
-        plan_agent_input = PlanAgentInput(
-            user_query=user_query,
-            user_conversations=user_conversations,
+        workflow_context = WorkflowContext(
+            conversation_histories=global_context.conversation_histories,
+            original_user_query=user_query,
         )
 
         yield EasyLocaiWorkflowOutput(type="status", message="Thinking...")
 
-        plan_agent_output: PlanAgentOutput = await self._plan_agent.run(
-            plan_agent_input
+        plan_output: PlanAgentOutput = await self._plan_agent.run(
+            PlanAgentInput(workflow_context=workflow_context)
         )
 
-        logger.debug(f"Plan Agent Response:\n{plan_agent_output}")
+        workflow_context.query_context = plan_output.query_context
+        workflow_context.reformatted_user_query = plan_output.reformatted_user_query
+        workflow_context.task_list = plan_output.task_list
 
-        tasks = plan_agent_output.tasks
-        user_context = plan_agent_output.context
-        previous_task_results = []
+        logger.debug(f"Plan output: {plan_output}")
 
         answer = None
         while True:
-            next_task = tasks[0]
-
+            next_task = workflow_context.task_list[0]
             yield EasyLocaiWorkflowOutput(type="status", message=next_task)
 
-            task_agent_input = SingleTaskAgentInput(
-                original_user_query=user_query,
-                task=next_task,
-                previous_task_results=previous_task_results,
-                user_context=user_context,
+            single_task_context = SingleTaskAgentContext(
+                conversation_histories=workflow_context.conversation_histories,
+                original_user_query=workflow_context.original_user_query,
+                query_context=workflow_context.query_context,
+                reformatted_user_query=workflow_context.reformatted_user_query,
+                task_list=workflow_context.task_list,
+                executed_task_results=workflow_context.executed_task_results,
+                original_task=next_task,
             )
 
-            task_agent_response: SingleTaskAgentOutput = (
-                await self._single_task_agent.run(task_agent_input)
+            task_output: SingleTaskAgentOutput = await self._single_task_agent.run(
+                single_task_context
             )
 
-            previous_task_results.append(
-                {
-                    "task": task_agent_response.task,
-                    "result": task_agent_response.result,
-                }
+            workflow_context.executed_task_results.append(
+                ExecutedTaskResult(
+                    executed_task=task_output.executed_task,
+                    result=task_output.result,
+                )
             )
 
-            yield EasyLocaiWorkflowOutput(
-                type="status", message="Check for completion..."
+            yield EasyLocaiWorkflowOutput(type="status", message="Check for completion...")
+
+            replan_output: ReplanAgentOutput = await self._replan_agent.run(
+                ReplanAgentInput(workflow_context=workflow_context)
             )
+            logger.debug(f"Replan output: {replan_output}")
 
-            replan_agent_input = ReplanAgentInput(
-                user_query=user_query,
-                previous_plan=tasks,
-                task_results=previous_task_results,
-                user_context=user_context,
-            )
-
-            replan_agent_output: ReplanAgentOutput = await self._replan_agent.run(
-                replan_agent_input
-            )
-            logger.debug(f"ReplanAgent Response:\n{replan_agent_output}")
-
-            response = replan_agent_output.response
-
-            if response is not None:
-                answer = response
+            if replan_output.response is not None:
+                answer = replan_output.response
                 break
 
-            tasks = replan_agent_output.tasks
+            workflow_context.task_list = replan_output.tasks
+
+        global_context.conversation_histories.append(
+            ConversationHistory(
+                original_user_query=user_query,
+                reformatted_user_query=workflow_context.reformatted_user_query or user_query,
+                query_context=workflow_context.query_context,
+                response=answer,
+            )
+        )
 
         yield EasyLocaiWorkflowOutput(type="result", message=answer)
