@@ -5,9 +5,9 @@ import sys
 
 from easylocai.config import ensure_user_config
 from easylocai.main import run_agent_workflow
-from easylocai.utlis.loggers.default_dict import default_logging_config
+from easylocai.utlis.loggers.default_dict import make_logging_config
 
-logging.config.dictConfig(default_logging_config)
+logging.config.dictConfig(make_logging_config())
 
 logger = logging.getLogger(__name__)
 
