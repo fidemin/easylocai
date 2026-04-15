@@ -19,57 +19,45 @@ from easylocai.llm_calls.task_result_filter import (
     TaskResultFilter,
     TaskResultFilterInput,
 )
-from easylocai.llm_calls.task_router import (
-    TaskRouter,
-    TaskRouterInput,
-    TaskRouterOutput,
-)
+from easylocai.llm_calls.task_router import TaskRouter, TaskRouterInput, TaskRouterOutput
 from easylocai.llm_calls.tool_selector import (
     ToolInput,
     ToolSelector,
     ToolSelectorInput,
     ToolSelectorOutput,
 )
+from easylocai.schemas.context import SingleTaskAgentContext, SubtaskResult
 
 logger = logging.getLogger(__name__)
 
 
-class SingleTaskAgentInput(BaseModel):
-    original_user_query: str
-    task: str
-    previous_task_results: list[dict] = []
-    user_context: str | None
-
-
 class SingleTaskAgentOutput(BaseModel):
-    task: str
+    executed_task: str
     result: str
 
 
-class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
+class SingleTaskAgent(Agent[SingleTaskAgentContext, SingleTaskAgentOutput]):
     N_TOOL_RESULTS = 18
 
-    def __init__(
-        self,
-        *,
-        client: AsyncClient,
-        tool_manager: ToolManager,
-    ):
+    def __init__(self, *, client: AsyncClient, tool_manager: ToolManager):
         self._ollama_client = client
         self._tool_manager = tool_manager
 
-    async def run(self, input_: SingleTaskAgentInput) -> SingleTaskAgentOutput:
-        task = input_.task
-        user_context = input_.user_context
-        previous_task_results = input_.previous_task_results
+    async def run(self, input_: SingleTaskAgentContext) -> SingleTaskAgentOutput:
+        ctx = input_
+        tool_candidates = await self._get_tool_candidates([ctx.original_task])
 
-        tool_candidates = await self._get_tool_candidates([task])
-        iteration_results = []
+        previous_task_results = [
+            {"task": r.executed_task, "result": r.result}
+            for r in ctx.executed_task_results
+        ]
 
         while True:
+            iteration_results = [r.model_dump() for r in ctx.subtask_results]
+
             task_router_output = await self._route_task(
-                task=task,
-                user_context=user_context,
+                task=ctx.original_task,
+                user_context=ctx.query_context,
                 tool_candidates=tool_candidates,
                 previous_task_results=previous_task_results,
                 iteration_results=iteration_results,
@@ -85,60 +73,45 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             if subtask_type == "tool":
                 result = await self._execute_tool_subtask(
                     subtask=subtask,
-                    user_context=user_context,
+                    user_context=ctx.query_context,
                     previous_task_results=previous_task_results,
                     iteration_results=iteration_results,
                 )
             elif subtask_type == "reasoning":
                 result = await self._execute_reasoning_subtask(
                     subtask=subtask,
-                    user_context=user_context,
+                    user_context=ctx.query_context,
                     previous_task_results=previous_task_results,
                     previous_subtask_results=iteration_results,
                 )
             else:
                 raise ValueError(f"Unknown subtask type: {subtask_type}")
 
-            filtered_subtask_result = await self._filter_subtask_result(
-                subtask=subtask,
-                result=result,
-            )
+            filtered_result = await self._filter_subtask_result(subtask=subtask, result=result)
+            ctx.subtask_results.append(SubtaskResult(subtask=subtask, result=filtered_result))
 
-            iteration_results.append(
-                {
-                    "subtask": subtask,
-                    "result": filtered_subtask_result,
-                }
-            )
-
-        filtered_result = await self._filter_task_result(
-            task=task,
-            subtask_results=iteration_results,
-            user_context=user_context,
+        final_result = await self._filter_task_result(
+            task=ctx.original_task,
+            subtask_results=[r.model_dump() for r in ctx.subtask_results],
+            user_context=ctx.query_context,
         )
 
         return SingleTaskAgentOutput(
-            task=task,
-            result=filtered_result,
+            executed_task=ctx.original_task,
+            result=final_result,
         )
 
     async def _get_tool_candidates(self, queries: list[str]) -> list[dict]:
-        tools = await self._tool_manager.search_tools(
-            queries, n_results=self.N_TOOL_RESULTS
-        )
-
-        tool_candidates = []
-        for tool in tools:
-            tool_candidates.append(
-                {
-                    "server_name": tool.server_name,
-                    "tool_name": tool.name,
-                    "tool_description": tool.description,
-                    "tool_input_schema": tool.input_schema,
-                }
-            )
-
-        return tool_candidates
+        tools = await self._tool_manager.search_tools(queries, n_results=self.N_TOOL_RESULTS)
+        return [
+            {
+                "server_name": t.server_name,
+                "tool_name": t.name,
+                "tool_description": t.description,
+                "tool_input_schema": t.input_schema,
+            }
+            for t in tools
+        ]
 
     async def _route_task(
         self,
@@ -156,12 +129,10 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             previous_task_results=previous_task_results,
             iteration_results=iteration_results,
         )
-
         task_router = TaskRouter(client=self._ollama_client)
-        task_router_output: TaskRouterOutput = await task_router.call(task_router_input)
-
-        logger.debug(f"TaskRouter output: {task_router_output}")
-        return task_router_output
+        output: TaskRouterOutput = await task_router.call(task_router_input)
+        logger.debug(f"TaskRouter output: {output}")
+        return output
 
     async def _execute_tool_subtask(
         self,
@@ -179,13 +150,9 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             previous_task_results=previous_task_results,
             iteration_results=iteration_results,
         )
-
         tool_selector = ToolSelector(client=self._ollama_client)
-
         try:
-            tool_selector_output: ToolSelectorOutput = await tool_selector.call(
-                tool_selector_input
-            )
+            tool_selector_output: ToolSelectorOutput = await tool_selector.call(tool_selector_input)
         except ValidationError:
             llm_call_response = tool_selector.current_llm_call_response
             logger.error(
@@ -194,13 +161,10 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             return {"error": "Failed to parse tool selector response"}
 
         if tool_selector_output.selected_tool is None:
-            logger.warning(
-                f"No tool selected for subtask: {subtask}. Reason: {tool_selector_output.failure_reason}"
-            )
+            logger.warning(f"No tool selected for subtask: {subtask}")
             return {"error": tool_selector_output.failure_reason}
 
-        tool_result = await self._call_tool(tool_selector_output.selected_tool)
-        return tool_result
+        return await self._call_tool(tool_selector_output.selected_tool)
 
     async def _execute_reasoning_subtask(
         self,
@@ -216,12 +180,8 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             previous_task_results=previous_task_results,
             previous_subtask_results=previous_subtask_results,
         )
-
         reasoning_agent = ReasoningAgent(client=self._ollama_client)
-        reasoning_agent_output: ReasoningAgentOutput = await reasoning_agent.run(
-            reasoning_agent_input
-        )
-
+        reasoning_agent_output: ReasoningAgentOutput = await reasoning_agent.run(reasoning_agent_input)
         logger.debug(f"ReasoningAgent output: {reasoning_agent_output}")
         return reasoning_agent_output.model_dump()
 
@@ -232,31 +192,17 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             tool_input.tool_args,
         )
         logger.debug(f"Tool call result: {tool_result}")
-
         if tool_result.isError:
             return {"error": f"Error occurred when calling tool: {tool_result.content}"}
-
         if tool_result.structuredContent:
             return tool_result.structuredContent
-        else:
-            return {"content": tool_result.content}
+        return {"content": tool_result.content}
 
-    async def _filter_subtask_result(
-        self,
-        subtask: str,
-        result: dict[str, Any],
-    ) -> str:
-        subtask_result_filter_input = SubtaskResultFilterInput(
-            subtask=subtask,
-            result=result,
-        )
-
+    async def _filter_subtask_result(self, subtask: str, result: dict[str, Any]) -> str:
+        subtask_result_filter_input = SubtaskResultFilterInput(subtask=subtask, result=result)
         subtask_result_filter = SubtaskResultFilter(client=self._ollama_client)
-        subtask_result_filter_output = await subtask_result_filter.call(
-            subtask_result_filter_input
-        )
-
-        return subtask_result_filter_output.root
+        output = await subtask_result_filter.call(subtask_result_filter_input)
+        return output.root
 
     async def _filter_task_result(
         self,
@@ -269,10 +215,6 @@ class SingleTaskAgent(Agent[SingleTaskAgentInput, SingleTaskAgentOutput]):
             subtask_results=subtask_results,
             user_context=user_context,
         )
-
         task_result_filter = TaskResultFilter(client=self._ollama_client)
-        task_result_filter_output = await task_result_filter.call(
-            task_result_filter_input
-        )
-
-        return task_result_filter_output.root
+        output = await task_result_filter.call(task_result_filter_input)
+        return output.root

@@ -6,76 +6,57 @@ from pydantic import BaseModel
 from easylocai.core.agent import Agent
 from easylocai.llm_calls.planner import Planner, PlannerInput, PlannerOutput
 from easylocai.llm_calls.query_reformatter import (
-    QueryReformatterInput,
     QueryReformatter,
+    QueryReformatterInput,
     QueryReformatterOutput,
 )
 from easylocai.schemas.common import UserConversation
+from easylocai.schemas.context import WorkflowContext
 
 logger = logging.getLogger(__name__)
 
 
 class PlanAgentInput(BaseModel):
-    user_query: str
-    user_conversations: list[UserConversation] = []
+    workflow_context: WorkflowContext
 
 
 class PlanAgentOutput(BaseModel):
-    context: str | None
-    tasks: list[str]
+    query_context: str | None
+    reformatted_user_query: str
+    task_list: list[str]
 
 
 class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
-    def __init__(
-        self,
-        *,
-        client: AsyncClient,
-    ):
+    def __init__(self, *, client: AsyncClient):
         self._ollama_client = client
 
     async def _run(self, input_: PlanAgentInput) -> PlanAgentOutput:
-        original_user_query = input_.user_query
-        previous_conversations = input_.user_conversations
+        ctx = input_.workflow_context
 
-        reformatter_output: QueryReformatterOutput = await self._reformat_query(
-            original_user_query, previous_conversations
-        )
+        previous_conversations = [
+            UserConversation(
+                user_query=h.original_user_query,
+                assistant_answer=h.response,
+            )
+            for h in ctx.conversation_histories
+        ]
 
-        user_query = reformatter_output.reformed_query
-        user_context = reformatter_output.query_context
-
-        planner_output = await self._initial_plan(user_query, user_context)
-
-        revised_plan = PlanAgentOutput(
-            tasks=planner_output.tasks,
-            context=user_context,
-        )
-
-        return revised_plan
-
-    async def _reformat_query(
-        self, original_user_query: str, previous_conversations: list[UserConversation]
-    ) -> QueryReformatterOutput:
         reformatter_input = QueryReformatterInput(
-            user_query=original_user_query,
+            user_query=ctx.original_user_query,
             previous_conversations=previous_conversations,
         )
+        reformatter: QueryReformatter = QueryReformatter(client=self._ollama_client)
+        reformatter_output: QueryReformatterOutput = await reformatter.call(reformatter_input)
 
-        query_reformatter: QueryReformatter = QueryReformatter(
-            client=self._ollama_client
-        )
-
-        reformatter_output: QueryReformatterOutput = await query_reformatter.call(
-            reformatter_input
-        )
-        return reformatter_output
-
-    async def _initial_plan(self, user_query: str, user_context: str) -> PlannerOutput:
-        planner = Planner(client=self._ollama_client)
         planner_input = PlannerInput(
-            user_query=user_query,
-            user_context=user_context,
+            user_query=reformatter_output.reformed_query,
+            user_context=reformatter_output.query_context,
         )
-
+        planner = Planner(client=self._ollama_client)
         planner_output: PlannerOutput = await planner.call(planner_input)
-        return planner_output
+
+        return PlanAgentOutput(
+            query_context=reformatter_output.query_context,
+            reformatted_user_query=reformatter_output.reformed_query,
+            task_list=planner_output.tasks,
+        )
