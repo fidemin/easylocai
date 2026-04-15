@@ -3,13 +3,16 @@ from datetime import datetime
 from pathlib import Path
 
 
-def make_logging_config() -> dict:
-    log_dir = Path.home() / ".easylocai" / "logs"
-    log_dir.mkdir(parents=True, exist_ok=True)
-
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    uid = uuid.uuid4().hex[:8]
-    log_file = log_dir / f"session_{timestamp}_{uid}.log"
+def make_logging_config(log_file: str | Path | None = None) -> dict:
+    if log_file is not None:
+        log_file = Path(log_file)
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        log_dir = Path.home() / ".easylocai" / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        uid = uuid.uuid4().hex[:8]
+        log_file = log_dir / f"session_{timestamp}_{uid}.log"
 
     return {
         "version": 1,

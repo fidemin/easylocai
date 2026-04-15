@@ -1,13 +1,12 @@
 import argparse
 import asyncio
 import logging
+import logging.config
 import sys
 
 from easylocai.config import ensure_user_config
 from easylocai.main import run_agent_workflow
 from easylocai.utlis.loggers.default_dict import make_logging_config
-
-logging.config.dictConfig(make_logging_config())
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +38,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Feature flag (e.g., --flag=beta)",
     )
+    parser.add_argument(
+        "--log-file",
+        type=str,
+        default=None,
+        help="Full path for the log file (default: ~/.easylocai/logs/session_<ts>_<uid>.log)",
+    )
 
     return parser
 
@@ -46,6 +51,8 @@ def build_parser() -> argparse.ArgumentParser:
 def run() -> int:
     parser = build_parser()
     args = parser.parse_args()
+
+    logging.config.dictConfig(make_logging_config(log_file=args.log_file))
 
     if args.command == "init":
         path = ensure_user_config(overwrite=args.force)
