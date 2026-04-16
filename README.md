@@ -116,4 +116,4 @@ python -m easylocai.run
 python -m easylocai.run --flag=beta
 ```
 
-- refer to [DEVELOPMENT.md](docs/DEVELOPMENT.md)
+- refer to [ARCHITECTURE.md](docs/ARCHITECTURE.md)
