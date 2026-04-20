@@ -1,12 +1,232 @@
 [
-  {"task": "What is 37 * 24?"},
-  {"task": "If a rectangle has width 13 and height 9, what is its area?"},
-  {"task": "Calculate (45 + 27) / 6."},
-  {"task": "What is the value of 2^7 + 3^4?"},
-  {"task": "Solve: (18 * 5) - (72 / 3)"},
-  {"task": "If the price increases from 240 to 312, what is the percentage increase?"},
-  {"task": "What is the least common multiple (LCM) of 18 and 30?"},
-  {"task": "A car travels 420 km in 6 hours. What is its average speed?"},
-  {"task": "Simplify the expression: (3/4) × (8/9) × (27/16)"},
-  {"task": "If 5x + 12 = 72, what is the value of x?"}
+  {
+    "id": "1",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "task": "What is 37 * 24?",
+          "user_context": null,
+          "previous_task_results": [],
+          "previous_subtask_results": []
+        }
+      }
+    ],
+    "expected": {
+      "final": "888",
+      "confidence": 100
+    },
+    "scoring_criteria": "final must contain 888. confidence should be high (>= 90)."
+  },
+  {
+    "id": "2",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "task": "If a rectangle has width 13 and height 9, what is its area?",
+          "user_context": null,
+          "previous_task_results": [],
+          "previous_subtask_results": []
+        }
+      }
+    ],
+    "expected": {
+      "final": "117",
+      "confidence": 100
+    },
+    "scoring_criteria": "final must contain 117. confidence should be high (>= 90)."
+  },
+  {
+    "id": "3",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "task": "Calculate (45 + 27) / 6.",
+          "user_context": null,
+          "previous_task_results": [],
+          "previous_subtask_results": []
+        }
+      }
+    ],
+    "expected": {
+      "final": "12",
+      "confidence": 100
+    },
+    "scoring_criteria": "final must contain 12. confidence should be high (>= 90)."
+  },
+  {
+    "id": "4",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "task": "What is the value of 2^7 + 3^4?",
+          "user_context": null,
+          "previous_task_results": [],
+          "previous_subtask_results": []
+        }
+      }
+    ],
+    "expected": {
+      "final": "209",
+      "confidence": 100
+    },
+    "scoring_criteria": "final must contain 209 (2^7=128, 3^4=81, sum=209). confidence should be high (>= 90)."
+  },
+  {
+    "id": "5",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "task": "Solve: (18 * 5) - (72 / 3)",
+          "user_context": null,
+          "previous_task_results": [],
+          "previous_subtask_results": []
+        }
+      }
+    ],
+    "expected": {
+      "final": "66",
+      "confidence": 100
+    },
+    "scoring_criteria": "final must contain 66 (90 - 24 = 66). confidence should be high (>= 90)."
+  },
+  {
+    "id": "6",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "task": "If the price increases from 240 to 312, what is the percentage increase?",
+          "user_context": null,
+          "previous_task_results": [],
+          "previous_subtask_results": []
+        }
+      }
+    ],
+    "expected": {
+      "final": "30%",
+      "confidence": 100
+    },
+    "scoring_criteria": "final must contain 30% (72/240*100=30%). confidence should be high (>= 90)."
+  },
+  {
+    "id": "7",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "task": "What is the least common multiple (LCM) of 18 and 30?",
+          "user_context": null,
+          "previous_task_results": [],
+          "previous_subtask_results": []
+        }
+      }
+    ],
+    "expected": {
+      "final": "90",
+      "confidence": 100
+    },
+    "scoring_criteria": "final must contain 90. confidence should be high (>= 90)."
+  },
+  {
+    "id": "8",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "task": "A car travels 420 km in 6 hours. What is its average speed?",
+          "user_context": null,
+          "previous_task_results": [],
+          "previous_subtask_results": []
+        }
+      }
+    ],
+    "expected": {
+      "final": "70 km/h",
+      "confidence": 100
+    },
+    "scoring_criteria": "final must contain 70 (420/6=70). Unit km/h is preferred. confidence should be high (>= 90)."
+  },
+  {
+    "id": "9",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "task": "Simplify the expression: (3/4) \u00d7 (8/9) \u00d7 (27/16)",
+          "user_context": null,
+          "previous_task_results": [],
+          "previous_subtask_results": []
+        }
+      }
+    ],
+    "expected": {
+      "final": "9/8",
+      "confidence": 100
+    },
+    "scoring_criteria": "final must contain 9/8 or 1.125. confidence should be high (>= 90)."
+  },
+  {
+    "id": "10",
+    "messages": [
+      {
+        "role": "system",
+        "arguments": {}
+      },
+      {
+        "role": "user",
+        "arguments": {
+          "task": "If 5x + 12 = 72, what is the value of x?",
+          "user_context": null,
+          "previous_task_results": [],
+          "previous_subtask_results": []
+        }
+      }
+    ],
+    "expected": {
+      "final": "12",
+      "confidence": 100
+    },
+    "scoring_criteria": "final must contain 12 (5x=60, x=12). confidence should be high (>= 90)."
+  }
 ]

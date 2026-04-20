@@ -32,8 +32,8 @@ Read the output and score each test case against the `expected` answers in the i
 ### Step 3: Create a Candidate Variant
 Based on the observed failures:
 - Read the original prompt content.
-- Create a candidate prompt file: `resources/prompts/<original_name>_candidate_v<N>.jinja2`. Never overwrite the original.
-- Create a matching config: `resources/prompt_eval/configs/<component>_candidate_v<N>_config.json` pointing to the candidate prompt and the same input file as the baseline config.
+- Create a candidate prompt file: `resources/prompts/<original_name>_c<N>_<intent>.jinja2` (e.g. `reasoning_system_prompt_c1_add_chain_of_thought.jinja2`). Never overwrite the original. Use `c<N>` (candidate number) to preserve creation order, and `<intent>` to describe what change is being tested.
+- Create a matching config: `resources/prompt_eval/configs/<component>_c<N>_<intent>_config.json` pointing to the candidate prompt and the same input file as the baseline config.
 - Make minimal, targeted changes addressing the specific failure modes observed in Step 2.
 
 **Avoid overfitting — do NOT copy test cases into the prompt as examples.** If a test case fails, fix the underlying rule or generalize the pattern; do not add the failing input as a direct shot. Examples in the prompt must use different domains, values, and phrasing than the test inputs. Overfitting produces prompts that pass eval but fail on real-world inputs.
