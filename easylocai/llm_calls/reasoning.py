@@ -44,7 +44,7 @@ class Reasoning(LLMCallV2[ReasoningInput, ReasoningOutput]):
         system_prompt_path = "prompts/reasoning_system_prompt.jinja2"
         user_prompt_path = "prompts/reasoning_user_prompt.jinja2"
         options = {
-            "temperature": 0.5,
+            "temperature": 0.2,
         }
 
         super().__init__(
