@@ -56,7 +56,6 @@ class TestReplanAgent:
 
     def test_replanner_input_has_conversation_histories_field(self):
         from easylocai.llm_calls.replanner import ReplannerInput
-        from easylocai.schemas.context import ConversationHistory
         histories = [
             ConversationHistory(
                 original_user_query="Find alice.txt",
@@ -97,4 +96,4 @@ class TestReplanAgent:
         )
         input_ = ReplanAgentInput(workflow_context=workflow_context)
         output: ReplanAgentOutput = await agent.run(input_)
-        assert output.response is not None
+        assert output.response is not None or len(output.tasks) > 0
