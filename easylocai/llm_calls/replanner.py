@@ -23,8 +23,8 @@ class ReplannerOutput(BaseModel):
 class Replanner(LLMCallV2[ReplannerInput, ReplannerOutput]):
     def __init__(self, *, client):
         model = GPT_OSS_20B
-        system_prompt_path = "prompts/replanner_system_prompt.jinja2"
-        user_prompt_path = "prompts/replanner_user_prompt.jinja2"
+        system_prompt_path = "prompts/replanner_system_prompt_c1_decision_tree_verbatim_plan.jinja2"
+        user_prompt_path = "prompts/replanner_user_prompt_c1_decision_tree_verbatim_plan.jinja2"
         options = {
             "temperature": 0.2,
         }

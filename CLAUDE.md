@@ -8,7 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Update `docs/ARCHITECTURE.md`** whenever the main structure or flow changes (e.g. new agent, workflow variant, LLM call, tool management change, or core loop modification).
 - **Python type annotations are required only when the type is not obvious.** Skip annotations when the type is evident from context (e.g. `x = 0`, `name = "foo"`, simple list/dict literals). Always annotate function signatures, dataclass fields, and any variable where the type is ambiguous.
 - **Never use `cd <dir> && git <cmd>` compound commands.** Use `git -C <path> <cmd>` instead to avoid bare repository attack detection and unnecessary permission prompts.
-- **Never use multiline `python -c` commands.** Write to a temp file and execute instead, or use a single-line `-c` argument to avoid shell injection detection and permission prompts.
+- **Never use multiline `python -c` commands.** Use a single-line `-c` argument only, or write a proper script file. Never use `/tmp` for temporary files.
+- **Never write files to `/tmp`.**
 
 ## Commands
 
