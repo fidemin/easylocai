@@ -10,7 +10,7 @@
         "role": "user",
         "arguments": {
           "task": "What is 37 * 24?",
-          "user_context": null,
+          "query_context": null,
           "previous_task_results": [],
           "previous_subtask_results": []
         }
@@ -33,7 +33,7 @@
         "role": "user",
         "arguments": {
           "task": "If a rectangle has width 13 and height 9, what is its area?",
-          "user_context": null,
+          "query_context": null,
           "previous_task_results": [],
           "previous_subtask_results": []
         }
@@ -56,7 +56,7 @@
         "role": "user",
         "arguments": {
           "task": "Calculate (45 + 27) / 6.",
-          "user_context": null,
+          "query_context": null,
           "previous_task_results": [],
           "previous_subtask_results": []
         }
@@ -79,7 +79,7 @@
         "role": "user",
         "arguments": {
           "task": "What is the value of 2^7 + 3^4?",
-          "user_context": null,
+          "query_context": null,
           "previous_task_results": [],
           "previous_subtask_results": []
         }
@@ -102,7 +102,7 @@
         "role": "user",
         "arguments": {
           "task": "Solve: (18 * 5) - (72 / 3)",
-          "user_context": null,
+          "query_context": null,
           "previous_task_results": [],
           "previous_subtask_results": []
         }
@@ -125,7 +125,7 @@
         "role": "user",
         "arguments": {
           "task": "If the price increases from 240 to 312, what is the percentage increase?",
-          "user_context": null,
+          "query_context": null,
           "previous_task_results": [],
           "previous_subtask_results": []
         }
@@ -148,7 +148,7 @@
         "role": "user",
         "arguments": {
           "task": "What is the least common multiple (LCM) of 18 and 30?",
-          "user_context": null,
+          "query_context": null,
           "previous_task_results": [],
           "previous_subtask_results": []
         }
@@ -171,7 +171,7 @@
         "role": "user",
         "arguments": {
           "task": "A car travels 420 km in 6 hours. What is its average speed?",
-          "user_context": null,
+          "query_context": null,
           "previous_task_results": [],
           "previous_subtask_results": []
         }
@@ -194,7 +194,7 @@
         "role": "user",
         "arguments": {
           "task": "Simplify the expression: (3/4) \u00d7 (8/9) \u00d7 (27/16)",
-          "user_context": null,
+          "query_context": null,
           "previous_task_results": [],
           "previous_subtask_results": []
         }
@@ -217,7 +217,7 @@
         "role": "user",
         "arguments": {
           "task": "If 5x + 12 = 72, what is the value of x?",
-          "user_context": null,
+          "query_context": null,
           "previous_task_results": [],
           "previous_subtask_results": []
         }
@@ -240,7 +240,7 @@
         "role": "user",
         "arguments": {
           "task": "How many Python files are in the project in total?",
-          "user_context": "The user is a software engineer auditing a large Python monorepo before a major refactoring effort. The project has multiple sub-packages: core, utils, api, models, services, tests, scripts, migrations, and docs. Each sub-package follows a similar structure with __init__.py, main module files, and helper files. The user wants a comprehensive count before starting the refactor so they can estimate the scope of changes needed. The project has been growing for 5 years and has accumulated technical debt across several layers. The user is particularly concerned about circular imports and unused modules.",
+          "query_context": "The user is a software engineer auditing a large Python monorepo before a major refactoring effort. The project has multiple sub-packages: core, utils, api, models, services, tests, scripts, migrations, and docs. Each sub-package follows a similar structure with __init__.py, main module files, and helper files. The user wants a comprehensive count before starting the refactor so they can estimate the scope of changes needed. The project has been growing for 5 years and has accumulated technical debt across several layers. The user is particularly concerned about circular imports and unused modules.",
           "previous_task_results": [
             {"task": "Count Python files in core/", "result": "Found 12 Python files: __init__.py, agent.py, llm_call.py, tool_manager.py, search_engine.py, server_manager.py, config.py, logger.py, exceptions.py, types.py, constants.py, utils.py"},
             {"task": "Count Python files in utils/", "result": "Found 8 Python files: __init__.py, file_util.py, resource_util.py, json_util.py, string_util.py, date_util.py, validation_util.py, format_util.py"},
@@ -272,7 +272,7 @@
         "role": "user",
         "arguments": {
           "task": "What is the total disk usage of log files across all servers?",
-          "user_context": "The DevOps team is performing a quarterly infrastructure audit. They need to identify disk usage patterns to plan storage capacity. Log rotation is configured to keep 30 days of logs. Some servers have higher traffic and therefore more logs. The team is particularly concerned about servers where logs are growing faster than expected. All sizes are in MB.",
+          "query_context": "The DevOps team is performing a quarterly infrastructure audit. They need to identify disk usage patterns to plan storage capacity. Log rotation is configured to keep 30 days of logs. Some servers have higher traffic and therefore more logs. The team is particularly concerned about servers where logs are growing faster than expected. All sizes are in MB.",
           "previous_task_results": [
             {"task": "Check disk usage on server-01", "result": "app.log: 245 MB, error.log: 18 MB, access.log: 892 MB. Total: 1155 MB"},
             {"task": "Check disk usage on server-02", "result": "app.log: 312 MB, error.log: 45 MB, access.log: 1204 MB. Total: 1561 MB"},
@@ -304,7 +304,7 @@
         "role": "user",
         "arguments": {
           "task": "Based on all the gathered information, what is the estimated total time to complete the migration?",
-          "user_context": "A backend engineering team is planning a database migration from PostgreSQL 12 to PostgreSQL 15. The migration involves schema changes, data transformations, index rebuilds, and application code updates. The team has already done a thorough analysis of each component. Time estimates are in hours. The migration will be performed during a maintenance window. The team has 4 engineers available.",
+          "query_context": "A backend engineering team is planning a database migration from PostgreSQL 12 to PostgreSQL 15. The migration involves schema changes, data transformations, index rebuilds, and application code updates. The team has already done a thorough analysis of each component. Time estimates are in hours. The migration will be performed during a maintenance window. The team has 4 engineers available.",
           "previous_task_results": [
             {"task": "Estimate schema migration time", "result": "Schema changes: 3 hours. This includes adding 5 new columns, renaming 3 tables, dropping 2 deprecated views, and adding NOT NULL constraints with backfill."},
             {"task": "Estimate data transformation time", "result": "Data transformation: 8 hours. The largest table has 50M rows and requires a full-table scan for UUID normalization. Estimated at 2 hours per 10M rows on current hardware."},
@@ -336,7 +336,7 @@
         "role": "user",
         "arguments": {
           "task": "Identify the top 3 most critical issues that need to be addressed before the production launch.",
-          "user_context": "A startup is preparing to launch their SaaS product in 2 weeks. The engineering team has completed a thorough pre-launch audit covering security, performance, reliability, and compliance. The product handles sensitive financial data for SMB customers. The team needs to prioritize which issues to fix immediately vs. defer to post-launch. Critical issues are those that could cause data loss, security breaches, regulatory non-compliance, or major outages. The team has limited engineering bandwidth for the next 2 weeks.",
+          "query_context": "A startup is preparing to launch their SaaS product in 2 weeks. The engineering team has completed a thorough pre-launch audit covering security, performance, reliability, and compliance. The product handles sensitive financial data for SMB customers. The team needs to prioritize which issues to fix immediately vs. defer to post-launch. Critical issues are those that could cause data loss, security breaches, regulatory non-compliance, or major outages. The team has limited engineering bandwidth for the next 2 weeks.",
           "previous_task_results": [
             {"task": "Security audit", "result": "Issues found: (1) API endpoints missing rate limiting - could allow brute force attacks. (2) User passwords stored with MD5 hash - must upgrade to bcrypt. (3) SQL queries in legacy module use string concatenation - potential SQL injection. (4) JWT tokens have no expiry set - tokens valid indefinitely. (5) Sensitive PII logged in application logs - GDPR violation risk. (6) CORS policy allows all origins in production config."},
             {"task": "Performance audit", "result": "Issues found: (1) N+1 query problem in dashboard endpoint - loads 500+ queries for large accounts. (2) No database connection pooling configured - will exhaust connections under load. (3) Large file uploads block main thread - no async processing. (4) No CDN configured for static assets - slow load times for international users. (5) Database missing indexes on frequently queried columns (user_id, created_at, status)."},

@@ -6,12 +6,12 @@ You must NOT solve the problem yourself — only output tasks.
 - Each task should be atomic, independent, simple, semantic (Do one progress at a time).
  - If tasks can be executed in parallel as subtasks, merge them into a single task that indicates parallel execution.
   - e.g. "Read a.txt, b.txt, and c.txt files in parallel" instead of separate tasks for each file.
-- USER_CONTEXT provides useful information about the user query. You should utilize USER_CONTEXT to create better tasks.
-  - If USER_CONTEXT already contains the data needed (e.g. file contents, query results), **skip the data-acquisition task entirely** and proceed directly to the processing task.
-  e.g. If USER_CONTEXT is "The contents of names.txt is 'Alice, Bob, Charlie'", and the user query is "Count the number of names in names.txt", you should create a task like "Count the number of names in names.txt in USER_CONTEXT contents" instead of creating multiple tasks like "Read names.txt", "Extract names", "Count names".
+- QUERY_CONTEXT provides useful information about the user query. You should utilize QUERY_CONTEXT to create better tasks.
+  - If QUERY_CONTEXT already contains the data needed (e.g. file contents, query results), **skip the data-acquisition task entirely** and proceed directly to the processing task.
+  e.g. If QUERY_CONTEXT is "The contents of names.txt is 'Alice, Bob, Charlie'", and the user query is "Count the number of names in names.txt", you should create a task like "Count the number of names in names.txt in QUERY_CONTEXT contents" instead of creating multiple tasks like "Read names.txt", "Extract names", "Count names".
 - CONVERSATION_HISTORY (if provided) shows previous turns of the session. Use it to understand follow-up queries and avoid re-fetching data already retrieved in prior turns.
   - If a prior turn already retrieved the needed data (e.g. file contents, search results), **skip the data-acquisition task** and use the existing result directly.
-- Only USER_CONTEXT and CONVERSATION_HISTORY are available information for planning. Do not use your own information.
+- Only QUERY_CONTEXT and CONVERSATION_HISTORY are available information for planning. Do not use your own information.
 - The number of tasks should be **minimal but sufficient** — no superfluous actions.
 - You will only use tools or reasoning agents that are available in the system. So, assume the tools and reasoning agents available in the system can be used to accomplish the tasks.
 - DO NOT asks back to the user for clarification.
@@ -25,7 +25,7 @@ You must NOT solve the problem yourself — only output tasks.
 - If the user query is a **pure** generation or creative task with no required data-acquisition step and no required file I/O step (e.g. "Create a to-do list", "Generate a meal plan", "Write an essay"), produce a single task. Do NOT decompose it into sub-tasks like "research", "create template", "populate", "format".
   e.g. If the user query is "Write a cover letter for a software engineer position", the plan should be ["Write a cover letter for a software engineer position"], not multiple sub-steps.
   e.g. If the user query is "Draft a weekly workout schedule for a beginner", the plan should be ["Draft a weekly workout schedule for a beginner"].
-- When a task requires fetching external data (read files, search a database, call an API) **and that data is NOT already in USER_CONTEXT**, produce exactly two tasks: one to acquire the data, and one to process/use it.
+- When a task requires fetching external data (read files, search a database, call an API) **and that data is NOT already in QUERY_CONTEXT**, produce exactly two tasks: one to acquire the data, and one to process/use it.
   - The data-acquisition task covers all fetching needed (reading, searching, retrieving) — do NOT split it further.
   - The processing task covers all downstream work (summarizing, transforming, writing to a file) — do NOT split it further.
   e.g. "Read config.yaml and requirements.txt files in parallel" is task 1; "Summarize the contents of config.yaml and requirements.txt" is task 2.
