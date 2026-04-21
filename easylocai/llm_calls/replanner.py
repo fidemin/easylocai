@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 
 from easylocai.constants.model import GPT_OSS_20B
 from easylocai.core.llm_call import LLMCallV2
+from easylocai.schemas.context import ConversationHistory
 
 
 class ReplannerInput(BaseModel):
@@ -9,6 +10,7 @@ class ReplannerInput(BaseModel):
     original_user_query: str
     previous_plan: list[str]
     task_results: list[dict]
+    conversation_histories: list[ConversationHistory] = Field(default_factory=list)
 
 
 class ReplannerOutput(BaseModel):
