@@ -57,7 +57,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentContext, SingleTaskAgentOutput]):
 
             task_router_output = await self._route_task(
                 task=ctx.original_task,
-                user_context=ctx.query_context,
+                query_context=ctx.query_context,
                 tool_candidates=tool_candidates,
                 previous_task_results=previous_task_results,
                 iteration_results=iteration_results,
@@ -72,15 +72,17 @@ class SingleTaskAgent(Agent[SingleTaskAgentContext, SingleTaskAgentOutput]):
 
             if subtask_type == "tool":
                 result = await self._execute_tool_subtask(
+                    original_task=ctx.original_task,
                     subtask=subtask,
-                    user_context=ctx.query_context,
+                    query_context=ctx.query_context,
                     previous_task_results=previous_task_results,
                     iteration_results=iteration_results,
                 )
             elif subtask_type == "reasoning":
                 result = await self._execute_reasoning_subtask(
+                    original_task=ctx.original_task,
                     subtask=subtask,
-                    user_context=ctx.query_context,
+                    query_context=ctx.query_context,
                     previous_task_results=previous_task_results,
                     previous_subtask_results=iteration_results,
                 )
@@ -93,7 +95,7 @@ class SingleTaskAgent(Agent[SingleTaskAgentContext, SingleTaskAgentOutput]):
         final_result = await self._filter_task_result(
             task=ctx.original_task,
             subtask_results=[r.model_dump() for r in ctx.subtask_results],
-            user_context=ctx.query_context,
+            query_context=ctx.query_context,
         )
 
         return SingleTaskAgentOutput(
@@ -117,14 +119,14 @@ class SingleTaskAgent(Agent[SingleTaskAgentContext, SingleTaskAgentOutput]):
         self,
         *,
         task: str,
-        user_context: str | None,
+        query_context: str | None,
         tool_candidates: list[dict],
         previous_task_results: list[dict],
         iteration_results: list[dict],
     ) -> TaskRouterOutput:
         task_router_input = TaskRouterInput(
             task=task,
-            user_context=user_context,
+            query_context=query_context,
             tool_candidates=tool_candidates,
             previous_task_results=previous_task_results,
             iteration_results=iteration_results,
@@ -137,15 +139,17 @@ class SingleTaskAgent(Agent[SingleTaskAgentContext, SingleTaskAgentOutput]):
     async def _execute_tool_subtask(
         self,
         *,
+        original_task: str,
         subtask: str,
-        user_context: str | None,
+        query_context: str | None,
         previous_task_results: list[dict],
         iteration_results: list[dict],
     ) -> dict[str, Any]:
         subtask_tool_candidates = await self._get_tool_candidates([subtask])
         tool_selector_input = ToolSelectorInput(
+            original_task=original_task,
             subtask=subtask,
-            user_context=user_context,
+            query_context=query_context,
             tool_candidates=subtask_tool_candidates,
             previous_task_results=previous_task_results,
             iteration_results=iteration_results,
@@ -169,14 +173,16 @@ class SingleTaskAgent(Agent[SingleTaskAgentContext, SingleTaskAgentOutput]):
     async def _execute_reasoning_subtask(
         self,
         *,
+        original_task: str,
         subtask: str,
-        user_context: str | None,
+        query_context: str | None,
         previous_task_results: list[dict],
         previous_subtask_results: list[dict],
     ) -> dict[str, Any]:
         reasoning_agent_input = ReasoningAgentInput(
+            original_task=original_task,
             task={"description": subtask},
-            user_context=user_context,
+            query_context=query_context,
             previous_task_results=previous_task_results,
             previous_subtask_results=previous_subtask_results,
         )
@@ -208,12 +214,12 @@ class SingleTaskAgent(Agent[SingleTaskAgentContext, SingleTaskAgentOutput]):
         self,
         task: str,
         subtask_results: list[dict],
-        user_context: str | None,
+        query_context: str | None,
     ) -> str:
         task_result_filter_input = TaskResultFilterInput(
             task=task,
             subtask_results=subtask_results,
-            user_context=user_context,
+            query_context=query_context,
         )
         task_result_filter = TaskResultFilter(client=self._ollama_client)
         output = await task_result_filter.call(task_result_filter_input)

@@ -16,8 +16,9 @@ class ToolInput(BaseModel):
 
 
 class ToolSelectorV2Input(BaseModel):
+    original_task: str
     subtask: str
-    user_context: str | None
+    query_context: str | None
     tool_candidates: list[dict]
     previous_task_results: list[dict]
     iteration_results: list[dict]
@@ -33,16 +34,18 @@ class ToolSelectorOutput(BaseModel):
 
 
 class ToolSelectorInput(BaseModel):
+    original_task: str
     subtask: str
-    user_context: str | None
+    query_context: str | None
     tool_candidates: list[dict]
     previous_task_results: list[dict]
     iteration_results: list[dict]
 
 
 class ToolSelectorInputV2(BaseModel):
+    original_task: str
     subtasks: list[str]
-    user_context: str | None
+    query_context: str | None
     tool_candidates: list[dict]
     previous_task_results: list[dict]
     iteration_results: list[dict]

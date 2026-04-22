@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 
 from easylocai.constants.model import GPT_OSS_20B
 from easylocai.core.llm_call import LLMCallV2
+from easylocai.schemas.context import ConversationHistory
 
 
 class PlannerInput(BaseModel):
@@ -12,6 +13,11 @@ class PlannerInput(BaseModel):
     user_context: str | None = Field(
         title="User Context",
         description="Additional context provided by the user.",
+    )
+    conversation_histories: list[ConversationHistory] = Field(
+        default_factory=list,
+        title="Conversation Histories",
+        description="Previous conversation turns for multi-turn context.",
     )
 
 

@@ -1,5 +1,13 @@
-USER_CONTEXT:
-{{ user_context }}
+{% if conversation_histories %}
+CONVERSATION_HISTORY:
+{% for h in conversation_histories %}
+user: {{ h.original_user_query }}
+assistant: {{ h.response }}
+
+{% endfor %}
+{% endif %}
+QUERY_CONTEXT:
+{{ query_context }}
 
 ORIGINAL_USER_QUERY:
 {{ original_user_query }}

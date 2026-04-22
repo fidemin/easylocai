@@ -9,10 +9,11 @@
       {
         "role": "user",
         "arguments": {
-          "task": "What is 37 * 24?",
-          "user_context": null,
+          "original_task": "What is 37 * 24?",
+          "query_context": null,
           "previous_task_results": [],
-          "previous_subtask_results": []
+          "previous_subtask_results": [],
+          "subtask": "What is 37 * 24?"
         }
       }
     ],
@@ -32,10 +33,11 @@
       {
         "role": "user",
         "arguments": {
-          "task": "If a rectangle has width 13 and height 9, what is its area?",
-          "user_context": null,
+          "original_task": "If a rectangle has width 13 and height 9, what is its area?",
+          "query_context": null,
           "previous_task_results": [],
-          "previous_subtask_results": []
+          "previous_subtask_results": [],
+          "subtask": "If a rectangle has width 13 and height 9, what is its area?"
         }
       }
     ],
@@ -55,10 +57,11 @@
       {
         "role": "user",
         "arguments": {
-          "task": "Calculate (45 + 27) / 6.",
-          "user_context": null,
+          "original_task": "Calculate (45 + 27) / 6.",
+          "query_context": null,
           "previous_task_results": [],
-          "previous_subtask_results": []
+          "previous_subtask_results": [],
+          "subtask": "Calculate (45 + 27) / 6."
         }
       }
     ],
@@ -78,10 +81,11 @@
       {
         "role": "user",
         "arguments": {
-          "task": "What is the value of 2^7 + 3^4?",
-          "user_context": null,
+          "original_task": "What is the value of 2^7 + 3^4?",
+          "query_context": null,
           "previous_task_results": [],
-          "previous_subtask_results": []
+          "previous_subtask_results": [],
+          "subtask": "What is the value of 2^7 + 3^4?"
         }
       }
     ],
@@ -101,10 +105,11 @@
       {
         "role": "user",
         "arguments": {
-          "task": "Solve: (18 * 5) - (72 / 3)",
-          "user_context": null,
+          "original_task": "Solve: (18 * 5) - (72 / 3)",
+          "query_context": null,
           "previous_task_results": [],
-          "previous_subtask_results": []
+          "previous_subtask_results": [],
+          "subtask": "Solve: (18 * 5) - (72 / 3)"
         }
       }
     ],
@@ -124,10 +129,11 @@
       {
         "role": "user",
         "arguments": {
-          "task": "If the price increases from 240 to 312, what is the percentage increase?",
-          "user_context": null,
+          "original_task": "If the price increases from 240 to 312, what is the percentage increase?",
+          "query_context": null,
           "previous_task_results": [],
-          "previous_subtask_results": []
+          "previous_subtask_results": [],
+          "subtask": "If the price increases from 240 to 312, what is the percentage increase?"
         }
       }
     ],
@@ -147,10 +153,11 @@
       {
         "role": "user",
         "arguments": {
-          "task": "What is the least common multiple (LCM) of 18 and 30?",
-          "user_context": null,
+          "original_task": "What is the least common multiple (LCM) of 18 and 30?",
+          "query_context": null,
           "previous_task_results": [],
-          "previous_subtask_results": []
+          "previous_subtask_results": [],
+          "subtask": "What is the least common multiple (LCM) of 18 and 30?"
         }
       }
     ],
@@ -170,10 +177,11 @@
       {
         "role": "user",
         "arguments": {
-          "task": "A car travels 420 km in 6 hours. What is its average speed?",
-          "user_context": null,
+          "original_task": "A car travels 420 km in 6 hours. What is its average speed?",
+          "query_context": null,
           "previous_task_results": [],
-          "previous_subtask_results": []
+          "previous_subtask_results": [],
+          "subtask": "A car travels 420 km in 6 hours. What is its average speed?"
         }
       }
     ],
@@ -193,10 +201,11 @@
       {
         "role": "user",
         "arguments": {
-          "task": "Simplify the expression: (3/4) \u00d7 (8/9) \u00d7 (27/16)",
-          "user_context": null,
+          "original_task": "Simplify the expression: (3/4) × (8/9) × (27/16)",
+          "query_context": null,
           "previous_task_results": [],
-          "previous_subtask_results": []
+          "previous_subtask_results": [],
+          "subtask": "Simplify the expression: (3/4) × (8/9) × (27/16)"
         }
       }
     ],
@@ -216,10 +225,11 @@
       {
         "role": "user",
         "arguments": {
-          "task": "If 5x + 12 = 72, what is the value of x?",
-          "user_context": null,
+          "original_task": "If 5x + 12 = 72, what is the value of x?",
+          "query_context": null,
           "previous_task_results": [],
-          "previous_subtask_results": []
+          "previous_subtask_results": [],
+          "subtask": "If 5x + 12 = 72, what is the value of x?"
         }
       }
     ],
@@ -239,19 +249,44 @@
       {
         "role": "user",
         "arguments": {
-          "task": "How many Python files are in the project in total?",
-          "user_context": "The user is a software engineer auditing a large Python monorepo before a major refactoring effort. The project has multiple sub-packages: core, utils, api, models, services, tests, scripts, migrations, and docs. Each sub-package follows a similar structure with __init__.py, main module files, and helper files. The user wants a comprehensive count before starting the refactor so they can estimate the scope of changes needed. The project has been growing for 5 years and has accumulated technical debt across several layers. The user is particularly concerned about circular imports and unused modules.",
+          "original_task": "Count total Python files across all sub-packages in the monorepo",
+          "query_context": "The user is a software engineer auditing a large Python monorepo before a major refactoring effort. The project has multiple sub-packages: core, utils, api, models, services, tests, scripts, migrations, and docs. Each sub-package follows a similar structure with __init__.py, main module files, and helper files. The user wants a comprehensive count before starting the refactor so they can estimate the scope of changes needed. The project has been growing for 5 years and has accumulated technical debt across several layers. The user is particularly concerned about circular imports and unused modules.",
           "previous_task_results": [
-            {"task": "Count Python files in core/", "result": "Found 12 Python files: __init__.py, agent.py, llm_call.py, tool_manager.py, search_engine.py, server_manager.py, config.py, logger.py, exceptions.py, types.py, constants.py, utils.py"},
-            {"task": "Count Python files in utils/", "result": "Found 8 Python files: __init__.py, file_util.py, resource_util.py, json_util.py, string_util.py, date_util.py, validation_util.py, format_util.py"},
-            {"task": "Count Python files in api/", "result": "Found 6 Python files: __init__.py, router.py, endpoints.py, middleware.py, schemas.py, auth.py"},
-            {"task": "Count Python files in models/", "result": "Found 9 Python files: __init__.py, user.py, task.py, result.py, config.py, log.py, event.py, session.py, base.py"},
-            {"task": "Count Python files in services/", "result": "Found 7 Python files: __init__.py, task_service.py, user_service.py, auth_service.py, notification_service.py, cache_service.py, db_service.py"},
-            {"task": "Count Python files in tests/", "result": "Found 15 Python files: conftest.py, 5 unit test files, 6 integration test files, 3 fixture files"},
-            {"task": "Count Python files in scripts/", "result": "Found 4 Python files: __init__.py, migrate.py, seed.py, cleanup.py"},
-            {"task": "Count Python files in migrations/", "result": "Found 3 Python files: __init__.py, v1_to_v2.py, v2_to_v3.py"}
+            {
+              "task": "Count Python files in core/",
+              "result": "Found 12 Python files: __init__.py, agent.py, llm_call.py, tool_manager.py, search_engine.py, server_manager.py, config.py, logger.py, exceptions.py, types.py, constants.py, utils.py"
+            },
+            {
+              "task": "Count Python files in utils/",
+              "result": "Found 8 Python files: __init__.py, file_util.py, resource_util.py, json_util.py, string_util.py, date_util.py, validation_util.py, format_util.py"
+            },
+            {
+              "task": "Count Python files in api/",
+              "result": "Found 6 Python files: __init__.py, router.py, endpoints.py, middleware.py, schemas.py, auth.py"
+            },
+            {
+              "task": "Count Python files in models/",
+              "result": "Found 9 Python files: __init__.py, user.py, task.py, result.py, config.py, log.py, event.py, session.py, base.py"
+            },
+            {
+              "task": "Count Python files in services/",
+              "result": "Found 7 Python files: __init__.py, task_service.py, user_service.py, auth_service.py, notification_service.py, cache_service.py, db_service.py"
+            },
+            {
+              "task": "Count Python files in tests/",
+              "result": "Found 15 Python files: conftest.py, 5 unit test files, 6 integration test files, 3 fixture files"
+            },
+            {
+              "task": "Count Python files in scripts/",
+              "result": "Found 4 Python files: __init__.py, migrate.py, seed.py, cleanup.py"
+            },
+            {
+              "task": "Count Python files in migrations/",
+              "result": "Found 3 Python files: __init__.py, v1_to_v2.py, v2_to_v3.py"
+            }
           ],
-          "previous_subtask_results": []
+          "previous_subtask_results": [],
+          "subtask": "How many Python files are in the project in total?"
         }
       }
     ],
@@ -271,19 +306,41 @@
       {
         "role": "user",
         "arguments": {
-          "task": "What is the total disk usage of log files across all servers?",
-          "user_context": "The DevOps team is performing a quarterly infrastructure audit. They need to identify disk usage patterns to plan storage capacity. Log rotation is configured to keep 30 days of logs. Some servers have higher traffic and therefore more logs. The team is particularly concerned about servers where logs are growing faster than expected. All sizes are in MB.",
+          "original_task": "Calculate total disk usage of log files across all servers",
+          "query_context": "The DevOps team is performing a quarterly infrastructure audit. They need to identify disk usage patterns to plan storage capacity. Log rotation is configured to keep 30 days of logs. Some servers have higher traffic and therefore more logs. The team is particularly concerned about servers where logs are growing faster than expected. All sizes are in MB.",
           "previous_task_results": [
-            {"task": "Check disk usage on server-01", "result": "app.log: 245 MB, error.log: 18 MB, access.log: 892 MB. Total: 1155 MB"},
-            {"task": "Check disk usage on server-02", "result": "app.log: 312 MB, error.log: 45 MB, access.log: 1204 MB. Total: 1561 MB"},
-            {"task": "Check disk usage on server-03", "result": "app.log: 178 MB, error.log: 9 MB, access.log: 634 MB. Total: 821 MB"},
-            {"task": "Check disk usage on server-04", "result": "app.log: 423 MB, error.log: 67 MB, access.log: 2103 MB. Total: 2593 MB"},
-            {"task": "Check disk usage on server-05", "result": "app.log: 156 MB, error.log: 12 MB, access.log: 489 MB. Total: 657 MB"}
+            {
+              "task": "Check disk usage on server-01",
+              "result": "app.log: 245 MB, error.log: 18 MB, access.log: 892 MB. Total: 1155 MB"
+            },
+            {
+              "task": "Check disk usage on server-02",
+              "result": "app.log: 312 MB, error.log: 45 MB, access.log: 1204 MB. Total: 1561 MB"
+            },
+            {
+              "task": "Check disk usage on server-03",
+              "result": "app.log: 178 MB, error.log: 9 MB, access.log: 634 MB. Total: 821 MB"
+            },
+            {
+              "task": "Check disk usage on server-04",
+              "result": "app.log: 423 MB, error.log: 67 MB, access.log: 2103 MB. Total: 2593 MB"
+            },
+            {
+              "task": "Check disk usage on server-05",
+              "result": "app.log: 156 MB, error.log: 12 MB, access.log: 489 MB. Total: 657 MB"
+            }
           ],
           "previous_subtask_results": [
-            {"subtask": "Sum totals for servers 01-03", "result": "1155 + 1561 + 821 = 3537 MB"},
-            {"subtask": "Sum totals for servers 04-05", "result": "2593 + 657 = 3250 MB"}
-          ]
+            {
+              "subtask": "Sum totals for servers 01-03",
+              "result": "1155 + 1561 + 821 = 3537 MB"
+            },
+            {
+              "subtask": "Sum totals for servers 04-05",
+              "result": "2593 + 657 = 3250 MB"
+            }
+          ],
+          "subtask": "What is the total disk usage of log files across all servers?"
         }
       }
     ],
@@ -303,19 +360,41 @@
       {
         "role": "user",
         "arguments": {
-          "task": "Based on all the gathered information, what is the estimated total time to complete the migration?",
-          "user_context": "A backend engineering team is planning a database migration from PostgreSQL 12 to PostgreSQL 15. The migration involves schema changes, data transformations, index rebuilds, and application code updates. The team has already done a thorough analysis of each component. Time estimates are in hours. The migration will be performed during a maintenance window. The team has 4 engineers available.",
+          "original_task": "Estimate the total time required to complete the PostgreSQL 12 to 15 migration",
+          "query_context": "A backend engineering team is planning a database migration from PostgreSQL 12 to PostgreSQL 15. The migration involves schema changes, data transformations, index rebuilds, and application code updates. The team has already done a thorough analysis of each component. Time estimates are in hours. The migration will be performed during a maintenance window. The team has 4 engineers available.",
           "previous_task_results": [
-            {"task": "Estimate schema migration time", "result": "Schema changes: 3 hours. This includes adding 5 new columns, renaming 3 tables, dropping 2 deprecated views, and adding NOT NULL constraints with backfill."},
-            {"task": "Estimate data transformation time", "result": "Data transformation: 8 hours. The largest table has 50M rows and requires a full-table scan for UUID normalization. Estimated at 2 hours per 10M rows on current hardware."},
-            {"task": "Estimate index rebuild time", "result": "Index rebuilds: 4 hours. 23 indexes across 8 tables need to be rebuilt. Concurrent index creation will be used to minimize locking. The two largest indexes are on the events and audit_log tables."},
-            {"task": "Estimate application code update time", "result": "Application code: 6 hours. 3 services need connection string updates, 2 services need query adjustments for PG15 syntax changes, and all services need integration testing."},
-            {"task": "Estimate rollback plan preparation time", "result": "Rollback preparation: 2 hours. Logical replication slot setup, snapshot verification, and runbook documentation."}
+            {
+              "task": "Estimate schema migration time",
+              "result": "Schema changes: 3 hours. This includes adding 5 new columns, renaming 3 tables, dropping 2 deprecated views, and adding NOT NULL constraints with backfill."
+            },
+            {
+              "task": "Estimate data transformation time",
+              "result": "Data transformation: 8 hours. The largest table has 50M rows and requires a full-table scan for UUID normalization. Estimated at 2 hours per 10M rows on current hardware."
+            },
+            {
+              "task": "Estimate index rebuild time",
+              "result": "Index rebuilds: 4 hours. 23 indexes across 8 tables need to be rebuilt. Concurrent index creation will be used to minimize locking. The two largest indexes are on the events and audit_log tables."
+            },
+            {
+              "task": "Estimate application code update time",
+              "result": "Application code: 6 hours. 3 services need connection string updates, 2 services need query adjustments for PG15 syntax changes, and all services need integration testing."
+            },
+            {
+              "task": "Estimate rollback plan preparation time",
+              "result": "Rollback preparation: 2 hours. Logical replication slot setup, snapshot verification, and runbook documentation."
+            }
           ],
           "previous_subtask_results": [
-            {"subtask": "Verify parallelizable tasks", "result": "Schema migration and rollback prep can run in parallel (saves 2 hours). Data transformation must run sequentially after schema changes."},
-            {"subtask": "Calculate critical path", "result": "Critical path: schema(3h) + data transformation(8h) + index rebuild(4h) = 15h sequential minimum. App updates can run in parallel with index rebuild."}
-          ]
+            {
+              "subtask": "Verify parallelizable tasks",
+              "result": "Schema migration and rollback prep can run in parallel (saves 2 hours). Data transformation must run sequentially after schema changes."
+            },
+            {
+              "subtask": "Calculate critical path",
+              "result": "Critical path: schema(3h) + data transformation(8h) + index rebuild(4h) = 15h sequential minimum. App updates can run in parallel with index rebuild."
+            }
+          ],
+          "subtask": "Based on all the gathered information, what is the estimated total time to complete the migration?"
         }
       }
     ],
@@ -335,19 +414,41 @@
       {
         "role": "user",
         "arguments": {
-          "task": "Identify the top 3 most critical issues that need to be addressed before the production launch.",
-          "user_context": "A startup is preparing to launch their SaaS product in 2 weeks. The engineering team has completed a thorough pre-launch audit covering security, performance, reliability, and compliance. The product handles sensitive financial data for SMB customers. The team needs to prioritize which issues to fix immediately vs. defer to post-launch. Critical issues are those that could cause data loss, security breaches, regulatory non-compliance, or major outages. The team has limited engineering bandwidth for the next 2 weeks.",
+          "original_task": "Identify the top 3 most critical issues to fix before the SaaS product production launch",
+          "query_context": "A startup is preparing to launch their SaaS product in 2 weeks. The engineering team has completed a thorough pre-launch audit covering security, performance, reliability, and compliance. The product handles sensitive financial data for SMB customers. The team needs to prioritize which issues to fix immediately vs. defer to post-launch. Critical issues are those that could cause data loss, security breaches, regulatory non-compliance, or major outages. The team has limited engineering bandwidth for the next 2 weeks.",
           "previous_task_results": [
-            {"task": "Security audit", "result": "Issues found: (1) API endpoints missing rate limiting - could allow brute force attacks. (2) User passwords stored with MD5 hash - must upgrade to bcrypt. (3) SQL queries in legacy module use string concatenation - potential SQL injection. (4) JWT tokens have no expiry set - tokens valid indefinitely. (5) Sensitive PII logged in application logs - GDPR violation risk. (6) CORS policy allows all origins in production config."},
-            {"task": "Performance audit", "result": "Issues found: (1) N+1 query problem in dashboard endpoint - loads 500+ queries for large accounts. (2) No database connection pooling configured - will exhaust connections under load. (3) Large file uploads block main thread - no async processing. (4) No CDN configured for static assets - slow load times for international users. (5) Database missing indexes on frequently queried columns (user_id, created_at, status)."},
-            {"task": "Reliability audit", "result": "Issues found: (1) No health check endpoints configured - load balancer cannot detect unhealthy instances. (2) Background job queue has no retry logic - failed jobs are silently dropped. (3) No circuit breaker for external payment API calls - cascading failures possible. (4) Database backups not tested for restore capability. (5) No alerting configured for error rate spikes."},
-            {"task": "Compliance audit", "result": "Issues found: (1) No data retention policy implemented - violates GDPR Article 5. (2) No audit log for sensitive data access - required for SOC2. (3) User data deletion flow incomplete - GDPR right to erasure not fully implemented. (4) Privacy policy does not reflect actual data collection practices. (5) No DPA (Data Processing Agreement) with third-party processors."}
+            {
+              "task": "Security audit",
+              "result": "Issues found: (1) API endpoints missing rate limiting - could allow brute force attacks. (2) User passwords stored with MD5 hash - must upgrade to bcrypt. (3) SQL queries in legacy module use string concatenation - potential SQL injection. (4) JWT tokens have no expiry set - tokens valid indefinitely. (5) Sensitive PII logged in application logs - GDPR violation risk. (6) CORS policy allows all origins in production config."
+            },
+            {
+              "task": "Performance audit",
+              "result": "Issues found: (1) N+1 query problem in dashboard endpoint - loads 500+ queries for large accounts. (2) No database connection pooling configured - will exhaust connections under load. (3) Large file uploads block main thread - no async processing. (4) No CDN configured for static assets - slow load times for international users. (5) Database missing indexes on frequently queried columns (user_id, created_at, status)."
+            },
+            {
+              "task": "Reliability audit",
+              "result": "Issues found: (1) No health check endpoints configured - load balancer cannot detect unhealthy instances. (2) Background job queue has no retry logic - failed jobs are silently dropped. (3) No circuit breaker for external payment API calls - cascading failures possible. (4) Database backups not tested for restore capability. (5) No alerting configured for error rate spikes."
+            },
+            {
+              "task": "Compliance audit",
+              "result": "Issues found: (1) No data retention policy implemented - violates GDPR Article 5. (2) No audit log for sensitive data access - required for SOC2. (3) User data deletion flow incomplete - GDPR right to erasure not fully implemented. (4) Privacy policy does not reflect actual data collection practices. (5) No DPA (Data Processing Agreement) with third-party processors."
+            }
           ],
           "previous_subtask_results": [
-            {"subtask": "Rank security issues by severity", "result": "Critical: MD5 passwords (immediate breach risk), SQL injection (data theft risk), JWT no expiry (session hijack risk). High: Rate limiting, PII logging, CORS."},
-            {"subtask": "Rank compliance issues by launch-blocking risk", "result": "Launch-blocking: MD5 passwords violates security standards, PII in logs violates GDPR, incomplete data deletion violates GDPR right to erasure. These could result in immediate regulatory action."},
-            {"subtask": "Assess performance issues for launch day impact", "result": "The N+1 query and missing connection pooling are most likely to cause outages on launch day with real traffic. Database indexes are also high priority but can be added with minimal downtime."}
-          ]
+            {
+              "subtask": "Rank security issues by severity",
+              "result": "Critical: MD5 passwords (immediate breach risk), SQL injection (data theft risk), JWT no expiry (session hijack risk). High: Rate limiting, PII logging, CORS."
+            },
+            {
+              "subtask": "Rank compliance issues by launch-blocking risk",
+              "result": "Launch-blocking: MD5 passwords violates security standards, PII in logs violates GDPR, incomplete data deletion violates GDPR right to erasure. These could result in immediate regulatory action."
+            },
+            {
+              "subtask": "Assess performance issues for launch day impact",
+              "result": "The N+1 query and missing connection pooling are most likely to cause outages on launch day with real traffic. Database indexes are also high priority but can be added with minimal downtime."
+            }
+          ],
+          "subtask": "Identify the top 3 most critical issues that need to be addressed before the production launch."
         }
       }
     ],

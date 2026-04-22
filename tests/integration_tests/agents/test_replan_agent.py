@@ -5,7 +5,7 @@ from easylocai.agents.replan_agent import (
     ReplanAgentInput,
     ReplanAgentOutput,
 )
-from easylocai.schemas.context import ExecutedTaskResult, WorkflowContext
+from easylocai.schemas.context import ConversationHistory, ExecutedTaskResult, WorkflowContext
 
 
 class TestReplanAgent:
@@ -52,4 +52,48 @@ class TestReplanAgent:
         input_ = ReplanAgentInput(workflow_context=workflow_context)
         output: ReplanAgentOutput = await agent.run(input_)
 
+        assert output.response is not None or len(output.tasks) > 0
+
+    def test_replanner_input_has_conversation_histories_field(self):
+        from easylocai.llm_calls.replanner import ReplannerInput
+        histories = [
+            ConversationHistory(
+                original_user_query="Find alice.txt",
+                reformatted_user_query="Find alice.txt",
+                response="Found alice.txt.",
+            )
+        ]
+        inp = ReplannerInput(
+            user_context=None,
+            original_user_query="Summarize alice.txt",
+            previous_plan=["Summarize alice.txt"],
+            task_results=[{"task": "Summarize alice.txt", "result": "It is a short file."}],
+            conversation_histories=histories,
+        )
+        assert len(inp.conversation_histories) == 1
+
+    @pytest.mark.asyncio
+    async def test_replan_with_conversation_history(self, ollama_client):
+        agent = ReplanAgent(client=ollama_client)
+        workflow_context = WorkflowContext(
+            original_user_query="Now count how many there are",
+            query_context=None,
+            reformatted_user_query="Count the number of Python files",
+            task_list=["Count the number of Python files"],
+            executed_task_results=[
+                ExecutedTaskResult(
+                    executed_task="Count the number of Python files",
+                    result="There are 15 Python files",
+                )
+            ],
+            conversation_histories=[
+                ConversationHistory(
+                    original_user_query="Find all Python files",
+                    reformatted_user_query="Find all Python files",
+                    response="Found 15 Python files in the project.",
+                )
+            ],
+        )
+        input_ = ReplanAgentInput(workflow_context=workflow_context)
+        output: ReplanAgentOutput = await agent.run(input_)
         assert output.response is not None or len(output.tasks) > 0

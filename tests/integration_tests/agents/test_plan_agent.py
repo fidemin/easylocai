@@ -30,6 +30,22 @@ class TestPlanAgent:
         output = await agent.run(input_)
         assert_output(output)
 
+    def test_planner_input_has_conversation_histories_field(self):
+        from easylocai.llm_calls.planner import PlannerInput
+        histories = [
+            ConversationHistory(
+                original_user_query="Find alice.txt",
+                reformatted_user_query="Find alice.txt",
+                response="Found alice.txt with 42 lines.",
+            )
+        ]
+        inp = PlannerInput(
+            user_query="Summarize alice.txt",
+            user_context=None,
+            conversation_histories=histories,
+        )
+        assert len(inp.conversation_histories) == 1
+
     @pytest.mark.asyncio
     async def test_query_with_conversation_history(self, ollama_client):
         agent = PlanAgent(client=ollama_client)

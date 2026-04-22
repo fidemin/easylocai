@@ -4,13 +4,17 @@ from easylocai.core.llm_call import LLMCallV2
 
 
 class ReasoningInput(BaseModel):
-    task: str = Field(
-        title="Task",
-        description="The task to reason about.",
+    original_task: str = Field(
+        title="Original Task",
+        description="The parent task that this subtask belongs to.",
     )
-    user_context: str | None = Field(
-        title="User Context",
-        description="Additional context provided by the user.",
+    subtask: str = Field(
+        title="Subtask",
+        description="The subtask to reason about.",
+    )
+    query_context: str | None = Field(
+        title="Query Context",
+        description="Preamble context extracted from the current query by QueryReformatter.",
     )
     previous_task_results: list[dict] = Field(
         title="Previous Task Results",
