@@ -1,3 +1,13 @@
+{% if conversation_histories %}
+CONVERSATION_HISTORY:
+{% for h in conversation_histories %}
+<conversation>
+- user: {{ h.original_user_query }}
+- assistant: {{ h.response }}
+</conversation>
+{% endfor %}
+
+{% endif %}
 ORIGINAL_TASK:
 {{ original_task }}
 

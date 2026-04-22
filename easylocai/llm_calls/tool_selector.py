@@ -3,6 +3,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from easylocai.core.llm_call import LLMCallV2
+from easylocai.schemas.context import ConversationHistory
 
 
 class ToolInput(BaseModel):
@@ -37,6 +38,7 @@ class ToolSelectorInput(BaseModel):
     original_task: str
     subtask: str
     query_context: str | None
+    conversation_histories: list[ConversationHistory] = Field(default_factory=list)
     tool_candidates: list[dict]
     previous_task_results: list[dict]
     iteration_results: list[dict]

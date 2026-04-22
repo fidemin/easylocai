@@ -1,11 +1,12 @@
 import logging
 
 from ollama import AsyncClient
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from easylocai.core.agent import Agent
 from easylocai.core.contants import DEFAULT_LLM_MODEL
 from easylocai.llm_calls.reasoning import Reasoning, ReasoningInput, ReasoningOutput
+from easylocai.schemas.context import ConversationHistory
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,8 @@ class ReasoningAgentInput(BaseModel):
     task: dict
     query_context: str | None
     previous_task_results: list[dict]
-    previous_subtask_results: list[dict] = []
+    previous_subtask_results: list[dict] = Field(default_factory=list)
+    conversation_histories: list[ConversationHistory] = Field(default_factory=list)
 
 
 class ReasoningAgentOutput(BaseModel):
@@ -40,6 +42,7 @@ class ReasoningAgent(Agent[ReasoningAgentInput, ReasoningAgentOutput]):
             query_context=input_.query_context,
             previous_task_results=input_.previous_task_results,
             previous_subtask_results=input_.previous_subtask_results,
+            conversation_histories=input_.conversation_histories,
         )
         reasoning = Reasoning(client=self._ollama_client)
         # TODO: adjust think time based on task complexity
