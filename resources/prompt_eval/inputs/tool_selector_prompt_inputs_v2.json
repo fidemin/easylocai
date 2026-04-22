@@ -9,6 +9,7 @@
       {
         "role": "user",
         "arguments": {
+          "original_task": "Read redis_config.md and summarize its contents",
           "subtasks": ["Read redis_config.md"],
           "query_context": null,
           "tool_candidates": [
@@ -73,6 +74,7 @@
       {
         "role": "user",
         "arguments": {
+          "original_task": "Read all Redis documents and summarize them",
           "subtasks": ["Read redis_intro.md file", "Read redis_config.md file", "Read redis_perf.md file"],
           "query_context": null,
           "tool_candidates": [

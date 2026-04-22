@@ -20,23 +20,25 @@ class TestReasoningAgent:
 
     @pytest.mark.asyncio
     async def test_without_context_or_prior_results(self, ollama_client):
-        """Happy path: no user_context, no previous results."""
+        """Happy path: no query_context, no previous results."""
         agent = ReasoningAgent(client=ollama_client)
         input_ = ReasoningAgentInput(
+            original_task="What is 2 + 2?",
             task={"description": "What is 2 + 2?"},
-            user_context=None,
+            query_context=None,
             previous_task_results=[],
         )
         output: ReasoningAgentOutput = await agent.run(input_)
         assert_reasoning_output(output)
 
     @pytest.mark.asyncio
-    async def test_with_user_context(self, ollama_client):
-        """Variant: user_context provided, no prior results."""
+    async def test_with_query_context(self, ollama_client):
+        """Variant: query_context provided, no prior results."""
         agent = ReasoningAgent(client=ollama_client)
         input_ = ReasoningAgentInput(
+            original_task="Summarize the user's goal",
             task={"description": "Summarize the user's goal"},
-            user_context="The user wants to refactor their Python codebase to use async/await.",
+            query_context="The user wants to refactor their Python codebase to use async/await.",
             previous_task_results=[],
         )
         output: ReasoningAgentOutput = await agent.run(input_)
@@ -44,11 +46,12 @@ class TestReasoningAgent:
 
     @pytest.mark.asyncio
     async def test_with_previous_task_results(self, ollama_client):
-        """Variant: previous_task_results provided, no user_context."""
+        """Variant: previous_task_results provided, no query_context."""
         agent = ReasoningAgent(client=ollama_client)
         input_ = ReasoningAgentInput(
+            original_task="How many Python files were found?",
             task={"description": "How many Python files were found?"},
-            user_context=None,
+            query_context=None,
             previous_task_results=[
                 {
                     "task": "List all files",
@@ -61,11 +64,12 @@ class TestReasoningAgent:
 
     @pytest.mark.asyncio
     async def test_with_previous_subtask_results(self, ollama_client):
-        """Variant: previous_subtask_results provided, no user_context or task results."""
+        """Variant: previous_subtask_results provided, no query_context or task results."""
         agent = ReasoningAgent(client=ollama_client)
         input_ = ReasoningAgentInput(
+            original_task="Combine counts into a total",
             task={"description": "Combine counts into a total"},
-            user_context=None,
+            query_context=None,
             previous_task_results=[],
             previous_subtask_results=[
                 {"subtask": "Count files in src/", "result": "5 files"},
@@ -77,11 +81,12 @@ class TestReasoningAgent:
 
     @pytest.mark.asyncio
     async def test_all_context_combined(self, ollama_client):
-        """Complex case: user_context + previous_task_results + previous_subtask_results all populated."""
+        """Complex case: query_context + previous_task_results + previous_subtask_results all populated."""
         agent = ReasoningAgent(client=ollama_client)
         input_ = ReasoningAgentInput(
+            original_task="Write a summary of all findings",
             task={"description": "Write a summary of all findings"},
-            user_context="User is auditing the project structure before a refactor.",
+            query_context="User is auditing the project structure before a refactor.",
             previous_task_results=[
                 {"task": "List top-level directories", "result": "src/, tests/, docs/"},
             ],

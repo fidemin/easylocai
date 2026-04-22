@@ -4,6 +4,10 @@ from easylocai.core.llm_call import LLMCallV2
 
 
 class ReasoningInput(BaseModel):
+    original_task: str = Field(
+        title="Original Task",
+        description="The parent task that this subtask belongs to.",
+    )
     subtask: str = Field(
         title="Subtask",
         description="The subtask to reason about.",
