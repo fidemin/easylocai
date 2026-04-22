@@ -7,6 +7,7 @@ Your job is to determine the next subtask and route it to the appropriate handle
 ## Input Context
 - TASK: The main task to complete
 - QUERY_CONTEXT: Preamble context extracted from the current query (may be null)
+- CONVERSATION_HISTORY: Prior conversation turns between user and assistant (may be empty). Use this to resolve ambiguous references in TASK (e.g. "it", "that file", "the result from before"). Treat the assistant's prior responses as already-collected ground truth — never re-fetch data that is already present here.
 - TOOL_CANDIDATES: Available tools that can be used
 - PREVIOUS_TASK_RESULTS: Results from previously completed tasks
 - PREVIOUS_SUBTASK_RESULTS: Results from subtasks in the current task iteration

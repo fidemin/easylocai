@@ -55,7 +55,7 @@ class LLMCallV2(ABC, Generic[InModel, OutModel]):
     ) -> Union[ChatResponse, AsyncIterator[ChatResponse], None]:
         return self._current_llm_call_response
 
-    async def call(self, input_: InModel, *, think=None) -> OutModel:
+    async def call(self, input_: InModel, *, think=None, max_retries: int = 3) -> OutModel:
         system_prompt = self._system_prompt_template.render()
         logger.debug(
             pretty_prompt_text(
@@ -75,41 +75,54 @@ class LLMCallV2(ABC, Generic[InModel, OutModel]):
         else:
             output_model_format = self._output_model.model_json_schema()
 
-        llm_call_response = await self._client.chat(
-            model=self._model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": self._system_prompt_template.render(),
-                },
-                {
-                    "role": "user",
-                    "content": self._user_prompt_template.render(**input_.model_dump()),
-                },
-            ],
-            options=self._options,
-            think=think,
-            format=output_model_format,
-        )
+        messages = [
+            {
+                "role": "system",
+                "content": self._system_prompt_template.render(),
+            },
+            {
+                "role": "user",
+                "content": self._user_prompt_template.render(**input_.model_dump()),
+            },
+        ]
 
-        self._current_llm_call_response = llm_call_response
-
-        content = llm_call_response["message"]["content"]
-
-        try:
-            if issubclass(self._output_model, RootModel):
-                # RootModel[str] case: validate plain text
-                response = self._output_model.model_validate(content)
-            else:
-                # BaseModel object output: JSON validate
-                response = self._output_model.model_validate_json(content)
-        except ValidationError as e:
-            thinking = llm_call_response["message"].get("thinking")
-            logger.error(
-                f"Failed to parse LLMCallV2 response: {content}"
-                + (f"\nThinking: {thinking}" if thinking else "")
+        last_error: Exception | None = None
+        for attempt in range(max_retries):
+            llm_call_response = await self._client.chat(
+                model=self._model,
+                messages=messages,
+                options=self._options,
+                think=think,
+                format=output_model_format,
             )
-            raise e
 
-        logger.debug(f"{self.__class__.__name__} Response:\n{response}")
-        return response
+            self._current_llm_call_response = llm_call_response
+            content = llm_call_response["message"]["content"]
+
+            if not content:
+                logger.warning(
+                    f"{self.__class__.__name__} received empty response "
+                    f"(attempt {attempt + 1}/{max_retries}), retrying..."
+                )
+                last_error = ValueError("LLM returned empty response")
+                continue
+
+            try:
+                if issubclass(self._output_model, RootModel):
+                    # RootModel[str] case: validate plain text
+                    response = self._output_model.model_validate(content)
+                else:
+                    # BaseModel object output: JSON validate
+                    response = self._output_model.model_validate_json(content)
+                logger.debug(f"{self.__class__.__name__} Response:\n{response}")
+                return response
+            except ValidationError as e:
+                thinking = llm_call_response["message"].get("thinking")
+                logger.error(
+                    f"{self.__class__.__name__} failed to parse response "
+                    f"(attempt {attempt + 1}/{max_retries}): {content}"
+                    + (f"\nThinking: {thinking}" if thinking else "")
+                )
+                last_error = e
+
+        raise last_error

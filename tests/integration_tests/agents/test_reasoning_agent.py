@@ -101,6 +101,34 @@ class TestReasoningAgent:
         assert_reasoning_output(output)
 
     @pytest.mark.asyncio
+    async def test_uses_conversation_history_without_refetching(self, ollama_client):
+        """Regression: agent must use content already in conversation_histories instead of re-fetching.
+        Previously the agent tried to read README.md from filesystem even though
+        the content was already provided in conversation history."""
+        agent = ReasoningAgent(client=ollama_client)
+        readme_content = (
+            "# MyProject\n"
+            "A Python tool for automating file analysis.\n"
+            "## Features\n- Fast file scanning\n- Supports CSV and JSON output"
+        )
+        input_ = ReasoningAgentInput(
+            original_task="Summarize the README.md content",
+            task={"description": "Summarize the README.md content"},
+            query_context=None,
+            previous_task_results=[],
+            conversation_histories=[
+                ConversationHistory(
+                    original_user_query="Read README.md",
+                    reformatted_user_query="Read README.md",
+                    response=readme_content,
+                )
+            ],
+        )
+        output: ReasoningAgentOutput = await agent.run(input_)
+        assert_reasoning_output(output)
+        assert "MyProject" in output.final or "file" in output.final.lower()
+
+    @pytest.mark.asyncio
     async def test_all_context_combined(self, ollama_client):
         """Complex case: query_context + previous_task_results + previous_subtask_results all populated."""
         agent = ReasoningAgent(client=ollama_client)
