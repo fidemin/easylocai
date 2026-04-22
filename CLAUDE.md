@@ -12,6 +12,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## References
 
+Read the relevant document before starting any task that touches the corresponding area. Update it when your changes affect the content it covers.
+
 | Topic | Document |
 |:------|:---------|
 | Project overview, features | [`README.md`](README.md) |
@@ -20,8 +22,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | MCP server configuration | [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) |
 | Development mode, testing, adding workflow variants, key code patterns | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) |
 | Architecture, agent responsibilities, data flow diagrams | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
-
-- update related file if you make changes to the system that affect any of the above topics. For example, if you add a new agent or workflow variant, update `docs/ARCHITECTURE.md` with new diagrams and explanations.
 
 ## Superpowers
 
