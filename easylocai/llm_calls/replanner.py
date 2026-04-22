@@ -2,13 +2,15 @@ from pydantic import BaseModel, Field
 
 from easylocai.constants.model import GPT_OSS_20B
 from easylocai.core.llm_call import LLMCallV2
+from easylocai.schemas.context import ConversationHistory
 
 
 class ReplannerInput(BaseModel):
-    user_context: str | None
+    query_context: str | None
     original_user_query: str
     previous_plan: list[str]
     task_results: list[dict]
+    conversation_histories: list[ConversationHistory] = Field(default_factory=list)
 
 
 class ReplannerOutput(BaseModel):
@@ -23,8 +25,8 @@ class ReplannerOutput(BaseModel):
 class Replanner(LLMCallV2[ReplannerInput, ReplannerOutput]):
     def __init__(self, *, client):
         model = GPT_OSS_20B
-        system_prompt_path = "prompts/replanner_system_prompt.jinja2"
-        user_prompt_path = "prompts/replanner_user_prompt.jinja2"
+        system_prompt_path = "prompts/replanner_system_prompt_c1_decision_tree_verbatim_plan.jinja2"
+        user_prompt_path = "prompts/replanner_user_prompt_c1_decision_tree_verbatim_plan.jinja2"
         options = {
             "temperature": 0.2,
         }

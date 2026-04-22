@@ -1,8 +1,18 @@
+{% if conversation_histories %}
+CONVERSATION_HISTORY:
+{% for h in conversation_histories %}
+<conversation>
+- user: {{ h.original_user_query }}
+- assistant: {{ h.response }}
+</conversation>
+{% endfor %}
+
+{% endif %}
 Task:
 {{ task }}
 
-USER_CONTEXT:
-{{ user_context }}
+QUERY_CONTEXT:
+{{ query_context }}
 
 TOOL_CANDIDATES:
 {% for tool in tool_candidates %}

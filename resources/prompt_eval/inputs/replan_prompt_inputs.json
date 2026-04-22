@@ -9,7 +9,7 @@
       {
         "role": "user",
         "arguments": {
-          "user_context": null,
+          "query_context": null,
           "original_user_query": "Find notion documents related to redis and summarize them to redis.txt file",
           "previous_plan": [
             "Search for notion documents related to redis",
@@ -29,7 +29,15 @@
           ]
         }
       }
-    ]
+    ],
+    "expected": {
+      "tasks": [
+        "Summarize the extracted information into a concise summary",
+        "Save the summary to a file named redis.txt"
+      ],
+      "response": null
+    },
+    "scoring_criteria": "Must return exactly 2 remaining tasks from the original plan (summarize + save). Must NOT invent new tasks. response must be null since tasks remain."
   },
   {
     "id": "replan-multi-source-task",
@@ -41,7 +49,7 @@
       {
         "role": "user",
         "arguments": {
-          "user_context": null,
+          "query_context": null,
           "original_user_query": "Find notion documents related to redis and summarize them to redis.txt file",
           "previous_plan": [
             "Search for notion documents related to redis",
@@ -57,7 +65,16 @@
           ]
         }
       }
-    ]
+    ],
+    "expected": {
+      "tasks": [
+        "Iterate through the found documents and extract relevant information about redis",
+        "Summarize the extracted information into a concise summary",
+        "Save the summary to a file named redis.txt"
+      ],
+      "response": null
+    },
+    "scoring_criteria": "Must return exactly 3 remaining tasks from the original plan (iterate/extract + summarize + save). Must NOT split into per-URL tasks or invent new tasks not in the plan. response must be null."
   },
   {
     "id": "replan-002",
@@ -69,7 +86,7 @@
       {
         "role": "user",
         "arguments": {
-          "user_context": null,
+          "query_context": null,
           "original_user_query": "Calculate (2+3) * 12 and save to file result.txt",
           "previous_plan": [
             "Calculate (2+3) * 12",
@@ -83,7 +100,14 @@
           ]
         }
       }
-    ]
+    ],
+    "expected": {
+      "tasks": [
+        "Save the result to a file named result.txt"
+      ],
+      "response": null
+    },
+    "scoring_criteria": "Must return exactly 1 remaining task matching 'Save the result to a file named result.txt' from the original plan. Must NOT rephrase by embedding the numeric result (e.g. 'Save the result 60...'). response must be null since the file save task is not done."
   },
   {
     "id": "replan-003",
@@ -95,7 +119,7 @@
       {
         "role": "user",
         "arguments": {
-          "user_context": null,
+          "query_context": null,
           "original_user_query": "Calculate (2+3) * 12 and save to file result.txt",
           "previous_plan": [
             "Calculate (2+3) * 12",
@@ -113,7 +137,12 @@
           ]
         }
       }
-    ]
+    ],
+    "expected": {
+      "tasks": [],
+      "response": "The result of (2+3) * 12 is 60 and it has been saved to result.txt."
+    },
+    "scoring_criteria": "All tasks completed. Must return empty tasks list. response must confirm both that the result is 60 and that it was saved to result.txt. Exact wording flexible."
   },
   {
     "id": "replan-004",
@@ -125,7 +154,7 @@
       {
         "role": "user",
         "arguments": {
-          "user_context": "Previous conversation: User asked to calculate (2+3) * 12 and save to result.txt. Answer was: result is 60 and saved to result.txt",
+          "query_context": "Previous conversation: User asked to calculate (2+3) * 12 and save to result.txt. Answer was: result is 60 and saved to result.txt",
           "original_user_query": "What was the result of my previous calculation?",
           "previous_plan": [
             "Retrieve the previous calculation result from context"
@@ -133,6 +162,11 @@
           "task_results": []
         }
       }
-    ]
+    ],
+    "expected": {
+      "tasks": [],
+      "response": "The result of your previous calculation was 60."
+    },
+    "scoring_criteria": "QUERY_CONTEXT already contains the answer (result is 60). Must recognize this and return empty tasks + a response with the answer from context. Must NOT create tasks to re-fetch the result. The response text just needs to convey the answer is 60."
   }
 ]

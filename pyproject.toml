@@ -1,6 +1,6 @@
 [project]
 name = "easylocai"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local AI CLI using local llm gpt-oss:20b"
 readme = "README.md"
 license = { file = "LICENSE" }

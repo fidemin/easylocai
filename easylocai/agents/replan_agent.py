@@ -32,10 +32,11 @@ class ReplanAgent(Agent[ReplanAgentInput, ReplanAgentOutput]):
         ]
 
         replanner_input = ReplannerInput(
-            user_context=ctx.query_context,
+            query_context=ctx.query_context,
             original_user_query=ctx.original_user_query,
             previous_plan=ctx.task_list,
             task_results=task_results,
+            conversation_histories=ctx.conversation_histories,
         )
 
         replanner = Replanner(client=self._ollama_client)

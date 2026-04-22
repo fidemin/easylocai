@@ -10,7 +10,7 @@
         "role": "user",
         "arguments": {
           "task": "Read redis_config.md",
-          "user_context": null,
+          "query_context": null,
           "tool_candidates": [
             {
               "server_name": "filesystem",
@@ -74,7 +74,7 @@
         "role": "user",
         "arguments": {
           "task": "Read all Redis documents",
-          "user_context": null,
+          "query_context": null,
           "tool_candidates": [
             {
               "server_name": "filesystem",
@@ -142,7 +142,7 @@
         "role": "user",
         "arguments": {
           "task": "Summarize the Redis configuration best practices",
-          "user_context": "User is setting up Redis for a production environment",
+          "query_context": "User is setting up Redis for a production environment",
           "tool_candidates": [
             {
               "server_name": "filesystem",

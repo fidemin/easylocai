@@ -14,13 +14,19 @@ ORIGINAL_USER_QUERY:
 
 PREVIOUS_PLAN:
 {% for task in previous_plan %}
-- {{ task }}
+{{ loop.index }}. {{ task }}
 {% endfor %}
 
-COMPLETED_TASKS:
+COMPLETED_TASKS ({{ task_results | length }} of {{ previous_plan | length }} done):
+{% if task_results %}
 {% for task_result in task_results %}
 <task_result>
 - task: {{ task_result["task"] }}
 - result: {{ task_result["result"] }}
 </task_result>
 {% endfor %}
+{% else %}
+(none completed yet)
+{% endif %}
+
+Based on the above, determine what to do next. Return ONLY remaining tasks from PREVIOUS_PLAN unless the query is already answerable.

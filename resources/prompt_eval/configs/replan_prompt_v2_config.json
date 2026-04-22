@@ -1,8 +1,8 @@
 {
   "input_file": "resources/prompt_eval/inputs/replan_prompt_inputs.json",
   "prompt_info": {
-    "system": "resources/prompts/replanner_system_prompt_v2.jinja2",
-    "user": "resources/prompts/replanner_user_prompt_v2.jinja2"
+    "system": "resources/prompts/replanner_system_prompt_c1_decision_tree_verbatim_plan.jinja2",
+    "user": "resources/prompts/replanner_user_prompt_c1_decision_tree_verbatim_plan.jinja2"
   },
   "output_model": "easylocai.llm_calls.replanner.ReplannerOutput"
 }

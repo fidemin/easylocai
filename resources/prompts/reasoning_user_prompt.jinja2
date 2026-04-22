@@ -1,8 +1,21 @@
-The Task:
-{{ task }}
+{% if conversation_histories %}
+CONVERSATION_HISTORY:
+{% for h in conversation_histories %}
+<conversation>
+- user: {{ h.original_user_query }}
+- assistant: {{ h.response }}
+</conversation>
+{% endfor %}
 
-USER_CONTEXT:
-{{ user_context }}
+{% endif %}
+ORIGINAL_TASK:
+{{ original_task }}
+
+SUBTASK:
+{{ subtask }}
+
+QUERY_CONTEXT:
+{{ query_context }}
 
 PREVIOUS_TASK_RESULTS:
 {% for task_result in previous_task_results %}

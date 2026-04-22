@@ -1,16 +1,21 @@
 from pydantic import BaseModel, Field
 
 from easylocai.core.llm_call import LLMCallV2
+from easylocai.schemas.context import ConversationHistory
 
 
 class ReasoningInput(BaseModel):
-    task: str = Field(
-        title="Task",
-        description="The task to reason about.",
+    original_task: str = Field(
+        title="Original Task",
+        description="The parent task that this subtask belongs to.",
     )
-    user_context: str | None = Field(
-        title="User Context",
-        description="Additional context provided by the user.",
+    subtask: str = Field(
+        title="Subtask",
+        description="The subtask to reason about.",
+    )
+    query_context: str | None = Field(
+        title="Query Context",
+        description="Preamble context extracted from the current query by QueryReformatter.",
     )
     previous_task_results: list[dict] = Field(
         title="Previous Task Results",
@@ -20,6 +25,11 @@ class ReasoningInput(BaseModel):
         default_factory=list,
         title="Previous Subtask Results",
         description="Results from previous subtasks within the current task.",
+    )
+    conversation_histories: list[ConversationHistory] = Field(
+        default_factory=list,
+        title="Conversation Histories",
+        description="Prior conversation turns for multi-turn context.",
     )
 
 
@@ -44,7 +54,7 @@ class Reasoning(LLMCallV2[ReasoningInput, ReasoningOutput]):
         system_prompt_path = "prompts/reasoning_system_prompt.jinja2"
         user_prompt_path = "prompts/reasoning_user_prompt.jinja2"
         options = {
-            "temperature": 0.5,
+            "temperature": 0.2,
         }
 
         super().__init__(
