@@ -3,13 +3,11 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from easylocai.core.llm_call import LLMCallV2
-from easylocai.schemas.context import ConversationHistory
 
 
 class TaskRouterInput(BaseModel):
     task: str
     query_context: str | None
-    conversation_histories: list[ConversationHistory] = Field(default_factory=list)
     tool_candidates: list[dict]
     previous_task_results: list[dict]
     iteration_results: list[dict]
