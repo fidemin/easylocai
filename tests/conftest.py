@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import sys
 from contextlib import AsyncExitStack
@@ -62,7 +63,32 @@ def mcp_servers_config():
 
 @pytest.fixture
 async def tool_manager(search_engine, mcp_servers_config):
-    tool_manager = ToolManager(search_engine, mpc_servers=mcp_servers_config)
-    async with AsyncExitStack() as stack:
-        await tool_manager.initialize(stack)
-        yield tool_manager
+    # anyio cancel scopes cannot be exited from a different task than they were
+    # entered in. pytest-asyncio runs fixture teardown in a separate task, so we
+    # keep the entire MCP lifecycle (setup + cleanup) inside one background task
+    # and signal across the task boundary with events.
+    tm = ToolManager(search_engine, mpc_servers=mcp_servers_config)
+    ready: asyncio.Event = asyncio.Event()
+    done: asyncio.Event = asyncio.Event()
+    errors: list = []
+
+    async def _lifecycle():
+        try:
+            async with AsyncExitStack() as stack:
+                await tm.initialize(stack)
+                ready.set()
+                await done.wait()
+        except Exception as exc:
+            errors.append(exc)
+            ready.set()
+
+    task = asyncio.ensure_future(_lifecycle())
+    await ready.wait()
+
+    if errors:
+        raise errors[0]
+
+    yield tm
+
+    done.set()
+    await task
