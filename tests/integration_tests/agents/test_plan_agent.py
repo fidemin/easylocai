@@ -41,7 +41,7 @@ class TestPlanAgent:
         ]
         inp = PlannerInput(
             user_query="Summarize alice.txt",
-            user_context=None,
+            query_context=None,
             conversation_histories=histories,
         )
         assert len(inp.conversation_histories) == 1

@@ -6,7 +6,7 @@ from easylocai.schemas.context import ConversationHistory
 
 
 class ReplannerInput(BaseModel):
-    user_context: str | None
+    query_context: str | None
     original_user_query: str
     previous_plan: list[str]
     task_results: list[dict]

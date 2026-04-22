@@ -20,7 +20,7 @@ class ReasoningInput(BaseModel):
 
 class TaskExecutorInput(BaseModel):
     task: str
-    user_context: str | None
+    query_context: str | None
     tool_candidates: list[dict]
     previous_task_results: list[dict]
     iteration_results: list[dict]

@@ -8,7 +8,7 @@ from easylocai.core.llm_call import LLMCallV2
 class TaskResultFilterInput(BaseModel):
     task: str
     subtask_results: list[dict]
-    user_context: str | None
+    query_context: str | None
 
 
 class TaskResultFilterOutput(RootModel[str]):

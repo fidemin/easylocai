@@ -64,7 +64,7 @@ class TestReplanAgent:
             )
         ]
         inp = ReplannerInput(
-            user_context=None,
+            query_context=None,
             original_user_query="Summarize alice.txt",
             previous_plan=["Summarize alice.txt"],
             task_results=[{"task": "Summarize alice.txt", "result": "It is a short file."}],

@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 
 from easylocai.core.llm_call import LLMCallV2
+from easylocai.schemas.context import ConversationHistory
 
 
 class ReasoningInput(BaseModel):
@@ -24,6 +25,11 @@ class ReasoningInput(BaseModel):
         default_factory=list,
         title="Previous Subtask Results",
         description="Results from previous subtasks within the current task.",
+    )
+    conversation_histories: list[ConversationHistory] = Field(
+        default_factory=list,
+        title="Conversation Histories",
+        description="Prior conversation turns for multi-turn context.",
     )
 
 
