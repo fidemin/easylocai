@@ -10,9 +10,9 @@ class PlannerInput(BaseModel):
         title="User Query",
         description="The user's objective/query that needs to be planned.",
     )
-    user_context: str | None = Field(
-        title="User Context",
-        description="Additional context provided by the user.",
+    query_context: str | None = Field(
+        title="Query Context",
+        description="Preamble context extracted from the current query by QueryReformatter.",
     )
     conversation_histories: list[ConversationHistory] = Field(
         default_factory=list,

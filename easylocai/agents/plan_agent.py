@@ -50,7 +50,7 @@ class PlanAgent(Agent[PlanAgentInput, PlanAgentOutput]):
 
         planner_input = PlannerInput(
             user_query=reformatter_output.reformed_query,
-            user_context=reformatter_output.query_context,
+            query_context=reformatter_output.query_context,
             conversation_histories=ctx.conversation_histories,
         )
         planner = Planner(client=self._ollama_client)
