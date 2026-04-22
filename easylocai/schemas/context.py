@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ConversationHistory(BaseModel):
@@ -9,7 +9,7 @@ class ConversationHistory(BaseModel):
 
 
 class GlobalContext(BaseModel):
-    conversation_histories: list[ConversationHistory] = []
+    conversation_histories: list[ConversationHistory] = Field(default_factory=list)
 
 
 class ExecutedTaskResult(BaseModel):
@@ -23,22 +23,22 @@ class SubtaskResult(BaseModel):
 
 
 class WorkflowContext(BaseModel):
-    conversation_histories: list[ConversationHistory] = []
+    conversation_histories: list[ConversationHistory] = Field(default_factory=list)
     original_user_query: str
     query_context: str | None = None
     reformatted_user_query: str | None = None
-    task_list: list[str] = []
-    executed_task_results: list[ExecutedTaskResult] = []
+    task_list: list[str] = Field(default_factory=list)
+    executed_task_results: list[ExecutedTaskResult] = Field(default_factory=list)
 
 
 class SingleTaskAgentContext(BaseModel):
     # All WorkflowContext fields
-    conversation_histories: list[ConversationHistory] = []
+    conversation_histories: list[ConversationHistory] = Field(default_factory=list)
     original_user_query: str
     query_context: str | None = None
     reformatted_user_query: str | None = None
-    task_list: list[str] = []
-    executed_task_results: list[ExecutedTaskResult] = []
+    task_list: list[str] = Field(default_factory=list)
+    executed_task_results: list[ExecutedTaskResult] = Field(default_factory=list)
     # SingleTaskAgent-specific fields
     original_task: str
-    subtask_results: list[SubtaskResult] = []
+    subtask_results: list[SubtaskResult] = Field(default_factory=list)

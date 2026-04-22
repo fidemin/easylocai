@@ -4,7 +4,7 @@ from easylocai.agents.single_task_agent import (
     SingleTaskAgent,
     SingleTaskAgentOutput,
 )
-from easylocai.schemas.context import ExecutedTaskResult, SingleTaskAgentContext
+from easylocai.schemas.context import ConversationHistory, ExecutedTaskResult, SingleTaskAgentContext
 
 
 class TestSingleTaskAgent:
@@ -41,6 +41,28 @@ class TestSingleTaskAgent:
                 )
             ],
             original_task="Count the total number of Python files found",
+        )
+        output: SingleTaskAgentOutput = await agent.run(context)
+
+        assert isinstance(output.executed_task, str)
+        assert isinstance(output.result, str)
+
+    @pytest.mark.asyncio
+    async def test_task_with_conversation_history(self, ollama_client, tool_manager):
+        agent = SingleTaskAgent(
+            client=ollama_client,
+            tool_manager=tool_manager,
+        )
+        context = SingleTaskAgentContext(
+            original_user_query="Count them",
+            original_task="Count the number of Python files found previously",
+            conversation_histories=[
+                ConversationHistory(
+                    original_user_query="Find all Python files",
+                    reformatted_user_query="Find all Python files",
+                    response="Found 3 Python files: a.py, b.py, c.py",
+                )
+            ],
         )
         output: SingleTaskAgentOutput = await agent.run(context)
 

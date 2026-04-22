@@ -5,6 +5,7 @@ from easylocai.agents.reasoning_agent import (
     ReasoningAgentInput,
     ReasoningAgentOutput,
 )
+from easylocai.schemas.context import ConversationHistory
 
 
 def assert_reasoning_output(output: ReasoningAgentOutput) -> None:
@@ -74,6 +75,26 @@ class TestReasoningAgent:
             previous_subtask_results=[
                 {"subtask": "Count files in src/", "result": "5 files"},
                 {"subtask": "Count files in tests/", "result": "3 files"},
+            ],
+        )
+        output: ReasoningAgentOutput = await agent.run(input_)
+        assert_reasoning_output(output)
+
+    @pytest.mark.asyncio
+    async def test_with_conversation_history(self, ollama_client):
+        """Variant: conversation_histories provided for multi-turn context."""
+        agent = ReasoningAgent(client=ollama_client)
+        input_ = ReasoningAgentInput(
+            original_task="Count how many there are",
+            task={"description": "Count how many Python files were found"},
+            query_context=None,
+            previous_task_results=[],
+            conversation_histories=[
+                ConversationHistory(
+                    original_user_query="Find all Python files",
+                    reformatted_user_query="Find all Python files",
+                    response="Found 3 Python files: a.py, b.py, c.py",
+                )
             ],
         )
         output: ReasoningAgentOutput = await agent.run(input_)
