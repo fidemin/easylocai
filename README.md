@@ -34,13 +34,37 @@ To ensure stable performance of the autonomous agent, your system must meet the 
 - **LLM Engine:** [Ollama](https://ollama.com/) must be installed and running.
   - **Model:** `gpt-oss:20b` (Make sure to run `ollama pull gpt-oss:20b` before starting).
 
-# Install & Execution 
-## Installation
-```bash
-bash install.sh
-````
+# Install & Execution
 
-## Configuration
+## (1) Installation
+
+### First-time install
+
+```bash
+pipx install easylocai
+```
+
+### Reinstall or upgrade
+
+```bash
+pipx upgrade easylocai
+```
+
+
+## (2) Initialization
+configuration file is generated at `~/.easylocai/config.json` after initialization.
+```bash
+easylocai init
+```
+
+If you want to force re-initialization, use `--force` flag:
+**WARNING**: config file will be reset to default and all existing MCP server configurations.
+
+```bash
+easylocai init --force
+```
+
+## (3) Configuration
 
 ### MCP server configuration
 - file_name: `~/.config/easylocai/config.json`
@@ -55,19 +79,6 @@ bash install.sh
             "@modelcontextprotocol/server-filesystem",
             "."
           ]
-        },
-        "kubernetes": {
-          "command": "python",
-          "args": [
-            "-m",
-            "kubectl_mcp_tool.mcp_server"
-          ],
-          "cwd": "~/Programming/kubectl-mcp-server",
-          "env": {
-            "KUBECONFIG": "~/.kube/config",
-            "KUBECTL_MCP_LOG_LEVEL": "ERROR",
-            "PYTHONUNBUFFERED": "1"
-          }
         },
         "notion_api": {
           "command": "docker",
@@ -86,34 +97,17 @@ bash install.sh
     }
     ```
 
-## Initialization
-```bash
-easylocai init
-```
-
-If you want to force re-initialization, use `--force` flag:
-```bash
-easylocai init --force
-```
-
-## Run
+## (4) Execution
+### Run default workflow
 ```bash
 easylocai
 ```
 
-## Run beta workflow variant
+### Run flag workflow variant
 ```bash
-easylocai --flag=beta
+easylocai --flag={flag}
 ```
 
-# Development
-
-## Run without installing
-```bash
-python -m easylocai.run
-
-# Beta variant
-python -m easylocai.run --flag=beta
-```
-
-- refer to [ARCHITECTURE.md](docs/ARCHITECTURE.md)
+# References
+- Development: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for development setup, testing, and key code patterns.
+- Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for agentic workflow architecture, component responsibilities, and data flow diagrams.
