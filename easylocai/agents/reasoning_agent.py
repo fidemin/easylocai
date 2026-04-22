@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class ReasoningAgentInput(BaseModel):
     task: dict
-    user_context: str | None
+    query_context: str | None
     previous_task_results: list[dict]
     previous_subtask_results: list[dict] = []
 
@@ -34,8 +34,8 @@ class ReasoningAgent(Agent[ReasoningAgentInput, ReasoningAgentOutput]):
 
     async def run(self, input_: ReasoningAgentInput) -> ReasoningAgentOutput:
         reasoning_input = ReasoningInput(
-            task=input_.task["description"],
-            user_context=input_.user_context,
+            subtask=input_.task["description"],
+            query_context=input_.query_context,
             previous_task_results=input_.previous_task_results,
             previous_subtask_results=input_.previous_subtask_results,
         )
